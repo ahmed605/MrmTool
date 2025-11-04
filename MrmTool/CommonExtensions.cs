@@ -65,5 +65,24 @@ namespace MrmTool
             picker.SetInProc();
             picker.InitializeWithWindow();
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int LastIndexOf(this string str, char c, out int index)
+        {
+            index = str.LastIndexOf(c);
+            return index;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string GetDisplayName(this string name)
+        {
+            return name.LastIndexOf('/', out var idx) != -1 ? name[(idx + 1)..] : name;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string? GetParentName(this string name)
+        {
+            return name.LastIndexOf('/', out var idx) != -1 ? name[..idx] : null;
+        }
     }
 }

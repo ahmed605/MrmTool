@@ -18,11 +18,42 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
     <EnableMsixTooling>true</EnableMsixTooling>
-	<ProjectPriFileName>resources.pri</ProjectPriFileName>
+    <ProjectPriFileName>resources.pri</ProjectPriFileName>
+    <_SupportEmbedFileResources>true</_SupportEmbedFileResources>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251015.2" />
     <PackageReference Include="MrmLib" Version="1.0.0" />
     <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100.5" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedPriResource Include="Assets\Icons\audio.png" />
+    <EmbeddedPriResource Include="Assets\Icons\folder.png" />
+    <EmbeddedPriResource Include="Assets\Icons\font.png" />
+    <EmbeddedPriResource Include="Assets\Icons\generic.png" />
+    <EmbeddedPriResource Include="Assets\Icons\image.png" />
+    <EmbeddedPriResource Include="Assets\Icons\text.png" />
+    <EmbeddedPriResource Include="Assets\Icons\video.png" />
+    <EmbeddedPriResource Include="Assets\Icons\xaml.png" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <Content Remove="Assets\Icons\audio.png" />
+    <Content Remove="Assets\Icons\folder.png" />
+    <Content Remove="Assets\Icons\font.png" />
+    <Content Remove="Assets\Icons\generic.png" />
+    <Content Remove="Assets\Icons\image.png" />
+    <Content Remove="Assets\Icons\text.png" />
+    <Content Remove="Assets\Icons\video.png" />
+    <Content Remove="Assets\Icons\xaml.png" />
+  </ItemGroup>
+
+  <Target Name="EmbedAssets" BeforeTargets="_GenerateProjectPriConfigurationFiles">
+    <ItemGroup>
+      <Content Remove="@(EmbeddedPriResource)"/>
+      <_EmbedFile Include="@(EmbeddedPriResource)">
+        <TargetPath>%(EmbeddedPriResource.Identity)</TargetPath>
+      </_EmbedFile>
+    </ItemGroup>
+  </Target>
 </Project>

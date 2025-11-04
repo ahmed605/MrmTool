@@ -1,5 +1,6 @@
 using MrmLib;
 using System.Linq;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
@@ -19,11 +20,6 @@ namespace MrmTool
             this.InitializeComponent();
         }
 
-        private void PageLoaded(object sender, RoutedEventArgs e)
-        {
-            // _
-        }
-
         private async void OnOpenFileClicked(object sender, RoutedEventArgs e)
         {
             FileOpenPicker picker = new();
@@ -33,7 +29,51 @@ namespace MrmTool
 
             if (await picker.PickSingleFileAsync() is { } file)
             {
+                await LoadPri(file);
+            }
+        }
+
+        private void MainGrid_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Copy;
+                e.Handled = true;
+            }
+        }
+
+        private async void MainGrid_Drop(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                if (items.Count > 0 && items[0] is StorageFile file)
+                {
+                    await LoadPri(file);
+                }
+            }
+        }
+
+        private async Task LoadPri(StorageFile file)
+        {
+            try
+            {
                 var pri = await PriFile.LoadAsync(file);
+                Frame.Navigate(typeof(PriPage), pri);
+            }
+            catch (Exception ex)
+            {
+                ContentDialog dialog = new()
+                {
+                    Title = "Error",
+                    Content = $"Failed to load the selected PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
+                    CloseButtonText = "OK",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot,
+                    Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
+                };
+
+                await dialog.ShowAsync();
             }
         }
     }
