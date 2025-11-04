@@ -19,6 +19,7 @@ namespace MrmTool
     public sealed partial class PriPage : Page
     {
         private PriFile? _pri;
+        private StorageFile? _currentFile;
 
         public ObservableCollection<ResourceItem> ResourceItems { get; } = [];
 
@@ -31,9 +32,10 @@ namespace MrmTool
         {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is PriFile pri)
+            if (e.Parameter is (PriFile pri, StorageFile file))
             {
                 LoadPri(pri);
+                _currentFile = file;
             }
         }
 
@@ -89,17 +91,43 @@ namespace MrmTool
             }
         }
 
-        private void Open_Click(object sender, RoutedEventArgs e)
+        private async void Open_Click(object sender, RoutedEventArgs e)
         {
+            FileOpenPicker picker = new();
+            picker.FileTypeFilter.Add(".pri");
+            picker.CommitButtonText = "Load";
+            picker.Initialize();
 
-        }
+            if (await picker.PickSingleFileAsync() is { } file)
+            {
+                try
+                {
+                    LoadPri(await PriFile.LoadAsync(file));
+                    _currentFile = file;
+                }
+                catch (Exception ex)
+                {
+                    ContentDialog dialog = new()
+                    {
+                        Title = "Error",
+                        Content = $"Failed to load the selected PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
+                        CloseButtonText = "OK",
+                        DefaultButton = ContentDialogButton.Close,
+                        XamlRoot = this.XamlRoot,
+                        Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
+                    };
 
-        private void Exit_Click(object sender, RoutedEventArgs e)
-        {
-
+                    await dialog.ShowAsync();
+                }
+            }
         }
 
         private void Save_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void SaveAs_Click(object sender, RoutedEventArgs e)
         {
 
         }
@@ -112,6 +140,21 @@ namespace MrmTool
         private void RemoveResources_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void SetRootFolder_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void EmbedPathResources_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            TerraFX.Interop.Windows.Windows.SendMessageW(((App)App.Current).HWND, TerraFX.Interop.Windows.WM.WM_CLOSE, 0, 0);
         }
     }
 }

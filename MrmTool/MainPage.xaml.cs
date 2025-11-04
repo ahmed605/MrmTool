@@ -59,7 +59,7 @@ namespace MrmTool
             try
             {
                 var pri = await PriFile.LoadAsync(file);
-                Frame.Navigate(typeof(PriPage), pri);
+                Frame.Navigate(typeof(PriPage), (pri, file));
             }
             catch (Exception ex)
             {

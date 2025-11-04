@@ -53,6 +53,11 @@
                         <SymbolIcon Symbol="Save"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save As" Click="SaveAs_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="SaveLocal"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
                 <MenuFlyoutItem Text="Exit" Click="Exit_Click">
                     <MenuFlyoutItem.Icon>
@@ -69,6 +74,17 @@
                 <MenuFlyoutItem x:Name="removeResourcesMenuItem" Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Delete"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Set Root Folder" Click="SetRootFolder_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="OpenLocal"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Embed Path Resources In" Click="EmbedPathResources_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="ImportAll"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
             </MenuBarItem>
