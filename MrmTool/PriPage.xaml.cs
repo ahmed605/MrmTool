@@ -20,6 +20,7 @@ namespace MrmTool
     {
         private PriFile? _pri;
         private StorageFile? _currentFile;
+        private StorageFolder? _rootFolder;
 
         public ObservableCollection<ResourceItem> ResourceItems { get; } = [];
 
@@ -122,14 +123,47 @@ namespace MrmTool
             }
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
+        private async Task SavePri(StorageFile file)
         {
+            try
+            {
+                using var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
+                stream.Size = 0;
 
+                await _pri!.WriteAsync(stream);
+                _currentFile = file;
+            }
+            catch (Exception ex)
+            {
+                ContentDialog dialog = new()
+                {
+                    Title = "Error",
+                    Content = $"Failed to save the PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
+                    CloseButtonText = "OK",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot,
+                    Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
+                };
+
+                await dialog.ShowAsync();
+            }
         }
 
-        private void SaveAs_Click(object sender, RoutedEventArgs e)
+        private async void Save_Click(object sender, RoutedEventArgs e)
         {
+            await SavePri(_currentFile!);
+        }
 
+        private async void SaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            FileSavePicker picker = new();
+            picker.FileTypeChoices.Add("PRI File", new List<string>() { ".pri" });
+            picker.Initialize();
+
+            if (await picker.PickSaveFileAsync() is { } file)
+            {
+                await SavePri(file);
+            }
         }
 
         private void AddResource_Click(object sender, RoutedEventArgs e)
@@ -142,14 +176,47 @@ namespace MrmTool
 
         }
 
-        private void SetRootFolder_Click(object sender, RoutedEventArgs e)
+        private async Task PickRootFolder()
         {
+            FolderPicker picker = new();
+            picker.FileTypeFilter.Add("*");
+            picker.CommitButtonText = "Select PRI Root Folder";
+            picker.Initialize();
 
+            if (await picker.PickSingleFolderAsync() is { } folder)
+            {
+                _rootFolder = folder;
+            }
         }
 
-        private void EmbedPathResources_Click(object sender, RoutedEventArgs e)
+        private async void SetRootFolder_Click(object sender, RoutedEventArgs e)
         {
+            await PickRootFolder();
+        }
 
+        private async void EmbedPathResources_Click(object sender, RoutedEventArgs e)
+        {
+            if (_rootFolder is null)
+            {
+                await PickRootFolder();
+
+                if (_rootFolder is null)
+                {
+                    ContentDialog dialog = new()
+                    {
+                        Title = "Error",
+                        Content = "Please select PRI root folder first in order to embed path resources into the PRI file.",
+                        CloseButtonText = "OK",
+                        DefaultButton = ContentDialogButton.Close,
+                        XamlRoot = this.XamlRoot
+                    };
+
+                    await dialog.ShowAsync();
+                    return;
+                }
+            }
+
+            await _pri!.ReplacePathCandidatesWithEmbeddedDataAsync(_rootFolder);
         }
 
         private void Exit_Click(object sender, RoutedEventArgs e)
