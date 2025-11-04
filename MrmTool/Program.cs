@@ -33,7 +33,7 @@ namespace MrmTool
             wc.lpszClassName = lpszClassName;
             ThrowLastErrorIfNull(RegisterClassA(&wc));
 
-            ThrowLastErrorIfDefault(CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null));
+            ThrowLastErrorIfDefault(CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null));
 
             MSG msg;
             while (GetMessageW(&msg, HWND.NULL, 0, 0))
