@@ -1,19 +1,14 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
+﻿using TerraFX.Interop.WinRT;
 using TerraFX.Interop.Windows;
-using TerraFX.Interop.WinRT;
 
 using static TerraFX.Interop.Windows.WM;
 using static TerraFX.Interop.Windows.WS;
-using static TerraFX.Interop.Windows.Windows;
 using static TerraFX.Interop.WinRT.WinRT;
+using static TerraFX.Interop.Windows.Windows;
 
 using static MrmTool.ErrorHelpers;
+using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using Windows.ApplicationModel.Resources.Core;
-using Windows.Storage;
-using System.Reflection;
 
 namespace MrmTool
 {
@@ -24,8 +19,8 @@ namespace MrmTool
         [STAThread]
         static unsafe void Main()
         {
-            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(ref Unsafe.AsRef(in "MrmToolClass\0"u8.GetPinnableReference()));
-            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(ref Unsafe.AsRef(in "MrmTool\0"u8.GetPinnableReference()));
+            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(in "MrmToolClass\0"u8.GetPinnableReference());
+            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(in "MrmTool\0"u8.GetPinnableReference());
 
             WNDCLASSA wc;
             wc.lpfnWndProc = &WndProc;

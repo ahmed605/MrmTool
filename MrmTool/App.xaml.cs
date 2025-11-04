@@ -44,8 +44,8 @@ namespace MrmTool
 
         private unsafe void InitializeXaml()
         {
-            LoadLibraryA((sbyte*)Unsafe.AsPointer(ref Unsafe.AsRef(in "twinapi.appcore.dll\0"u8.GetPinnableReference())));
-            LoadLibraryA((sbyte*)Unsafe.AsPointer(ref Unsafe.AsRef(in "threadpoolwinrt.dll\0"u8.GetPinnableReference())));
+            LoadLibraryA((sbyte*)Unsafe.AsPointer(in "twinapi.appcore.dll\0"u8.GetPinnableReference()));
+            LoadLibraryA((sbyte*)Unsafe.AsPointer(in "threadpoolwinrt.dll\0"u8.GetPinnableReference()));
 
             _xamlManager = WindowsXamlManager.InitializeForCurrentThread();
             _desktopWindowXamlSource = new();
