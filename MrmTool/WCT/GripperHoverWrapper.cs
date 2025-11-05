@@ -8,7 +8,7 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
 
-namespace Microsoft.Toolkit.Uwp.UI.Controls
+namespace CommunityToolkit.WinUI.Controls
 {
     internal class GripperHoverWrapper
     {

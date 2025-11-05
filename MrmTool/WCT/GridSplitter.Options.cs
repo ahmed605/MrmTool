@@ -7,7 +7,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 
-namespace Microsoft.Toolkit.Uwp.UI.Controls
+namespace CommunityToolkit.WinUI.Controls
 {
     /// <summary>
     /// Represents the control that redistributes space between columns or rows of a Grid control.

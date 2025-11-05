@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MrmTool": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}

@@ -3,6 +3,7 @@ using MrmTool.Models;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
@@ -92,6 +93,29 @@ namespace MrmTool
             }
         }
 
+        private async Task TryLoadPri(StorageFile file)
+        {
+            try
+            {
+                LoadPri(await PriFile.LoadAsync(file));
+                _currentFile = file;
+            }
+            catch (Exception ex)
+            {
+                ContentDialog dialog = new()
+                {
+                    Title = "Error",
+                    Content = $"Failed to load the selected PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
+                    CloseButtonText = "OK",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot,
+                    Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
+                };
+
+                await dialog.ShowAsync();
+            }
+        }
+
         private async void Open_Click(object sender, RoutedEventArgs e)
         {
             FileOpenPicker picker = new();
@@ -101,25 +125,7 @@ namespace MrmTool
 
             if (await picker.PickSingleFileAsync() is { } file)
             {
-                try
-                {
-                    LoadPri(await PriFile.LoadAsync(file));
-                    _currentFile = file;
-                }
-                catch (Exception ex)
-                {
-                    ContentDialog dialog = new()
-                    {
-                        Title = "Error",
-                        Content = $"Failed to load the selected PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
-                        CloseButtonText = "OK",
-                        DefaultButton = ContentDialogButton.Close,
-                        XamlRoot = this.XamlRoot,
-                        Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
-                    };
-
-                    await dialog.ShowAsync();
-                }
+                await TryLoadPri(file);
             }
         }
 
@@ -222,6 +228,27 @@ namespace MrmTool
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
             TerraFX.Interop.Windows.Windows.SendMessageW(((App)App.Current).HWND, TerraFX.Interop.Windows.WM.WM_CLOSE, 0, 0);
+        }
+
+        private void Grid_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                e.AcceptedOperation = DataPackageOperation.Copy;
+                e.Handled = true;
+            }
+        }
+
+        private async void Grid_Drop(object sender, DragEventArgs e)
+        {
+            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            {
+                var items = await e.DataView.GetStorageItemsAsync();
+                if (items.Count > 0 && items[0] is StorageFile file && file.Name.ToLowerInvariant().EndsWith(".pri"))
+                {
+                    await TryLoadPri(file);
+                }
+            }
         }
     }
 }

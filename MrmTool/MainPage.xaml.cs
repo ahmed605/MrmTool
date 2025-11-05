@@ -47,7 +47,7 @@ namespace MrmTool
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 var items = await e.DataView.GetStorageItemsAsync();
-                if (items.Count > 0 && items[0] is StorageFile file)
+                if (items.Count > 0 && items[0] is StorageFile file && file.Name.ToLowerInvariant().EndsWith(".pri"))
                 {
                     await LoadPri(file);
                 }

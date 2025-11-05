@@ -7,7 +7,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:selectors="using:MrmTool.Selectors"
     xmlns:models="using:MrmTool.Models"
-    xmlns:wct="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:wct="using:CommunityToolkit.WinUI.Controls"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
@@ -34,9 +36,11 @@
         <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector"
             ResourceTree="{StaticResource TreeTemplate}"
             Resource="{StaticResource ResourceTemplate}" />
+
+        <SolidColorBrush x:Key="PriBorderBrush" Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
     </Page.Resources>
 
-    <Grid>
+    <Grid Background="Transparent" AllowDrop="True" DragOver="Grid_DragOver" Drop="Grid_Drop">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -100,8 +104,66 @@
                 <TreeView x:Name="treeView" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
             </ScrollViewer>
 
-            <Grid Grid.Column="2">
-                
+            <Grid Grid.Column="2" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="180" MinHeight="130"/>
+                    <RowDefinition Height="12"/>
+                    <RowDefinition Height="*" MinHeight="130"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Row="0" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                    <ListView>
+                        <ListView.Header>
+                            <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
+                                <interactivity:Interaction.Behaviors>
+                                    <behaviors:StickyHeaderBehavior/>
+                                </interactivity:Interaction.Behaviors>
+
+                                <wct:DataTable Margin="10,0,0,0" Height="30" ColumnSpacing="16">
+                                    <wct:DataColumn Content="Type" MinWidth="100" CanResize="True"/>
+                                    <wct:DataColumn Content="Qualifiers"/>
+                                </wct:DataTable>
+                            </Border>
+                        </ListView.Header>
+
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+
+                        <ListViewItem>
+                            <wct:DataRow HorizontalAlignment="Left">
+                                <TextBlock Text="String" VerticalAlignment="Center"/>
+                                <TextBlock Text="(Language = en-US, Scale = 200)" VerticalAlignment="Center"/>
+                            </wct:DataRow>
+                        </ListViewItem>
+
+                        <ListViewItem>
+                            <wct:DataRow HorizontalAlignment="Left">
+                                <TextBlock Text="Path" VerticalAlignment="Center"/>
+                                <TextBlock Text="(Language = fr-FR), (Language = en-US, Fallback Score = 0.5)" VerticalAlignment="Center"/>
+                            </wct:DataRow>
+                        </ListViewItem>
+
+                        <ListViewItem>
+                            <wct:DataRow HorizontalAlignment="Left">
+                                <TextBlock Text="Embedded Data" VerticalAlignment="Center"/>
+                                <TextBlock Text="(None)" VerticalAlignment="Center"/>
+                            </wct:DataRow>
+                        </ListViewItem>
+                    </ListView>
+                </Border>
+                <Border Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                </Border>
+
+                <wct:GridSplitter Grid.Row="1" Height="12" ResizeBehavior="BasedOnAlignment" ResizeDirection="Rows" Background="Transparent">
+                    <wct:GridSplitter.Element>
+                        <TextBlock Text="" FontFamily="Segoe MDL2 Assets" IsHitTestVisible="False" Opacity="0.5" VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center"/>
+                    </wct:GridSplitter.Element>
+                    <wct:GridSplitter.RenderTransform>
+                        <TranslateTransform Y="-5" />
+                    </wct:GridSplitter.RenderTransform>
+                </wct:GridSplitter>
             </Grid>
 
             <wct:GridSplitter Grid.Column="1" Width="16" ResizeBehavior="BasedOnAlignment" ResizeDirection="Auto" Background="Transparent">
@@ -109,7 +171,7 @@
                     <Rectangle Fill="{ThemeResource ButtonForegroundThemeBrush}" Width="0.5" Opacity="0.1" VerticalAlignment="Stretch" HorizontalAlignment="Center"/>
                 </wct:GridSplitter.Element>
                 <wct:GridSplitter.RenderTransform>
-                    <TranslateTransform X="7" />
+                    <TranslateTransform X="8" />
                 </wct:GridSplitter.RenderTransform>
             </wct:GridSplitter>
         </Grid>

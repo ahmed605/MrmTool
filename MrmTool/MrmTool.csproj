@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251015.2" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Uwp.Managed" Version="3.0.0" />
     <PackageReference Include="MrmLib" Version="1.0.0" />
     <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100.5" />
   </ItemGroup>
@@ -50,7 +51,7 @@
 
   <Target Name="EmbedAssets" BeforeTargets="_GenerateProjectPriConfigurationFiles">
     <ItemGroup>
-      <Content Remove="@(EmbeddedPriResource)"/>
+      <Content Remove="@(EmbeddedPriResource)" />
       <_EmbedFile Include="@(EmbeddedPriResource)">
         <TargetPath>%(EmbeddedPriResource.Identity)</TargetPath>
       </_EmbedFile>

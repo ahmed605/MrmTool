@@ -9,7 +9,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 
-namespace Microsoft.Toolkit.Uwp.UI.Controls
+namespace CommunityToolkit.WinUI.Controls
 {
     /// <summary>
     /// Represents the control that redistributes space between columns or rows of a Grid control.
@@ -184,6 +184,11 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
             // if current row has fixed height then resize it
             if (!IsStarRow(CurrentRow))
             {
+                if (!IsValidRowHeight(SiblingRow, verticalChange * -1))
+                {
+                    return false;
+                }
+
                 // No need to check for the row Min height because it is automatically respected
                 if (!SetRowHeight(CurrentRow, verticalChange, GridUnitType.Pixel))
                 {
@@ -195,7 +200,7 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
             else if (!IsStarRow(SiblingRow))
             {
                 // Would adding to this column make the current column violate the MinWidth?
-                if (IsValidRowHeight(CurrentRow, verticalChange) == false)
+                if (!IsValidRowHeight(CurrentRow, verticalChange))
                 {
                     return false;
                 }
@@ -250,6 +255,11 @@ namespace Microsoft.Toolkit.Uwp.UI.Controls
             // if current column has fixed width then resize it
             if (!IsStarColumn(CurrentColumn))
             {
+                if (!IsValidColumnWidth(SiblingColumn, horizontalChange * -1))
+                {
+                    return false;
+                }
+
                 // No need to check for the Column Min width because it is automatically respected
                 if (!SetColumnWidth(CurrentColumn, horizontalChange, GridUnitType.Pixel))
                 {

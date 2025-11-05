@@ -1,0 +1,45 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <Color x:Key="TextFillColorSecondary">#C5FFFFFF</Color>
+            <Color x:Key="ControlStrokeColorSecondary">#18FFFFFF</Color>
+            <Color x:Key="ControlAltFillColorTransparent">#00FFFFFF</Color>
+            <Color x:Key="ControlAltFillColorTertiary">#0BFFFFFF</Color>
+            <Color x:Key="ControlAltFillColorQuarternary">#12FFFFFF</Color>
+            <Color x:Key="ControlAltFillColorDisabled">#00FFFFFF</Color>
+            <Color x:Key="ControlStrongFillColorDefault">#8BFFFFFF</Color>
+            <Color x:Key="SolidBackgroundFillColorTertiary">#282828</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <Color x:Key="TextFillColorSecondary">#9E000000</Color>
+            <Color x:Key="ControlStrokeColorSecondary">#29000000</Color>
+            <Color x:Key="ControlAltFillColorTransparent">#00FFFFFF</Color>
+            <Color x:Key="ControlAltFillColorTertiary">#0F000000</Color>
+            <Color x:Key="ControlAltFillColorQuarternary">#18000000</Color>
+            <Color x:Key="ControlAltFillColorDisabled">#00FFFFFF</Color>
+            <Color x:Key="ControlStrongFillColorDefault">#72000000</Color>
+            <Color x:Key="SolidBackgroundFillColorTertiary">#F9F9F9</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <Color x:Key="TextFillColorSecondary">#FF000000</Color>
+            <Color x:Key="ControlStrokeColorSecondary">#FF0000</Color>
+            <Color x:Key="ControlAltFillColorTransparent">#FF0000</Color>
+            <Color x:Key="ControlAltFillColorTertiary">#FF0000</Color>
+            <Color x:Key="ControlAltFillColorQuarternary">#FF0000</Color>
+            <Color x:Key="ControlAltFillColorDisabled">#FF0000</Color>
+            <Color x:Key="ControlStrongFillColorDefault">#FF0000</Color>
+            <Color x:Key="SolidBackgroundFillColorTertiary">#FF0000</Color>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TextFillColorSecondary}"/>
+    <SolidColorBrush x:Key="ControlStrokeColorSecondaryBrush" Color="{StaticResource ControlStrokeColorSecondary}"/>
+    <SolidColorBrush x:Key="ControlAltFillColorTransparentBrush" Color="{StaticResource ControlAltFillColorTransparent}"/>
+    <SolidColorBrush x:Key="ControlAltFillColorTertiaryBrush" Color="{StaticResource ControlAltFillColorTertiary}"/>
+    <SolidColorBrush x:Key="ControlAltFillColorQuarternaryBrush" Color="{StaticResource ControlAltFillColorQuarternary}"/>
+    <SolidColorBrush x:Key="ControlAltFillColorDisabledBrush" Color="{StaticResource ControlAltFillColorDisabled}"/>
+    <SolidColorBrush x:Key="ControlStrongFillColorDefaultBrush" Color="{StaticResource ControlStrongFillColorDefault}"/>
+    <SolidColorBrush x:Key="SolidBackgroundFillColorTertiaryBrush" Color="{StaticResource SolidBackgroundFillColorTertiary}"/>
+</ResourceDictionary>
