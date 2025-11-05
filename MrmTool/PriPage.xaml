@@ -101,7 +101,7 @@
             </Grid.ColumnDefinitions>
 
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <TreeView x:Name="treeView" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
+                <TreeView x:Name="treeView" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
             </ScrollViewer>
 
             <Grid Grid.Column="2" VerticalAlignment="Stretch">

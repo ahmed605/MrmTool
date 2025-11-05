@@ -46,43 +46,8 @@ namespace MrmTool
             ResourceItems.Clear();
         }
 
-        /*
-        private static ResourceItem? FindResourceItem(ObservableCollection<ResourceItem> items, string name)
-        {
-            foreach (var i in items)
-            {
-                if (i.Name == name) return i;
-
-                var found = FindResourceItem(i.Children, name);
-                if (found is not null) return found;
-            }
-
-            return null;
-        }
-        */
-
         private ResourceItem GetOrAddResourceItem(string name)
         {
-            /*
-            var item = FindResourceItem(ResourceItems, name);
-            if (item is not null) return item;
-
-            var parentName = name.GetParentName();
-            if (parentName is null)
-            {
-                item = new ResourceItem(name);
-                ResourceItems.Add(item);
-            }
-            else
-            {
-                var parentItem = GetOrAddResourceItem(parentName);
-                item = new ResourceItem(name);
-                parentItem.Children.Add(item);
-            }
-
-            return item;
-            */
-
             string[] split = name.Split('/');
             ResourceItem? currentParent = null;
             foreach (var item in split)
