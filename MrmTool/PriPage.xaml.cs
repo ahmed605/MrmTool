@@ -46,6 +46,7 @@ namespace MrmTool
             ResourceItems.Clear();
         }
 
+        /*
         private static ResourceItem? FindResourceItem(ObservableCollection<ResourceItem> items, string name)
         {
             foreach (var i in items)
@@ -58,9 +59,11 @@ namespace MrmTool
 
             return null;
         }
+        */
 
         private ResourceItem GetOrAddResourceItem(string name)
         {
+            /*
             var item = FindResourceItem(ResourceItems, name);
             if (item is not null) return item;
 
@@ -78,6 +81,22 @@ namespace MrmTool
             }
 
             return item;
+            */
+
+            string[] split = name.Split('/');
+            ResourceItem? currentParent = null;
+            foreach (var item in split)
+            {
+                ObservableCollection<ResourceItem> currentList = currentParent?.Children ?? ResourceItems;
+                currentParent = currentList.FirstOrDefault(i => i.Name == item);
+                if (currentParent is null)
+                {
+                    currentParent = new ResourceItem(item);
+                    currentList.Add(currentParent);
+                }
+            }
+
+            return currentParent!;
         }
 
         private void LoadPri(PriFile pri)
