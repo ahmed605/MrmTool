@@ -10,27 +10,28 @@
     xmlns:wct="using:CommunityToolkit.WinUI.Controls"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
     <Page.Resources>
         <DataTemplate x:Key="TreeTemplate" x:DataType="models:ResourceItem">
-            <TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}"
-                          ItemsSource="{x:Bind Children}" IsExpanded="True" Margin="-20,2,0,2">
+            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}"
+                          ItemsSource="{x:Bind Children}" IsExpanded="False" Margin="0,2,0,2">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
                 </StackPanel>
-            </TreeViewItem>
+            </muxc:TreeViewItem>
         </DataTemplate>
 
         <DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
-            <TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}" Margin="-20,2,0,2">
+            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}" Margin="0,2,0,2">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
                 </StackPanel>
-            </TreeViewItem>
+            </muxc:TreeViewItem>
         </DataTemplate>
 
         <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector"
@@ -100,7 +101,7 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
+            <muxc:TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
 
             <Grid Grid.Column="2" VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>

@@ -11,6 +11,9 @@
                 <ResourceDictionary Source="ms-appx:///WCT/GridSplitter.xaml"/>
                 <ResourceDictionary Source="ms-appx:///WCT/SizerBase.xaml"/>
                 <ResourceDictionary Source="ms-appx:///WCT/DataColumn.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Uno/TreeView_themeresources.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Uno/TreeViewItem.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Uno/TreeView.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
