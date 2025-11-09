@@ -83,6 +83,7 @@ namespace MrmTool
             {
                 LoadPri(await PriFile.LoadAsync(file));
                 _currentFile = file;
+                _rootFolder = null;
             }
             catch (Exception ex)
             {
@@ -240,6 +241,41 @@ namespace MrmTool
             if (args.AddedItems.Count is 1 && args.AddedItems[0] is ResourceItem item && item.Candidates.Count > 0)
             {
                 candidatesList.ItemsSource = item.Candidates;
+            }
+        }
+
+        private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count is 1 && e.AddedItems[0] is CandidateItem item)
+            {
+                var candidate = item.Candidate;
+                if (candidate.ValueType is ResourceValueType.Path)
+                {
+                    StorageFile? file = null;
+
+                    var root = _rootFolder ?? await _currentFile?.GetParentAsync();
+                    if (await root.TryGetItemAsync(candidate.StringValue) is StorageFile cFile)
+                    {
+                        file = cFile;
+                    }
+                    else
+                    {
+                        if (await root.TryGetItemAsync(_currentFile?.DisplayName) is StorageFolder folder)
+                        {
+                            file = await folder.TryGetItemAsync(candidate.StringValue) as StorageFile;
+                        }
+                    }
+
+                    if (file is null)
+                    {
+                        // TODO: display an error in the display area suggesting setting the PRI root folder
+                        return;
+                    }
+
+                    // TODO: display file
+                }
+
+                // TODO: handle other resource types
             }
         }
     }

@@ -110,8 +110,9 @@
                     <RowDefinition Height="12"/>
                     <RowDefinition Height="*" MinHeight="130"/>
                 </Grid.RowDefinitions>
+                
                 <Border Grid.Row="0" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
-                    <ListView x:Name="candidatesList">
+                    <ListView x:Name="candidatesList" SelectionChanged="candidatesList_SelectionChanged">
                         <ListView.Header>
                             <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
                                 <interactivity:Interaction.Behaviors>
