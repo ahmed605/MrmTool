@@ -361,7 +361,8 @@ public partial class TreeViewList : ListView
 			{
 				DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
 				{
-#if !HAS_UNO // Uno Specific: this is actually a bug in WinUI, copy WinUI's fix when https://github.com/microsoft/microsoft-ui-xaml/issues/9549 is resolved
+//#if !HAS_UNO // Uno Specific: this is actually a bug in WinUI, copy WinUI's fix when https://github.com/microsoft/microsoft-ui-xaml/issues/9549 is resolved
+#if false
 					itemNode.IsExpanded = itemContainer.IsExpanded;
 #else
 					// The "source of truth" for IsExpanded should come from the (likely recycled) container only if

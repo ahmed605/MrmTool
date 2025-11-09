@@ -27,60 +27,43 @@ namespace MrmTool.Models
             else
             {
                 var lower = DisplayName.ToLowerInvariant();
-
-                if (lower.Length > 4 && lower[^4..] is { } last4)
+                if (lower.Length > 3 && lower.LastIndexOf('.') is int idx && idx > 0)
                 {
-                    if (last4[0] is '.')
+                    switch (lower[idx..])
                     {
-                        if (last4 is ".xbf")
-                        {
-                            Type = ResourceType.Xaml;
-                        }
-                        else if (last4 is ".txt" or ".xml" or ".csv" or ".ini")
-                        {
-                            Type = ResourceType.Text;
-                        }
-                        else if (last4 is ".png" or ".jpg" or ".gif" or ".bmp" or ".svg")
-                        {
+                        case ".xbf":
+                            Type = ResourceType.Xbf;
+                            break;
+
+                        case ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff":
                             Type = ResourceType.Image;
-                        }
-                        else if (last4 is ".mp3" or ".wav" or ".wma" or ".ogg")
-                        {
+                            break;
+
+                        case ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus":
                             Type = ResourceType.Audio;
-                        }
-                        else if (last4 is ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv")
-                        {
+                            break;
+
+                        case ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js":
+                            Type = ResourceType.Text;
+                            break;
+
+                        case ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv":
                             Type = ResourceType.Video;
-                        }
-                        else if (last4 is ".ttf" or ".otf" or ".ttc")
-                        {
+                            break;
+
+                        case ".ttf" or ".otf" or ".ttc":
                             Type = ResourceType.Font;
-                        }
-                    }
-                    else if (lower.Length > 5 && lower[^5..] is { } last5 && last5[0] is '.')
-                    {
-                        if (last5 is ".xaml")
-                        {
+                            break;
+
+                        case ".xaml":
                             Type = ResourceType.Xaml;
-                        }
-                        else if (last5 is ".json")
-                        {
-                            Type = ResourceType.Text;
-                        }
-                        else if (last5 is ".jpeg" or ".webp" or ".heif" or ".tiff")
-                        {
-                            Type = ResourceType.Image;
-                        }
-                        else if (last5 is ".flac" or ".opus")
-                        {
-                            Type = ResourceType.Audio;
-                        }
+                            break;
                     }
                 }
 
                 if (Type is ResourceType.Unknown &&
                     Candidates.Count > 0 &&
-                    Candidates[0].ValueType == ResourceValueType.String)
+                    Candidates[0].ValueType is ResourceValueType.String)
                 {
                     Type = ResourceType.Text;
                 }
@@ -100,8 +83,8 @@ namespace MrmTool.Models
                     ResourceType.Image => Icons.Image.Value,
                     ResourceType.Audio => Icons.Audio.Value,
                     ResourceType.Video => Icons.Video.Value,
-                    ResourceType.Xaml => Icons.Xaml.Value,
                     ResourceType.Font => Icons.Font.Value,
+                    ResourceType.Xaml or ResourceType.Xbf => Icons.Xaml.Value,
                     _ => Icons.Unknown.Value,
                 };
             }

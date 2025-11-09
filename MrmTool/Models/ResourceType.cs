@@ -7,6 +7,7 @@
         Text,
         Image,
         Xaml,
+        Xbf,
         Audio,
         Video,
         Font
