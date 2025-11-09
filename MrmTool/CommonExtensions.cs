@@ -1,6 +1,7 @@
 ﻿using TerraFX.Interop.Windows;
 using Windows.Storage.Pickers;
 using System.Runtime.CompilerServices;
+using MrmLib;
 
 namespace MrmTool
 {
@@ -83,6 +84,33 @@ namespace MrmTool
         internal static string? GetParentName(this string name)
         {
             return name.LastIndexOf('/', out var idx) != -1 ? name[..idx] : null;
+        }
+
+        extension(QualifierOperator op)
+        {
+            internal string Symbol
+            {
+                get
+                {
+                    return op switch
+                    {
+                        QualifierOperator.False => "= false",
+                        QualifierOperator.True => "= true",
+                        QualifierOperator.AttributeDefined => "is defined",
+                        QualifierOperator.AttributeUndefined => "is undefined",
+                        QualifierOperator.NotEqual => "!≃",
+                        QualifierOperator.NoMatch => "!=",
+                        QualifierOperator.Less => "<",
+                        QualifierOperator.LessOrEqual => "≤",
+                        QualifierOperator.Greater => ">",
+                        QualifierOperator.GreaterOrEqual => "≥",
+                        QualifierOperator.Match => "=",
+                        QualifierOperator.Equal => "≃",
+                        QualifierOperator.ExtendedOperator or QualifierOperator.Custom => "[Custom Operator]",
+                        _ => $"[Custom Operator ({(uint)op})]",
+                    };
+                }
+            }
         }
     }
 }

@@ -12,7 +12,7 @@ namespace MrmTool.Models
 
         public ObservableCollection<ResourceItem> Children { get; } = [];
 
-        public List<ResourceCandidate> Candidates { get; } = [];
+        public List<CandidateItem> Candidates { get; } = [];
 
         public BitmapImage? Icon { get; private set; }
 
@@ -63,7 +63,7 @@ namespace MrmTool.Models
 
                 if (Type is ResourceType.Unknown &&
                     Candidates.Count > 0 &&
-                    Candidates[0].ValueType is ResourceValueType.String)
+                    Candidates[0].Candidate.ValueType is ResourceValueType.String)
                 {
                     Type = ResourceType.Text;
                 }

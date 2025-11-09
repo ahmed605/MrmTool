@@ -234,5 +234,13 @@ namespace MrmTool
                 }
             }
         }
+
+        private void treeView_SelectionChanged(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewSelectionChangedEventArgs args)
+        {
+            if (args.AddedItems.Count is 1 && args.AddedItems[0] is ResourceItem item && item.Candidates.Count > 0)
+            {
+                candidatesList.ItemsSource = item.Candidates;
+            }
+        }
     }
 }

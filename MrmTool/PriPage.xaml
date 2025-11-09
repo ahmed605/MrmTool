@@ -94,6 +94,7 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
         </MenuBar>
+        
         <Grid Grid.Row="1" Margin="0,5,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="280"/>
@@ -101,7 +102,7 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <muxc:TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}"/>
+            <muxc:TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}" SelectionChanged="treeView_SelectionChanged"/>
 
             <Grid Grid.Column="2" VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>
@@ -110,7 +111,7 @@
                     <RowDefinition Height="*" MinHeight="130"/>
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
-                    <ListView>
+                    <ListView x:Name="candidatesList">
                         <ListView.Header>
                             <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
                                 <interactivity:Interaction.Behaviors>
@@ -130,26 +131,16 @@
                             </Style>
                         </ListView.ItemContainerStyle>
 
-                        <ListViewItem>
-                            <wct:DataRow HorizontalAlignment="Left">
-                                <TextBlock Text="String" VerticalAlignment="Center"/>
-                                <TextBlock Text="(Language = en-US, Scale = 200)" VerticalAlignment="Center"/>
-                            </wct:DataRow>
-                        </ListViewItem>
-
-                        <ListViewItem>
-                            <wct:DataRow HorizontalAlignment="Left">
-                                <TextBlock Text="Path" VerticalAlignment="Center"/>
-                                <TextBlock Text="(Language = fr-FR), (Language = en-US, Fallback Score = 0.5)" VerticalAlignment="Center"/>
-                            </wct:DataRow>
-                        </ListViewItem>
-
-                        <ListViewItem>
-                            <wct:DataRow HorizontalAlignment="Left">
-                                <TextBlock Text="Embedded Data" VerticalAlignment="Center"/>
-                                <TextBlock Text="(None)" VerticalAlignment="Center"/>
-                            </wct:DataRow>
-                        </ListViewItem>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:CandidateItem">
+                                <ListViewItem>
+                                    <wct:DataRow HorizontalAlignment="Left">
+                                        <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind Qualifers}" VerticalAlignment="Center"/>
+                                    </wct:DataRow>
+                                </ListViewItem>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
                     </ListView>
                 </Border>
                 <Border Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
