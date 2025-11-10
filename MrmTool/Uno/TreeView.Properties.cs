@@ -7,6 +7,7 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Animation;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -35,7 +36,8 @@ public partial class TreeView
 	/// </summary>
 	public Style ItemContainerStyle
 	{
-		get => (Style)GetValue(ItemContainerStyleProperty);
+        [DynamicWindowsRuntimeCast(typeof(Style))]
+        get => (Style)GetValue(ItemContainerStyleProperty);
 		set => SetValue(ItemContainerStyleProperty, value);
 	}
 
@@ -45,7 +47,8 @@ public partial class TreeView
 	/// </summary>
 	public StyleSelector ItemContainerStyleSelector
 	{
-		get => (StyleSelector)GetValue(ItemContainerStyleSelectorProperty);
+        [DynamicWindowsRuntimeCast(typeof(StyleSelector))]
+        get => (StyleSelector)GetValue(ItemContainerStyleSelectorProperty);
 		set => SetValue(ItemContainerStyleSelectorProperty, value);
 	}
 
@@ -54,7 +57,8 @@ public partial class TreeView
 	/// </summary>
 	public TransitionCollection ItemContainerTransitions
 	{
-		get => (TransitionCollection)GetValue(ItemContainerTransitionsProperty);
+        [DynamicWindowsRuntimeCast(typeof(TransitionCollection))]
+        get => (TransitionCollection)GetValue(ItemContainerTransitionsProperty);
 		set => SetValue(ItemContainerTransitionsProperty, value);
 	}
 
@@ -72,7 +76,8 @@ public partial class TreeView
 	/// </summary>
 	public DataTemplate ItemTemplate
 	{
-		get => (DataTemplate)GetValue(ItemTemplateProperty);
+        [DynamicWindowsRuntimeCast(typeof(DataTemplate))]
+        get => (DataTemplate)GetValue(ItemTemplateProperty);
 		set => SetValue(ItemTemplateProperty, value);
 	}
 
@@ -82,7 +87,8 @@ public partial class TreeView
 	/// </summary>
 	public DataTemplateSelector ItemTemplateSelector
 	{
-		get => (DataTemplateSelector)GetValue(ItemTemplateSelectorProperty);
+        [DynamicWindowsRuntimeCast(typeof(DataTemplateSelector))]
+        get => (DataTemplateSelector)GetValue(ItemTemplateSelectorProperty);
 		set => SetValue(ItemTemplateSelectorProperty, value);
 	}
 

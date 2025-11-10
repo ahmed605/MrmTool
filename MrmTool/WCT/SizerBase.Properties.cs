@@ -5,6 +5,8 @@
 using CommunityToolkit.WinUI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using WinRT;
+
 
 
 #if !WINAPPSDK
@@ -26,6 +28,7 @@ public partial class SizerBase
     /// </summary>
     public CursorEnum Cursor
     {
+        [DynamicWindowsRuntimeCast(typeof(CursorEnum))]
         get { return (CursorEnum)GetValue(CursorProperty); }
         set { SetValue(CursorProperty, value); }
     }
@@ -83,6 +86,7 @@ public partial class SizerBase
     /// </remarks>
     public Orientation Orientation
     {
+        [DynamicWindowsRuntimeCast(typeof(Orientation))]
         get { return (Orientation)GetValue(OrientationProperty); }
         set { SetValue(OrientationProperty, value); }
     }
@@ -108,7 +112,7 @@ public partial class SizerBase
     public static readonly DependencyProperty IsThumbVisibleProperty =
         DependencyProperty.Register(nameof(IsThumbVisible), typeof(bool), typeof(SizerBase), new PropertyMetadata(true, OnIsThumbVisiblePropertyChanged));
 
-
+    [DynamicWindowsRuntimeCast(typeof(CursorEnum))]
     private static void OnOrientationPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is SizerBase gripper)

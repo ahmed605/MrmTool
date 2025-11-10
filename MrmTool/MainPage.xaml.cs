@@ -7,6 +7,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Media;
+using WinRT;
 
 namespace MrmTool
 {
@@ -42,6 +43,7 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         private async void MainGrid_Drop(object sender, DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
@@ -54,6 +56,7 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
         private async Task LoadPri(StorageFile file)
         {
             try

@@ -9,6 +9,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using WinRT;
 
 namespace CommunityToolkit.WinUI.Controls
 {
@@ -37,6 +38,7 @@ namespace CommunityToolkit.WinUI.Controls
         /// </summary>
         private FrameworkElement TargetControl
         {
+            [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
             get
             {
                 if (ParentLevel == 0)
@@ -61,7 +63,14 @@ namespace CommunityToolkit.WinUI.Controls
         /// <summary>
         /// Gets GridSplitter Container Grid
         /// </summary>
-        private Grid Resizable => TargetControl?.Parent as Grid;
+        private Grid Resizable
+        {
+            [DynamicWindowsRuntimeCast(typeof(Grid))]
+            get
+            {
+                return TargetControl?.Parent as Grid;
+            }
+        }
 
         /// <summary>
         /// Gets the current Column definition of the parent Grid

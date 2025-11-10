@@ -4,6 +4,7 @@
 
 using Microsoft.Xaml.Interactivity;
 using Windows.UI.Xaml;
+using WinRT;
 
 namespace CommunityToolkit.WinUI.Behaviors;
 
@@ -40,6 +41,7 @@ public abstract class BehaviorBase<T> : Behavior<T>
     /// <remarks>
     /// Override this to hook up functionality to the <see cref="P:Microsoft.Xaml.Interactivity.Behavior.AssociatedObject" />
     /// </remarks>
+    [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
     protected override void OnAttached()
     {
         base.OnAttached();
@@ -61,6 +63,7 @@ public abstract class BehaviorBase<T> : Behavior<T>
     /// <remarks>
     /// Override this to unhook functionality from the <see cref="P:Microsoft.Xaml.Interactivity.Behavior.AssociatedObject" />
     /// </remarks>
+    [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
     protected override void OnDetaching()
     {
         base.OnDetaching();

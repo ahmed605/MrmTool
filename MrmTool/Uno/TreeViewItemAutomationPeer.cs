@@ -10,6 +10,7 @@ using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Automation.Provider;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using WinRT;
 using TreeView = Microsoft.UI.Xaml.Controls.TreeView;
 using TreeViewItem = Microsoft.UI.Xaml.Controls.TreeViewItem;
 using TreeViewNode = Microsoft.UI.Xaml.Controls.TreeViewNode;
@@ -262,7 +263,8 @@ public partial class TreeViewItemAutomationPeer : ListViewItemAutomationPeer, IE
 		UpdateSelection(true);
 	}
 
-	private ListView GetParentListView()
+    [DynamicWindowsRuntimeCast(typeof(ListView))]
+    private ListView GetParentListView()
 	{
 		var treeViewItemAncestor = (DependencyObject)Owner;
 		ListView ancestorListView = null;

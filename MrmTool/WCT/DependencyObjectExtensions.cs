@@ -5,6 +5,7 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using CommunityToolkit.WinUI.Predicates;
+using WinRT;
 
 namespace CommunityToolkit.WinUI;
 
@@ -143,6 +144,7 @@ public static class DependencyObjectExtensions
     /// <param name="name">The name of the element to look for.</param>
     /// <param name="comparisonType">The comparison type to use to match <paramref name="name"/>.</param>
     /// <returns>The descendant (or self) that was found, or <see langword="null"/>.</returns>
+    [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
     public static FrameworkElement? FindDescendantOrSelf(this DependencyObject element, string name, StringComparison comparisonType = StringComparison.Ordinal)
     {
         if (element is FrameworkElement result && name.Equals(result.Name, comparisonType))
@@ -391,6 +393,7 @@ public static class DependencyObjectExtensions
     /// <param name="name">The name of the element to look for.</param>
     /// <param name="comparisonType">The comparison type to use to match <paramref name="name"/>.</param>
     /// <returns>The ascendant (or self) that was found, or <see langword="null"/>.</returns>
+    [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
     public static FrameworkElement? FindAscendantOrSelf(this DependencyObject element, string name, StringComparison comparisonType = StringComparison.Ordinal)
     {
         if (element is FrameworkElement result && name.Equals(result.Name, comparisonType))

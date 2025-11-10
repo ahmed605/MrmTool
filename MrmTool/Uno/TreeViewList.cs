@@ -14,6 +14,7 @@ using TreeViewListAutomationPeer = Microsoft.UI.Xaml.Automation.Peers.TreeViewLi
 using DragEventArgs = Windows.UI.Xaml.DragEventArgs;
 using Windows.UI.Xaml.Media;
 using Windows.System;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -206,7 +207,8 @@ public partial class TreeViewList : ListView
 		}
 	}
 
-	protected override void OnDragOver(DragEventArgs args)
+    [DynamicWindowsRuntimeCast(typeof(UIElement))]
+    protected override void OnDragOver(DragEventArgs args)
 	{
 		if (!args.Handled)
 		{

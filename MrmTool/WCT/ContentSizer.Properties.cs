@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Windows.UI.Xaml;
+using WinRT;
 
 namespace CommunityToolkit.WinUI.Controls;
 
@@ -29,6 +30,7 @@ public partial class ContentSizer
     /// </summary>
     public FrameworkElement? TargetControl
     {
+        [DynamicWindowsRuntimeCast(typeof(FrameworkElement))]
         get { return (FrameworkElement?)GetValue(TargetControlProperty); }
         set { SetValue(TargetControlProperty, value); }
     }

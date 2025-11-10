@@ -11,6 +11,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using WinRT;
 
 namespace MrmTool
 {
@@ -30,6 +31,8 @@ namespace MrmTool
             this.InitializeComponent();
         }
 
+        [DynamicWindowsRuntimeCast(typeof(PriFile))]
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -77,6 +80,7 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
         private async Task TryLoadPri(StorageFile file)
         {
             try
@@ -114,6 +118,7 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
         private async Task SavePri(StorageFile file)
         {
             try
@@ -224,6 +229,7 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         private async void Grid_Drop(object sender, DragEventArgs e)
         {
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
@@ -244,6 +250,8 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
+        [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
         private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count is 1 && e.AddedItems[0] is CandidateItem item)

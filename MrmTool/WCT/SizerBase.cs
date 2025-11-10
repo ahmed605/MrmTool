@@ -5,6 +5,7 @@
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Shapes;
+using WinRT;
 
 namespace CommunityToolkit.WinUI.Controls;
 
@@ -88,6 +89,7 @@ public partial class SizerBase : Control
     /// <summary>
     /// Initializes a new instance of the <see cref="SizerBase"/> class.
     /// </summary>
+    [DynamicWindowsRuntimeCast(typeof(Style))]
     public SizerBase()
     {
         DefaultStyleKey = typeof(SizerBase);

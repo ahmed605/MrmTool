@@ -17,6 +17,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.UI.Core;
 using TreeViewItemAutomationPeer = Microsoft.UI.Xaml.Automation.Peers.TreeViewItemAutomationPeer;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -282,8 +283,10 @@ public partial class TreeViewItem : ListViewItem
 	protected override AutomationPeer OnCreateAutomationPeer() =>
 		new TreeViewItemAutomationPeer(this);
 
-	// IFrameworkElementOverrides
-	protected override void OnApplyTemplate()
+    // IFrameworkElementOverrides
+    [DynamicWindowsRuntimeCast(typeof(CheckBox))]
+    [DynamicWindowsRuntimeCast(typeof(UIElement))]
+    protected override void OnApplyTemplate()
 	{
 		RecycleEvents();
 
@@ -463,7 +466,8 @@ public partial class TreeViewItem : ListViewItem
 		}
 	}
 
-	private void OnCheckToggle(object sender, RoutedEventArgs args)
+    [DynamicWindowsRuntimeCast(typeof(CheckBox))]
+    private void OnCheckToggle(object sender, RoutedEventArgs args)
 	{
 		var treeView = AncestorTreeView;
 		if (treeView != null)

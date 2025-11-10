@@ -20,6 +20,7 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <ProjectPriFileName>resources.pri</ProjectPriFileName>
     <_SupportEmbedFileResources>true</_SupportEmbedFileResources>
+    <CsWinRTAotWarningLevel>3</CsWinRTAotWarningLevel>
 	<LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>

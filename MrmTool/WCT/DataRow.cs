@@ -5,6 +5,7 @@
 using Windows.Foundation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using WinRT;
 using TreeView = Windows.UI.Xaml.Controls.TreeView;
 
 namespace CommunityToolkit.WinUI.Controls;
@@ -32,6 +33,8 @@ public partial class DataRow : Panel
         _parentPanel = null;
     }
 
+    [DynamicWindowsRuntimeCast(typeof(Grid))]
+    [DynamicWindowsRuntimeCast(typeof(Panel))]
     private Panel? InitializeParentHeaderConnection()
     {
         // TODO: Think about this expression instead...
@@ -73,6 +76,7 @@ public partial class DataRow : Panel
         return panel;
     }
 
+    [DynamicWindowsRuntimeCast(typeof(Grid))]
     protected override Size MeasureOverride(Size availableSize)
     {
         // We should probably only have to do this once ever?
@@ -171,6 +175,7 @@ public partial class DataRow : Panel
         return new(_parentPanel?.DesiredSize.Width ?? availableSize.Width, maxHeight);
     }
 
+    [DynamicWindowsRuntimeCast(typeof(Grid))]
     protected override Size ArrangeOverride(Size finalSize)
     {
         int column = 0;

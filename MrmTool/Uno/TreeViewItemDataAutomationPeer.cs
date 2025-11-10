@@ -10,6 +10,7 @@ using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Automation.Provider;
 using Windows.UI.Xaml.Controls;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Automation.Peers;
 
@@ -87,7 +88,9 @@ public partial class TreeViewItemDataAutomationPeer : ItemAutomationPeer, IExpan
 		return base.GetPatternCore(patternInterface);
 	}
 
-	private TreeViewItemAutomationPeer GetTreeViewItemAutomationPeer()
+    [DynamicWindowsRuntimeCast(typeof(ItemsControl))]
+    [DynamicWindowsRuntimeCast(typeof(UIElement))]
+    private TreeViewItemAutomationPeer GetTreeViewItemAutomationPeer()
 	{
 		// ItemsAutomationPeer hold ItemsControlAutomationPeer and Item properties.
 		// ItemsControlAutomationPeer -> ItemsControl by ItemsControlAutomationPeer.Owner -> ItemsControl Look up Item to get TreeViewItem -> Get TreeViewItemAutomationPeer

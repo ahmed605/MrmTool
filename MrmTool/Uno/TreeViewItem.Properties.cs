@@ -6,6 +6,7 @@
 
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -34,7 +35,8 @@ public partial class TreeViewItem
 	/// </summary>
 	public Brush GlyphBrush
 	{
-		get => (Brush)GetValue(GlyphBrushProperty);
+        [DynamicWindowsRuntimeCast(typeof(Brush))]
+        get => (Brush)GetValue(GlyphBrushProperty);
 		set => SetValue(GlyphBrushProperty, value);
 	}
 

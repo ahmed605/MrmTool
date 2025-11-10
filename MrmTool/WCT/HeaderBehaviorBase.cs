@@ -14,6 +14,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using WinRT;
 using ListViewBase = Windows.UI.Xaml.Controls.ListViewBase;
 #endif
 
@@ -178,6 +179,8 @@ public abstract class HeaderBehaviorBase : BehaviorBase<FrameworkElement>
         AssignAnimation();
     }
 
+    [DynamicWindowsRuntimeCast(typeof(ScrollViewer))]
+    [DynamicWindowsRuntimeCast(typeof(UIElement))]
     private void ScrollViewer_GotFocus(object sender, RoutedEventArgs e)
     {
         var scroller = (ScrollViewer)sender;

@@ -5,6 +5,7 @@
 // MUX Reference TreeViewItemTemplateSettings.properties.cpp, tag winui3/release/1.4.2
 
 using Windows.UI.Xaml;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -18,7 +19,8 @@ public partial class TreeViewItemTemplateSettings : DependencyObject
 	/// </summary>
 	public Visibility CollapsedGlyphVisibility
 	{
-		get => (Visibility)GetValue(CollapsedGlyphVisibilityProperty);
+        [DynamicWindowsRuntimeCast(typeof(Visibility))]
+        get => (Visibility)GetValue(CollapsedGlyphVisibilityProperty);
 		internal set => SetValue(CollapsedGlyphVisibilityProperty, value);
 	}
 
@@ -36,7 +38,8 @@ public partial class TreeViewItemTemplateSettings : DependencyObject
 	/// </summary>
 	public Visibility ExpandedGlyphVisibility
 	{
-		get => (Visibility)GetValue(ExpandedGlyphVisibilityProperty);
+        [DynamicWindowsRuntimeCast(typeof(Visibility))]
+        get => (Visibility)GetValue(ExpandedGlyphVisibilityProperty);
 		internal set => SetValue(ExpandedGlyphVisibilityProperty, value);
 	}
 

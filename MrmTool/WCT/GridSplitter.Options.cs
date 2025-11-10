@@ -6,6 +6,7 @@ using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using WinRT;
 
 namespace CommunityToolkit.WinUI.Controls
 {
@@ -99,6 +100,7 @@ namespace CommunityToolkit.WinUI.Controls
         /// </summary>
         public UIElement Element
         {
+            [DynamicWindowsRuntimeCast(typeof(UIElement))]
             get { return (UIElement)GetValue(ElementProperty); }
             set { SetValue(ElementProperty, value); }
         }
@@ -128,6 +130,7 @@ namespace CommunityToolkit.WinUI.Controls
         /// </summary>
         public Brush GripperForeground
         {
+            [DynamicWindowsRuntimeCast(typeof(Brush))]
             get { return (Brush)GetValue(GripperForegroundProperty); }
 
             set { SetValue(GripperForegroundProperty, value); }
