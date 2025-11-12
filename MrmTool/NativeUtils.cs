@@ -4,11 +4,15 @@ using System.Runtime.InteropServices.Marshalling;
 using Windows.ApplicationModel.Resources.Core;
 
 using static TerraFX.Interop.Windows.Windows;
+using Microsoft.Win32;
+using System.Runtime.CompilerServices;
 
 namespace MrmTool
 {
     internal static unsafe partial class NativeUtils
     {
+        private readonly static RegistryKey personalizeKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")!;
+
         private enum WINDOWCOMPOSITIONATTRIB
         {
             WCA_UNDEFINED = 0,
@@ -68,9 +72,9 @@ namespace MrmTool
         [DllImport("uxtheme.dll", EntryPoint = "#137")]
         private static extern BOOL IsDarkModeAllowedForWindow(HWND hwnd);
 
-        [PreserveSig]
-        [DllImport("uxtheme.dll", EntryPoint = "#132")]
-        private static extern BOOL ShouldAppsUseDarkMode();
+        //[PreserveSig]
+        //[DllImport("uxtheme.dll", EntryPoint = "#132")]
+        //private static extern BOOL ShouldAppsUseDarkMode();
 
         [PreserveSig]
         [DllImport("user32.dll")]
@@ -114,6 +118,12 @@ namespace MrmTool
 
         [GuidRVAGen.Guid("79b9d5f2-879e-4b89-b798-79e47598030c")]
         public static partial Guid* IID_ICoreWindow { get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool ShouldAppsUseDarkMode()
+        {
+            return personalizeKey.GetValue("AppsUseLightTheme") is 0;
+        }
 
         internal static void EnsureTitleBarTheme(HWND hwnd)
         {
