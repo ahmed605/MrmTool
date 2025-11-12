@@ -28,16 +28,19 @@ namespace MrmTool
             NativeUtils.InitializeResourceManager();
             _xamlApp = new App();
 
-            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(in "MrmToolClass"u8.GetPinnableReference());
-            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(in "MrmTool"u8.GetPinnableReference());
+            ReadOnlySpan<char> className = ['M', 'r', 'm', 'T', 'o', 'o', 'l', 'C', 'l', 'a', 's', 's', '\0'];
+            ReadOnlySpan<char> windowName = ['M', 'r', 'm', 'T', 'o', 'o', 'l', '\0'];
 
-            WNDCLASSA wc;
+            char* lpszClassName = (char*)Unsafe.AsPointer(in MemoryMarshal.GetReference(className));
+            char* lpWindowName = (char*)Unsafe.AsPointer(in MemoryMarshal.GetReference(windowName));
+
+            WNDCLASSW wc;
             wc.lpfnWndProc = &WndProc;
             wc.hInstance = GetModuleHandleW(null);
             wc.lpszClassName = lpszClassName;
-            ThrowLastErrorIfNull(RegisterClassA(&wc));
+            ThrowLastErrorIfNull(RegisterClassW(&wc));
 
-            WindowHandle = CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null);
+            WindowHandle = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null);
             ThrowLastErrorIfDefault(WindowHandle);
 
             LoadLibraryA((sbyte*)Unsafe.AsPointer(in "twinapi.appcore.dll"u8.GetPinnableReference()));
@@ -120,7 +123,7 @@ namespace MrmTool
                     PostQuitMessage(0);
                     break;
                 default:
-                    return DefWindowProcA(hWnd, message, wParam, lParam);
+                    return DefWindowProcW(hWnd, message, wParam, lParam);
             }
             return 0;
         }
