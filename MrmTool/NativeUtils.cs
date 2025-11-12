@@ -4,11 +4,15 @@ using System.Runtime.InteropServices.Marshalling;
 using Windows.ApplicationModel.Resources.Core;
 
 using static TerraFX.Interop.Windows.Windows;
+using Microsoft.Win32;
+using System.Runtime.CompilerServices;
 
 namespace MrmTool
 {
     internal static unsafe partial class NativeUtils
     {
+        private readonly static RegistryKey personalizeKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize")!;
+
         private enum WINDOWCOMPOSITIONATTRIB
         {
             WCA_UNDEFINED = 0,
@@ -68,9 +72,9 @@ namespace MrmTool
         [DllImport("uxtheme.dll", EntryPoint = "#137")]
         private static extern BOOL IsDarkModeAllowedForWindow(HWND hwnd);
 
-        [PreserveSig]
-        [DllImport("uxtheme.dll", EntryPoint = "#132")]
-        private static extern BOOL ShouldAppsUseDarkMode();
+        //[PreserveSig]
+        //[DllImport("uxtheme.dll", EntryPoint = "#132")]
+        //private static extern BOOL ShouldAppsUseDarkMode();
 
         [PreserveSig]
         [DllImport("user32.dll")]
@@ -87,6 +91,39 @@ namespace MrmTool
         [PreserveSig]
         [DllImport("uxtheme.dll", EntryPoint = "#133")]
         private static extern void AllowDarkModeForWindow(HWND hwnd, bool allow);
+
+        public enum CoreWindowType : int
+        {
+            IMMERSIVE_BODY = 0,
+            IMMERSIVE_DOCK,
+            IMMERSIVE_HOSTED,
+            IMMERSIVE_TEST,
+            IMMERSIVE_BODY_ACTIVE,
+            IMMERSIVE_DOCK_ACTIVE,
+            NOT_IMMERSIVE
+        }
+
+        [DllImport("Windows.UI.dll", EntryPoint = "#1500", ExactSpelling = true)]
+        public static extern int PrivateCreateCoreWindow(
+            CoreWindowType coreWindowType,
+            char* windowTitle,
+            int x,
+            int y,
+            int width,
+            int height,
+            uint dwAttributes,
+            HWND hOwnerWindow,
+            Guid* riid,
+            nint* pCoreWindow);
+
+        [GuidRVAGen.Guid("79b9d5f2-879e-4b89-b798-79e47598030c")]
+        public static partial Guid* IID_ICoreWindow { get; }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool ShouldAppsUseDarkMode()
+        {
+            return personalizeKey.GetValue("AppsUseLightTheme") is 0;
+        }
 
         internal static void EnsureTitleBarTheme(HWND hwnd)
         {
@@ -184,5 +221,16 @@ namespace MrmTool
         void SetTargetFolderLibrary(void* pShellItem);
 
         void PrepopulateCallingAppData([MarshalUsing(typeof(HStringMarshaller))] string appId, [MarshalUsing(typeof(HStringMarshaller))] string packageFullName);
+    }
+
+    [GeneratedComInterface, Guid("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")]
+    internal partial interface ICoreApplicationPrivate2
+    {
+        void _stub3();
+        void _stub4();
+        void _stub5();
+        void _stub6();
+        void _stub7();
+        nint CreateNonImmersiveView();
     }
 }

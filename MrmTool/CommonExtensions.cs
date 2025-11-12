@@ -28,21 +28,21 @@ namespace MrmTool
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InitializeWithWindow(this FileOpenPicker picker, HWND? hwnd = null)
         {
-            hwnd ??= ((App)App.Current).HWND;
+            hwnd ??= Program.WindowHandle;
             WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd.Value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InitializeWithWindow(this FileSavePicker picker, HWND? hwnd = null)
         {
-            hwnd ??= ((App)App.Current).HWND;
+            hwnd ??= Program.WindowHandle;
             WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd.Value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void InitializeWithWindow(this FolderPicker picker, HWND? hwnd = null)
         {
-            hwnd ??= ((App)App.Current).HWND;
+            hwnd ??= Program.WindowHandle;
             WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd.Value);
         }
 

@@ -1,15 +1,11 @@
 using MrmLib;
 using MrmTool.Models;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Maps;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using WinRT;
 
@@ -217,7 +213,7 @@ namespace MrmTool
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            TerraFX.Interop.Windows.Windows.SendMessageW(((App)App.Current).HWND, TerraFX.Interop.Windows.WM.WM_CLOSE, 0, 0);
+            TerraFX.Interop.Windows.Windows.SendMessageW(Program.WindowHandle, TerraFX.Interop.Windows.WM.WM_CLOSE, 0, 0);
         }
 
         private void Grid_DragOver(object sender, DragEventArgs e)
