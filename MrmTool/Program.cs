@@ -19,16 +19,19 @@ namespace MrmTool
         [STAThread]
         static unsafe void Main()
         {
-            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(in "MrmToolClass\0"u8.GetPinnableReference());
-            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(in "MrmTool\0"u8.GetPinnableReference());
+            ReadOnlySpan<char> className = [ 'M', 'r', 'm', 'T', 'o', 'o', 'l', 'C', 'l', 'a', 's', 's', '\0' ];
+            ReadOnlySpan<char> windowName = [ 'M', 'r', 'm', 'T', 'o', 'o', 'l', '\0' ];
 
-            WNDCLASSA wc;
+            char* lpszClassName = (char*)Unsafe.AsPointer(in MemoryMarshal.GetReference(className));
+            char* lpWindowName = (char*)Unsafe.AsPointer(in MemoryMarshal.GetReference(windowName));
+
+            WNDCLASSW wc;
             wc.lpfnWndProc = &WndProc;
             wc.hInstance = GetModuleHandleW(null);
             wc.lpszClassName = lpszClassName;
-            ThrowLastErrorIfNull(RegisterClassA(&wc));
+            ThrowLastErrorIfNull(RegisterClassW(&wc));
 
-            ThrowLastErrorIfDefault(CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null));
+            ThrowLastErrorIfDefault(CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null));
 
             MSG msg;
             while (GetMessageW(&msg, HWND.NULL, 0, 0))
@@ -74,7 +77,7 @@ namespace MrmTool
                     PostQuitMessage(0);
                     break;
                 default:
-                    return DefWindowProcA(hWnd, message, wParam, lParam);
+                    return DefWindowProcW(hWnd, message, wParam, lParam);
             }
             return 0;
         }
