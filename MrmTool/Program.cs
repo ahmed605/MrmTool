@@ -45,17 +45,16 @@ namespace MrmTool
 
             nint pCoreWindow;
 
-            fixed (char* t = "")
-            {
-                NativeUtils.PrivateCreateCoreWindow(
+            char empty = '\0';
+
+            NativeUtils.PrivateCreateCoreWindow(
                     NativeUtils.CoreWindowType.IMMERSIVE_HOSTED,
-                    t,
+                    &empty,
                     0, 0, 0, 0,
                     0,
                     WindowHandle,
                     NativeUtils.IID_ICoreWindow,
                     &pCoreWindow);
-            }
 
             SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
 
@@ -82,7 +81,7 @@ namespace MrmTool
 
             SetParent(coreHwnd, WindowHandle);
             SetWindowLong(coreHwnd, GWL.GWL_STYLE, WS_CHILD | WS_VISIBLE);
-            SetWindowPos(coreHwnd, HWND.NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP.SWP_SHOWWINDOW);
+            SetWindowPos(coreHwnd, HWND.NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW | SWP.SWP_NOACTIVATE);
 
             Frame frame = new();
             frame.Navigate(typeof(MainPage));
@@ -102,7 +101,7 @@ namespace MrmTool
                     NativeUtils.EnsureTitleBarTheme(hWnd);
                     break;
                 case WM_SIZE:
-                    SetWindowPos(_coreHwnd, HWND.NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW);
+                    SetWindowPos(_coreHwnd, HWND.NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW | SWP.SWP_NOACTIVATE);
                     SendMessageW(_coreHwnd, message, wParam, lParam);
                     break;
                 case WM_SETTINGCHANGE:
