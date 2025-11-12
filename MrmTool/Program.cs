@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using Microsoft.System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TerraFX.Interop.Windows;
 using TerraFX.Interop.WinRT;
@@ -20,6 +21,10 @@ namespace MrmTool
         static private App? _xamlApp = null;
         static private HWND _coreHwnd;
         public static HWND WindowHandle;
+
+        #nullable disable
+        public static App Application => _xamlApp;
+        #nullable enable
 
         [STAThread]
         static unsafe void Main()
@@ -59,7 +64,7 @@ namespace MrmTool
                     NativeUtils.IID_ICoreWindow,
                     &pCoreWindow);
 
-            SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
+            DispatcherHelper.SetSynchronizationContext();
 
             CoreWindow coreWindow = CoreWindow.FromAbi(pCoreWindow);
             Marshal.Release(pCoreWindow);

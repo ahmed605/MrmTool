@@ -72,8 +72,7 @@ namespace MrmTool
                     Content = $"Failed to load the selected PRI file.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
                     CloseButtonText = "OK",
                     DefaultButton = ContentDialogButton.Close,
-                    XamlRoot = this.XamlRoot,
-                    Template = (ControlTemplate)Application.Current.Resources["ScrollableContentDialogTemplate"]
+                    Template = (ControlTemplate)Program.Application.Resources["ScrollableContentDialogTemplate"]
                 };
 
                 await dialog.ShowAsync();

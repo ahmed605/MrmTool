@@ -15,6 +15,7 @@ using DragEventArgs = Windows.UI.Xaml.DragEventArgs;
 using Windows.UI.Xaml.Media;
 using Windows.System;
 using WinRT;
+using Windows.UI.Core;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -361,7 +362,7 @@ public partial class TreeViewList : ListView
 			itemContainer.GlyphOpacity = hasChildren ? 1.0 : 0.0;
 			if (itemContainer.IsExpanded != itemNode.IsExpanded)
 			{
-				DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+				_ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
 				{
 //#if !HAS_UNO // Uno Specific: this is actually a bug in WinUI, copy WinUI's fix when https://github.com/microsoft/microsoft-ui-xaml/issues/9549 is resolved
 #if false

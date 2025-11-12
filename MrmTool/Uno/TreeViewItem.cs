@@ -803,7 +803,7 @@ public partial class TreeViewItem : ListViewItem
 	//We schedule it on the dispatcher so that it runs after layout pass.
 	private void UpdateNodeIsExpandedAsync(TreeViewNode node, bool isExpanded)
 	{
-		DispatcherQueue.GetForCurrentThread().TryEnqueue(() =>
+		_ = Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
 		{
 			node.IsExpanded = isExpanded;
 		});
