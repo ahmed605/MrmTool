@@ -69,7 +69,16 @@ namespace MrmTool
             CoreWindow coreWindow = CoreWindow.FromAbi(pCoreWindow);
             Marshal.Release(pCoreWindow);
 
-            nint pCoreApplicationView = CoreApplication.As<ICoreApplicationPrivate2>().CreateNonImmersiveView();
+            nint pCoreApplicationView = 0;
+            try
+            {
+                pCoreApplicationView = CoreApplication.As<ICoreApplicationPrivate2>().CreateNonImmersiveView();
+            }
+            catch
+            {
+                pCoreApplicationView = (nint)LegacyNonImmersiveView.Create();
+            }
+
             CoreApplicationView view = CoreApplicationView.FromAbi(pCoreApplicationView);
             Marshal.Release(pCoreApplicationView);
 

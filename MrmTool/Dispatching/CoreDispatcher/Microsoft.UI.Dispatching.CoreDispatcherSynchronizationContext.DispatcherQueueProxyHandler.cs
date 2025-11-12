@@ -74,7 +74,7 @@ namespace Microsoft.System
             /// <returns>A pointer to the newly initialized <see cref="CoreDispatcherProxyHandler"/> instance.</returns>
             public static CoreDispatcherProxyHandler* Create(SendOrPostCallback handler, object? state)
             {
-#if NET6_0
+#if NET6_0_OR_GREATER
                 CoreDispatcherProxyHandler* @this = (CoreDispatcherProxyHandler*)NativeMemory.Alloc((nuint)sizeof(CoreDispatcherProxyHandler));
 #else
                 CoreDispatcherProxyHandler* @this = (CoreDispatcherProxyHandler*)Marshal.AllocHGlobal(sizeof(CoreDispatcherProxyHandler));
@@ -106,7 +106,7 @@ namespace Microsoft.System
                         stateHandle.Free();
                     }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
                     NativeMemory.Free(Unsafe.AsPointer(ref this));
 #else
                     Marshal.FreeHGlobal((IntPtr)Unsafe.AsPointer(ref this));
@@ -193,7 +193,7 @@ namespace Microsoft.System
                             @this->stateHandle.Free();
                         }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
                         NativeMemory.Free(@this);
 #else
                         Marshal.FreeHGlobal((IntPtr)@this);

@@ -72,7 +72,7 @@ namespace Microsoft.System
             /// <returns>A pointer to the newly initialized <see cref="DispatcherQueueProxyHandler"/> instance.</returns>
             public static DispatcherQueueProxyHandler* Create(SendOrPostCallback handler, object? state)
             {
-#if NET6_0
+#if NET6_0_OR_GREATER
                 DispatcherQueueProxyHandler* @this = (DispatcherQueueProxyHandler*)NativeMemory.Alloc((nuint)sizeof(DispatcherQueueProxyHandler));
 #else
                 DispatcherQueueProxyHandler* @this = (DispatcherQueueProxyHandler*)Marshal.AllocHGlobal(sizeof(DispatcherQueueProxyHandler));
@@ -104,7 +104,7 @@ namespace Microsoft.System
                         stateHandle.Free();
                     }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
                     NativeMemory.Free(Unsafe.AsPointer(ref this));
 #else
                     Marshal.FreeHGlobal((IntPtr)Unsafe.AsPointer(ref this));
@@ -191,7 +191,7 @@ namespace Microsoft.System
                             @this->stateHandle.Free();
                         }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
                         NativeMemory.Free(@this);
 #else
                         Marshal.FreeHGlobal((IntPtr)@this);
