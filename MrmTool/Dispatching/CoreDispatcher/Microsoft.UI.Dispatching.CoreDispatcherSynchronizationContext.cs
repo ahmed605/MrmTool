@@ -1,3 +1,5 @@
+#if COREDISPATCHER_FALLBACK
+
 using System;
 using TerraFX.Interop.WinRT;
 using Windows.System;
@@ -75,3 +77,5 @@ namespace Microsoft.System
         }
     }
 }
+
+#endif

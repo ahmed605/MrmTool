@@ -1,3 +1,5 @@
+#if COREDISPATCHER_FALLBACK
+
 #if NET5_0_OR_GREATER
 
 using WinRT;
@@ -227,5 +229,7 @@ namespace Microsoft.System
         }
     }
 }
+
+#endif
 
 #endif

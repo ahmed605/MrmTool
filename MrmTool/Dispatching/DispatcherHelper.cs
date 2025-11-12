@@ -8,10 +8,13 @@ namespace Microsoft.System
 {
     internal static class DispatcherHelper
     {
+#if COREDISPATCHER_FALLBACK
         private static readonly bool IsDispatcherQueueSupported = ApiInformation.IsTypePresent("Windows.System.DispatcherQueue");
+#endif
 
         internal static void SetSynchronizationContext()
         {
+#if COREDISPATCHER_FALLBACK
             if (IsDispatcherQueueSupported)
             {
                 SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
@@ -19,19 +22,9 @@ namespace Microsoft.System
             }
 
             SynchronizationContext.SetSynchronizationContext(new CoreDispatcherSynchronizationContext(CoreWindow.GetForCurrentThread().Dispatcher));
+#else
+            SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
+#endif
         }
-
-        /*internal static void RunOnDispatcher(Action action, DispatcherQueue? queue = null, CoreDispatcher? dispatcher = null)
-        {
-            if (IsDispatcherQueueSupported)
-            {
-                queue ??= DispatcherQueue.GetForCurrentThread();
-                queue.TryEnqueue(() => action());
-                return;
-            }
-
-            dispatcher ??= CoreWindow.GetForCurrentThread().Dispatcher;
-            _ = dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => action());
-        }*/
     }
 }
