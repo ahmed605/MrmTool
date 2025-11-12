@@ -1,26 +1,35 @@
-﻿using TerraFX.Interop.WinRT;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using TerraFX.Interop.Windows;
-
+using TerraFX.Interop.WinRT;
+using Windows.ApplicationModel.Core;
+using Windows.System;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using WinRT;
+using static MrmTool.ErrorHelpers;
+using static TerraFX.Interop.Windows.Windows;
 using static TerraFX.Interop.Windows.WM;
 using static TerraFX.Interop.Windows.WS;
-using static TerraFX.Interop.WinRT.WinRT;
-using static TerraFX.Interop.Windows.Windows;
-
-using static MrmTool.ErrorHelpers;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 
 namespace MrmTool
 {
     internal class Program
     {
         static private App? _xamlApp = null;
+        static private HWND _coreHwnd;
+        public static HWND WindowHandle;
 
         [STAThread]
         static unsafe void Main()
         {
-            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(in "MrmToolClass\0"u8.GetPinnableReference());
-            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(in "MrmTool\0"u8.GetPinnableReference());
+            ComWrappersSupport.InitializeComWrappers();
+            NativeUtils.InitializeResourceManager();
+            _xamlApp = new App();
+
+            sbyte* lpszClassName = (sbyte*)Unsafe.AsPointer(in "MrmToolClass"u8.GetPinnableReference());
+            sbyte* lpWindowName = (sbyte*)Unsafe.AsPointer(in "MrmTool"u8.GetPinnableReference());
 
             WNDCLASSA wc;
             wc.lpfnWndProc = &WndProc;
@@ -28,18 +37,59 @@ namespace MrmTool
             wc.lpszClassName = lpszClassName;
             ThrowLastErrorIfNull(RegisterClassA(&wc));
 
-            ThrowLastErrorIfDefault(CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null));
+            WindowHandle = CreateWindowExA(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null);
+            ThrowLastErrorIfDefault(WindowHandle);
 
-            MSG msg;
-            while (GetMessageW(&msg, HWND.NULL, 0, 0))
+            LoadLibraryA((sbyte*)Unsafe.AsPointer(in "twinapi.appcore.dll"u8.GetPinnableReference()));
+            LoadLibraryA((sbyte*)Unsafe.AsPointer(in "threadpoolwinrt.dll"u8.GetPinnableReference()));
+
+            nint pCoreWindow;
+
+            fixed (char* t = "")
             {
-                bool xamlSourceProcessedMessage = _xamlApp is not null && _xamlApp.PreTranslateMessage(&msg);
-                if (!xamlSourceProcessedMessage)
-                {
-                    TranslateMessage(&msg);
-                    DispatchMessageW(&msg);
-                }
+                NativeUtils.PrivateCreateCoreWindow(
+                    NativeUtils.CoreWindowType.IMMERSIVE_HOSTED,
+                    t,
+                    0, 0, 0, 0,
+                    0,
+                    WindowHandle,
+                    NativeUtils.IID_ICoreWindow,
+                    &pCoreWindow);
             }
+
+            SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
+
+            CoreWindow coreWindow = CoreWindow.FromAbi(pCoreWindow);
+            Marshal.Release(pCoreWindow);
+
+            nint pCoreApplicationView = CoreApplication.As<ICoreApplicationPrivate2>().CreateNonImmersiveView();
+            CoreApplicationView view = CoreApplicationView.FromAbi(pCoreApplicationView);
+            Marshal.Release(pCoreApplicationView);
+
+            FrameworkView frameworkView = new();
+            frameworkView.Initialize(view);
+            frameworkView.SetWindow(coreWindow);
+
+            HWND coreHwnd;
+            using ComPtr<ICoreWindowInterop> interop = default;
+            ThrowIfFailed(((IUnknown*)((IWinRTObject)coreWindow).NativeObject.ThisPtr)->QueryInterface(__uuidof<ICoreWindowInterop>(), (void**)interop.GetAddressOf()));
+            ThrowIfFailed(interop.Get()->get_WindowHandle(&coreHwnd));
+
+            _coreHwnd = coreHwnd;
+
+            RECT clientRect;
+            GetClientRect(WindowHandle, &clientRect);
+
+            SetParent(coreHwnd, WindowHandle);
+            SetWindowLong(coreHwnd, GWL.GWL_STYLE, WS_CHILD | WS_VISIBLE);
+            SetWindowPos(coreHwnd, HWND.NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP.SWP_SHOWWINDOW);
+
+            Frame frame = new();
+            frame.Navigate(typeof(MainPage));
+
+            Window.Current.Content = frame;
+
+            frameworkView.Run();
         }
 
         [UnmanagedCallersOnly]
@@ -50,11 +100,10 @@ namespace MrmTool
                 case WM_CREATE:
                     NativeUtils.EnableDarkModeSupport(hWnd);
                     NativeUtils.EnsureTitleBarTheme(hWnd);
-                    OnWindowCreate(hWnd);
                     break;
                 case WM_SIZE:
-                    _xamlApp?.OnResize(LOWORD(lParam), HIWORD(lParam));
-
+                    SetWindowPos(_coreHwnd, HWND.NULL, 0, 0, LOWORD(lParam), HIWORD(lParam), SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW);
+                    SendMessageW(_coreHwnd, message, wParam, lParam);
                     break;
                 case WM_SETTINGCHANGE:
                     if ((BOOL)lParam && new string((char*)lParam) == "ImmersiveColorSet")
@@ -62,12 +111,10 @@ namespace MrmTool
 
                     goto case WM_THEMECHANGED;
                 case WM_THEMECHANGED:
-                    _xamlApp?.ProcessCoreWindowMessage(message, wParam, lParam);
-
+                    SendMessageW(_coreHwnd, message, wParam, lParam);
                     break;
                 case WM_SETFOCUS:
-                    _xamlApp?.OnSetFocus();
-
+                    SetFocus(_coreHwnd);
                     break;
                 case WM_DESTROY:
                     _xamlApp = null;
@@ -77,14 +124,6 @@ namespace MrmTool
                     return DefWindowProcA(hWnd, message, wParam, lParam);
             }
             return 0;
-        }
-
-        private static unsafe void OnWindowCreate(HWND hwnd)
-        {
-            RoInitialize(RO_INIT_TYPE.RO_INIT_SINGLETHREADED);
-            NativeUtils.InitializeResourceManager();
-
-            _xamlApp = new(hwnd);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿<Application    
+﻿<Application
     x:Class="MrmTool.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,15 +6,19 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Colors.xaml"/>
-                <ResourceDictionary Source="ms-appx:///ControlTemplates.xaml"/>
-                <ResourceDictionary Source="ms-appx:///WCT/GridSplitter.xaml"/>
-                <ResourceDictionary Source="ms-appx:///WCT/SizerBase.xaml"/>
-                <ResourceDictionary Source="ms-appx:///WCT/DataColumn.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Uno/TreeView_themeresources.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Uno/TreeViewItem.xaml"/>
-                <ResourceDictionary Source="ms-appx:///Uno/TreeView.xaml"/>
+                <ResourceDictionary Source="ms-appx:///Colors.xaml" />
+                <ResourceDictionary Source="ms-appx:///ControlTemplates.xaml" />
+                <ResourceDictionary Source="ms-appx:///WCT/GridSplitter.xaml" />
+                <ResourceDictionary Source="ms-appx:///WCT/SizerBase.xaml" />
+                <ResourceDictionary Source="ms-appx:///WCT/DataColumn.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/TreeView_themeresources.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/TreeViewItem.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/TreeView.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Frame">
+                <Setter Property="Background" Value="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
