@@ -14,6 +14,9 @@
                 <ResourceDictionary Source="ms-appx:///Uno/TreeView_themeresources.xaml" />
                 <ResourceDictionary Source="ms-appx:///Uno/TreeViewItem.xaml" />
                 <ResourceDictionary Source="ms-appx:///Uno/TreeView.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBar_themeresources.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBarItem.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBar.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="Frame">

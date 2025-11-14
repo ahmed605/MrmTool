@@ -5,19 +5,21 @@
 // MUX Reference TreeViewItem.cpp, tag winui3/release/1.4.2
 
 using System;
+using TerraFX.Interop.Windows;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
+using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.System;
-using Windows.UI.Core;
-using TreeViewItemAutomationPeer = Microsoft.UI.Xaml.Automation.Peers.TreeViewItemAutomationPeer;
 using WinRT;
+using TreeViewItemAutomationPeer = Microsoft.UI.Xaml.Automation.Peers.TreeViewItemAutomationPeer;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -29,17 +31,19 @@ public partial class TreeViewItem : ListViewItem
 	private const long c_dragOverInterval = 1000 * 10000;
 	private const string c_multiSelectCheckBoxName = "MultiSelectCheckBox";
 	private const string c_expandCollapseChevronName = "ExpandCollapseChevron";
+	private const string c_contentPresenterName = "ContentPresenter";
 
 	private bool m_expansionCycled;
 	private CheckBox m_selectionBox;
 	private DispatcherTimer m_expandContentTimer;
 	private TreeView m_ancestorTreeView;
 	private UIElement m_expandCollapseChevron;
+	ContentPresenter m_contentPresenter;
 
-	/// <summary>
-	/// Initializes a new instance of the TreeViewItem control.
-	/// </summary>
-	public TreeViewItem()
+    /// <summary>
+    /// Initializes a new instance of the TreeViewItem control.
+    /// </summary>
+    public TreeViewItem()
 	{
         Loaded += TreeViewItem_Loaded;
 		DefaultStyleKey = typeof(TreeViewItem);
@@ -49,6 +53,18 @@ public partial class TreeViewItem : ListViewItem
     private void TreeViewItem_Loaded(object sender, RoutedEventArgs e)
     {
 		OnLoaded();
+    }
+
+    [DynamicWindowsRuntimeCast(typeof(UIElement))]
+    [DynamicWindowsRuntimeCast(typeof(ContentPresenter))]
+    protected override void OnContentChanged(object oldContent, object newContent)
+    {
+		if (m_contentPresenter is not null && VisualTreeHelper.GetChild(m_contentPresenter, 0) is TreeViewItemWrapper wrapper)
+		{
+            SetBinding(ItemsSourceProperty, new Binding() { Path = new PropertyPath(nameof(ItemsSource)), Source = wrapper, Mode = BindingMode.OneWay });
+        }
+
+        base.OnContentChanged(oldContent, newContent);
     }
 
     // IControlOverrides
@@ -286,11 +302,13 @@ public partial class TreeViewItem : ListViewItem
     // IFrameworkElementOverrides
     [DynamicWindowsRuntimeCast(typeof(CheckBox))]
     [DynamicWindowsRuntimeCast(typeof(UIElement))]
+    [DynamicWindowsRuntimeCast(typeof(ContentPresenter))]
     protected override void OnApplyTemplate()
 	{
 		RecycleEvents();
 
 		m_selectionBox = (CheckBox)GetTemplateChild(c_multiSelectCheckBoxName);
+		m_contentPresenter = (ContentPresenter)GetTemplateChild(c_contentPresenterName);
 		RegisterPropertyChangedCallback(SelectorItem.IsSelectedProperty, OnIsSelectedChanged);
 
 		if (m_selectionBox != null)

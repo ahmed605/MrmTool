@@ -52,7 +52,7 @@
     <x:Double x:Key="SizerBaseThumbRadius">2</x:Double>
     <Thickness x:Key="SizerBasePadding">4</Thickness>
 
-    <Style x:Name="DefaultSizerBaseStyle" TargetType="controls:SizerBase">
+    <contract7Present:Style x:Key="DefaultSizerBaseStyle" TargetType="controls:SizerBase">
         <Setter Property="IsTabStop" Value="True" />
         <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -75,7 +75,7 @@
                           BorderThickness="{TemplateBinding BorderThickness}"
                           contract7Present:CornerRadius="{TemplateBinding CornerRadius}">
                         <contract7Present:Grid.BackgroundTransition>
-                            <BrushTransition Duration="0:0:0.083" />
+                            <contract7Present:BrushTransition Duration="0:0:0.083" />
                         </contract7Present:Grid.BackgroundTransition>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
@@ -127,6 +127,79 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>
+    </contract7Present:Style>
+
+    <contract7NotPresent:Style x:Key="DefaultSizerBaseStyle" TargetType="controls:SizerBase">
+        <Setter Property="IsTabStop" Value="True" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="IsFocusEngagementEnabled" Value="True" />
+        <Setter Property="MinHeight" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="Padding" Value="{ThemeResource SizerBasePadding}" />
+        <Setter Property="Foreground" Value="{ThemeResource SizerBaseForeground}" />
+        <Setter Property="Background" Value="{ThemeResource SizerBaseBackground}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ManipulationMode" Value="TranslateX,TranslateY" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:SizerBase">
+                    <Grid x:Name="RootGrid"
+                      Background="{TemplateBinding Background}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="{TemplateBinding BorderThickness}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource SizerBaseBackgroundPointerOver}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource SizerBaseBackgroundPressed}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="RootGrid.Background" Value="{ThemeResource SizerBaseBackgroundDisabled}" />
+                                        <Setter Target="PART_Thumb.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="OrientationStates">
+                                <VisualState x:Name="Vertical" />
+                                <VisualState x:Name="Horizontal">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Thumb.Width" Value="{ThemeResource SizerBaseThumbHeight}" />
+                                        <Setter Target="PART_Thumb.Height" Value="{ThemeResource SizerBaseThumbWidth}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="ThumbVisibilityStates">
+                                <VisualState x:Name="Visible" />
+                                <VisualState x:Name="Collapsed">
+                                    <VisualState.Setters>
+                                        <Setter Target="PART_Thumb.Visibility" Value="Collapsed" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Rectangle x:Name="PART_Thumb"
+                               Width="{ThemeResource SizerBaseThumbWidth}"
+                               Height="{ThemeResource SizerBaseThumbHeight}"
+                               Margin="{TemplateBinding Padding}"
+                               Fill="{TemplateBinding Foreground}"
+                               RadiusX="{ThemeResource SizerBaseThumbRadius}"
+                               RadiusY="{ThemeResource SizerBaseThumbRadius}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </contract7NotPresent:Style>
 
 </ResourceDictionary>

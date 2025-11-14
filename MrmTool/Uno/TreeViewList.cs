@@ -16,6 +16,7 @@ using Windows.UI.Xaml.Media;
 using Windows.System;
 using WinRT;
 using Windows.UI.Core;
+using Windows.Foundation;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -351,7 +352,7 @@ public partial class TreeViewList : ListView
 		var itemNode = NodeFromContainer(element);
 		TreeViewNode itemNodeImplNoRef = itemNode;
 		TreeViewItem itemContainer = (TreeViewItem)element;
-		var selectionState = itemNodeImplNoRef.SelectionState;
+        var selectionState = itemNodeImplNoRef.SelectionState;
 
 		//Set the expanded property to match that of the Node, and enable Drop by default
 		itemContainer.AllowDrop = true;
@@ -410,8 +411,13 @@ public partial class TreeViewList : ListView
 		return targetItem;
 	}
 
-	// IFrameworkElementOverrides
-	protected override void OnApplyTemplate()
+    protected override bool IsItemItsOwnContainerOverride(object item)
+    {
+        return base.IsItemItsOwnContainerOverride(item) || item is TreeViewItem;
+    }
+
+    // IFrameworkElementOverrides
+    protected override void OnApplyTemplate()
 	{
 		if (!m_itemsSourceAttached)
 		{
@@ -719,7 +725,7 @@ public partial class TreeViewList : ListView
 		return current;
 	}
 
-	internal TreeViewNode NodeFromContainer(DependencyObject container)
+    internal TreeViewNode NodeFromContainer(DependencyObject container)
 	{
 		int index = container != null ? IndexFromContainer(container) : -1;
 		if (index >= 0 && index < ListViewModel.Count)

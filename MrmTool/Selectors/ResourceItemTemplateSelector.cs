@@ -11,23 +11,14 @@ namespace MrmTool.Selectors
     {
         public ResourceItemTemplateSelector() { }
 
-        public DataTemplate? ResourceTree { get; set; }
-
         public DataTemplate? Resource { get; set; }
 
         protected override DataTemplate? SelectTemplateCore(object item)
         {
-            var resourceItem = (ResourceItem)item;
-            resourceItem.EnsureIconAndType();
+            if (item is ResourceItem resourceItem)
+                resourceItem.EnsureIconAndType();
 
-            if (resourceItem.Children.Count > 0)
-            {
-                return ResourceTree;
-            }
-            else
-            {
-                return Resource;
-            }
+            return Resource;
         }
     }
 }

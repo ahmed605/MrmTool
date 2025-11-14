@@ -11,32 +11,35 @@
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:muxcContract7NotPresent="using:Microsoft.UI.Xaml.Controls?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,7)"
+    xmlns:contract7Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,7)"
+    xmlns:contract5Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
+    xmlns:contract5NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
     <Page.Resources>
-        <DataTemplate x:Key="TreeTemplate" x:DataType="models:ResourceItem">
+        <contract5NotPresent:DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
+            <muxc:TreeViewItemWrapper AutomationProperties.Name="{x:Bind DisplayName}"
+                          ItemsSource="{x:Bind Children}" Margin="0,2,0,2">
+                <StackPanel Orientation="Horizontal">
+                    <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
+                </StackPanel>
+            </muxc:TreeViewItemWrapper>
+        </contract5NotPresent:DataTemplate>
+
+        <contract5Present:DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}"
-                          ItemsSource="{x:Bind Children}" IsExpanded="False" Margin="0,2,0,2">
+                        ItemsSource="{x:Bind Children}" Margin="0,2,0,2">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
                 </StackPanel>
             </muxc:TreeViewItem>
-        </DataTemplate>
+        </contract5Present:DataTemplate>
 
-        <DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
-            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}" Margin="0,2,0,2">
-                <StackPanel Orientation="Horizontal">
-                    <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
-                    <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
-                </StackPanel>
-            </muxc:TreeViewItem>
-        </DataTemplate>
-
-        <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector"
-            ResourceTree="{StaticResource TreeTemplate}"
-            Resource="{StaticResource ResourceTemplate}" />
+        <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector" Resource="{StaticResource ResourceTemplate}" />
 
         <SolidColorBrush x:Key="PriBorderBrush" Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
     </Page.Resources>
@@ -46,8 +49,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <MenuBar Grid.Row="0">
-            <MenuBarItem Title="File">
+        <muxcContract7NotPresent:MenuBar Grid.Row="0">
+            <muxcContract7NotPresent:MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open" Click="Open_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="OpenFile"/>
@@ -69,14 +72,14 @@
                         <SymbolIcon Symbol="Cancel"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-            </MenuBarItem>
-            <MenuBarItem Title="Edit">
+            </muxcContract7NotPresent:MenuBarItem>
+            <muxcContract7NotPresent:MenuBarItem Title="Edit">
                 <MenuFlyoutItem Text="Add Resource" Click="AddResource_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Add"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="removeResourcesMenuItem" Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
+                <MenuFlyoutItem Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Delete"/>
                     </MenuFlyoutItem.Icon>
@@ -92,9 +95,58 @@
                         <SymbolIcon Symbol="ImportAll"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-            </MenuBarItem>
-        </MenuBar>
-        
+            </muxcContract7NotPresent:MenuBarItem>
+        </muxcContract7NotPresent:MenuBar>
+
+        <contract7Present:MenuBar Grid.Row="0">
+            <contract7Present:MenuBarItem Title="File">
+                <MenuFlyoutItem Text="Open" Click="Open_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="OpenFile"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save" Click="Save_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Save"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Save As" Click="SaveAs_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="SaveLocal"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Exit" Click="Exit_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Cancel"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </contract7Present:MenuBarItem>
+            <contract7Present:MenuBarItem Title="Edit">
+                <MenuFlyoutItem Text="Add Resource" Click="AddResource_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Add"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Delete"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem Text="Set Root Folder" Click="SetRootFolder_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="OpenLocal"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Embed Path Resources In" Click="EmbedPathResources_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="ImportAll"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </contract7Present:MenuBarItem>
+        </contract7Present:MenuBar>
+
         <Grid Grid.Row="1" Margin="0,5,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="280"/>
@@ -134,12 +186,10 @@
 
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="models:CandidateItem">
-                                <ListViewItem>
-                                    <wct:DataRow HorizontalAlignment="Left">
-                                        <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{x:Bind Qualifers}" VerticalAlignment="Center"/>
-                                    </wct:DataRow>
-                                </ListViewItem>
+                                <wct:DataRow HorizontalAlignment="Left">
+                                    <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{x:Bind Qualifers}" VerticalAlignment="Center"/>
+                                </wct:DataRow>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
