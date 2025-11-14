@@ -35,9 +35,7 @@ namespace Microsoft.UI.Xaml.Controls
 		private Button m_button;
 		private bool m_isFlyoutOpen;
 
-#pragma warning disable CS0649 // Field is never assigned to, and will always have its default value null
 		private DependencyObject m_passThroughElement;
-#pragma warning restore CS0649 // Field is never assigned to, and will always have its default value null
 
 		private CompositeDisposable _activeDisposables;
 
@@ -76,11 +74,12 @@ namespace Microsoft.UI.Xaml.Controls
         protected override void OnApplyTemplate()
 		{
 			m_button = GetTemplateChild("ContentButton") as Button;
+			SynchronizeMenuBar();
+
+			m_menuBar?.RequestPassThroughElement(this);
 
 			PopulateContent();
 			AttachEventHandlers();
-
-			SynchronizeMenuBar();
 		}
 
 		private void SynchronizeMenuBar()
@@ -278,13 +277,16 @@ namespace Microsoft.UI.Xaml.Controls
 
 				if (s_isFlyoutShowOptionsPresent)
 				{
-					// Sets an exclusion rect over the button that generates the flyout so that even if the menu opens upwards
-					// (which is the default in touch mode) it doesn't cover the menu bar button.
-					FlyoutShowOptions options = new FlyoutShowOptions();
-					options.Position = new Point(0, height);
-					options.Placement = FlyoutPlacementMode.Bottom;
-					options.ExclusionRect = new Rect(0, 0, width, height);
-					m_flyout.ShowAt(m_button, options);
+                    // Sets an exclusion rect over the button that generates the flyout so that even if the menu opens upwards
+                    // (which is the default in touch mode) it doesn't cover the menu bar button.
+                    FlyoutShowOptions options = new()
+                    {
+                        Position = new Point(0, height),
+                        Placement = FlyoutPlacementMode.Bottom,
+                        ExclusionRect = new Rect(0, 0, width, height)
+                    };
+
+                    m_flyout.ShowAt(m_button, options);
 				}
 				else
 				{
@@ -325,12 +327,10 @@ namespace Microsoft.UI.Xaml.Controls
 			}
 		}
 
-#if false
-		void AddPassThroughElement(DependencyObject element)
+		internal void AddPassThroughElement(DependencyObject element)
 		{
 			m_passThroughElement = element;
 		}
-#endif
 
 		public bool IsFlyoutOpen()
 		{

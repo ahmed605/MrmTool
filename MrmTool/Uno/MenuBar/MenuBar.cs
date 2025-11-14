@@ -10,50 +10,56 @@ using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls
 {
-	[ContentProperty(Name = nameof(Items))]
-	public partial class MenuBar : Control
-	{
-		private Grid m_layoutRoot;
-		private ItemsControl m_contentRoot;
+    [ContentProperty(Name = nameof(Items))]
+    public partial class MenuBar : Control
+    {
+        private Grid m_layoutRoot;
+        private ItemsControl m_contentRoot;
 
-		public IList<MenuBarItem> Items
-		{
-			get => (IList<MenuBarItem>)this.GetValue(ItemsProperty);
-			private set => this.SetValue(ItemsProperty, value);
-		}
+        public IList<MenuBarItem> Items
+        {
+            get => (IList<MenuBarItem>)this.GetValue(ItemsProperty);
+            private set => this.SetValue(ItemsProperty, value);
+        }
 
-		public static DependencyProperty ItemsProperty { get; } =
-			DependencyProperty.Register(
-				"Items",
-				typeof(IList<MenuBarItem>),
-				typeof(MenuBar),
-				new PropertyMetadata(null)
-		);
+        public static DependencyProperty ItemsProperty { get; } =
+            DependencyProperty.Register(
+                "Items",
+                typeof(IList<MenuBarItem>),
+                typeof(MenuBar),
+                new PropertyMetadata(null)
+        );
 
-		public MenuBar() : base()
-		{
-			Items = new ObservableCollection<MenuBarItem>();
-			DefaultStyleKey = typeof(MenuBar);
+        public MenuBar() : base()
+        {
+            Items = new ObservableCollection<MenuBarItem>();
+            DefaultStyleKey = typeof(MenuBar);
         }
 
         [DynamicWindowsRuntimeCast(typeof(Grid))]
         [DynamicWindowsRuntimeCast(typeof(ItemsControl))]
         protected override void OnApplyTemplate()
-		{
-			base.OnApplyTemplate();
+        {
+            base.OnApplyTemplate();
 
-			m_layoutRoot = GetTemplateChild("LayoutRoot") as Grid;
+            m_layoutRoot = GetTemplateChild("LayoutRoot") as Grid;
 
-			if (GetTemplateChild("ContentRoot") is ItemsControl contentRoot)
-			{
-				contentRoot.XYFocusKeyboardNavigation = XYFocusKeyboardNavigationMode.Enabled;
+            if (GetTemplateChild("ContentRoot") is ItemsControl contentRoot)
+            {
+                contentRoot.XYFocusKeyboardNavigation = XYFocusKeyboardNavigationMode.Enabled;
 
-				contentRoot.ItemsSource = Items;
+                contentRoot.ItemsSource = Items;
 
-				m_contentRoot = contentRoot;
-			}
-		}
+                m_contentRoot = contentRoot;
+            }
+        }
 
-		internal bool IsFlyoutOpen { get; set; }
-	}
+        internal void RequestPassThroughElement(MenuBarItem menuBarItem)
+        {
+            // To enable switching flyout on hover, every menubar item needs the MenuBar root to include it for hit detection with flyouts open
+            menuBarItem.AddPassThroughElement(m_layoutRoot);
+        }
+
+        internal bool IsFlyoutOpen { get; set; }
+    }
 }

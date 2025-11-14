@@ -33,12 +33,19 @@ namespace MrmTool
             ComWrappersSupport.InitializeComWrappers();
             NativeUtils.InitializeResourceManager();
 
-            var priv = Windows.UI.Xaml.Application.As<IFrameworkApplicationStaticsPrivate>();
-            var callback = ABI.Windows.UI.Xaml.ApplicationInitializationCallback.CreateMarshaler2((args) => { _xamlApp = new App(); });
-            CoSetASTATestMode(ASTA_TEST_MODE_FLAGS.ROINITIALIZEASTA_ALLOWED);
-            priv.StartInCoreWindowHostingMode(new() { TransparentBackground = 1 }, (void*)callback.GetAbi());
-            MarshalInspectable<object>.DisposeMarshaler(callback);
-            ArgumentNullException.ThrowIfNull(_xamlApp);
+            if (Common.Features.IsXamlRootAvailable)
+            {
+                _xamlApp = new App();
+            }
+            else
+            {
+                var priv = Windows.UI.Xaml.Application.As<IFrameworkApplicationStaticsPrivate>();
+                var callback = ABI.Windows.UI.Xaml.ApplicationInitializationCallback.CreateMarshaler2((args) => { _xamlApp = new App(); });
+                CoSetASTATestMode(ASTA_TEST_MODE_FLAGS.ROINITIALIZEASTA_ALLOWED);
+                priv.StartInCoreWindowHostingMode(new() { TransparentBackground = 1 }, (void*)callback.GetAbi());
+                MarshalInspectable<object>.DisposeMarshaler(callback);
+                ArgumentNullException.ThrowIfNull(_xamlApp);
+            }
 
             ReadOnlySpan<char> className = ['M', 'r', 'm', 'T', 'o', 'o', 'l', 'C', 'l', 'a', 's', 's', '\0'];
             ReadOnlySpan<char> windowName = ['M', 'r', 'm', 'T', 'o', 'o', 'l', '\0'];

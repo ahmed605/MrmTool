@@ -11,7 +11,6 @@
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    xmlns:muxcContract7NotPresent="using:Microsoft.UI.Xaml.Controls?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,7)"
     xmlns:contract7Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,7)"
     xmlns:contract5Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
     xmlns:contract5NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)"
@@ -49,8 +48,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <muxcContract7NotPresent:MenuBar Grid.Row="0">
-            <muxcContract7NotPresent:MenuBarItem Title="File">
+        <muxc:MenuBar Grid.Row="0">
+            <muxc:MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open" Click="Open_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="OpenFile"/>
@@ -72,8 +71,8 @@
                         <SymbolIcon Symbol="Cancel"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-            </muxcContract7NotPresent:MenuBarItem>
-            <muxcContract7NotPresent:MenuBarItem Title="Edit">
+            </muxc:MenuBarItem>
+            <muxc:MenuBarItem Title="Edit">
                 <MenuFlyoutItem Text="Add Resource" Click="AddResource_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Add"/>
@@ -95,57 +94,8 @@
                         <SymbolIcon Symbol="ImportAll"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-            </muxcContract7NotPresent:MenuBarItem>
-        </muxcContract7NotPresent:MenuBar>
-
-        <contract7Present:MenuBar Grid.Row="0">
-            <contract7Present:MenuBarItem Title="File">
-                <MenuFlyoutItem Text="Open" Click="Open_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="OpenFile"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Save" Click="Save_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="Save"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Save As" Click="SaveAs_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="SaveLocal"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Exit" Click="Exit_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="Cancel"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-            </contract7Present:MenuBarItem>
-            <contract7Present:MenuBarItem Title="Edit">
-                <MenuFlyoutItem Text="Add Resource" Click="AddResource_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="Add"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="Delete"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutSeparator/>
-                <MenuFlyoutItem Text="Set Root Folder" Click="SetRootFolder_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="OpenLocal"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Embed Path Resources In" Click="EmbedPathResources_Click">
-                    <MenuFlyoutItem.Icon>
-                        <SymbolIcon Symbol="ImportAll"/>
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-            </contract7Present:MenuBarItem>
-        </contract7Present:MenuBar>
+            </muxc:MenuBarItem>
+        </muxc:MenuBar>
 
         <Grid Grid.Row="1" Margin="0,5,0,0">
             <Grid.ColumnDefinitions>
@@ -172,7 +122,7 @@
                                 </interactivity:Interaction.Behaviors>
 
                                 <wct:DataTable Margin="10,0,0,0" Height="30">
-                                    <wct:DataColumn Content="Type" Width="116" MinWidth="100" CanResize="True"/>
+                                    <wct:DataColumn Content="Type" Width="120" MinWidth="100" CanResize="True"/>
                                     <wct:DataColumn Content="Qualifiers"/>
                                 </wct:DataTable>
                             </Border>

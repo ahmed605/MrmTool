@@ -26,8 +26,6 @@ namespace CommunityToolkit.WinUI.Behaviors.Internal;
 /// </summary>
 public abstract class HeaderBehaviorBase : BehaviorBase<FrameworkElement>
 {
-    private static readonly bool IsXamlRootAvailable = ApiInformation.IsTypePresent("Windows.UI.Xaml.XamlRoot");
-
     // From Doc: https://learn.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.controls.canvas.zindex
     private const int CanvasZIndexMax = 1_000_000;
 
@@ -189,7 +187,7 @@ public abstract class HeaderBehaviorBase : BehaviorBase<FrameworkElement>
         var scroller = (ScrollViewer)sender;
 
         object focusedElement;
-        if (IsXamlRootAvailable && scroller.XamlRoot is { } root)
+        if (Common.Features.IsXamlRootAvailable && scroller.XamlRoot is { } root)
         {
             focusedElement = FocusManager.GetFocusedElement(root)!;
         }
