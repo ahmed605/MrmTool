@@ -139,7 +139,7 @@ namespace Microsoft.UI.Xaml.Controls
 			public void Reset() => _inner.Reset();
 		}
 
-		private class UntypedList<T> : IList
+		private partial class UntypedList<T> : IList
 		{
 			private readonly IList<T> _inner;
 

@@ -10,6 +10,7 @@ using System.Linq;
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using WinRT;
 
 namespace Microsoft.UI.Xaml.Controls;
 
@@ -655,17 +656,19 @@ internal partial class TreeViewViewModel : ObservableVector<object>
 
 	internal IList<object> SelectedItems => m_selectedItems;
 
-	internal void TrackItemSelected(object item)
+    [DynamicWindowsRuntimeCast(typeof(DependencyObject))]
+    internal void TrackItemSelected(object item)
 	{
-		if (m_selectionTrackingCounter > 0 && item != m_originNode)
+		if (m_selectionTrackingCounter > 0 && item as DependencyObject != m_originNode)
 		{
 			m_addedSelectedItems.Add(new WeakReference<object>(item));
 		}
 	}
 
-	internal void TrackItemUnselected(object item)
+    [DynamicWindowsRuntimeCast(typeof(DependencyObject))]
+    internal void TrackItemUnselected(object item)
 	{
-		if (m_selectionTrackingCounter > 0 && item != m_originNode)
+		if (m_selectionTrackingCounter > 0 && item as DependencyObject != m_originNode)
 		{
 			m_removedSelectedItems.Add(item);
 		}
@@ -998,7 +1001,7 @@ internal partial class TreeViewViewModel : ObservableVector<object>
 		return new TreeViewViewModelEnumerator(this);
 	}
 
-	private class TreeViewViewModelEnumerator : IEnumerator<object>
+	private partial class TreeViewViewModelEnumerator : IEnumerator<object>
 	{
 		private readonly TreeViewViewModel _treeViewViewModel;
 		private int _currentIndex = -1;

@@ -21,7 +21,7 @@ namespace Uno.Disposables
 	/// <summary>
 	/// Represents a disposable that does nothing on disposal.
 	/// </summary>
-	internal sealed class DefaultDisposable : IDisposable
+	internal partial class DefaultDisposable : IDisposable
 	{
 		/// <summary>
 		/// Singleton default disposable.

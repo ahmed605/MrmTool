@@ -24,7 +24,7 @@ namespace Uno.Disposables
 	/// <summary>
 	/// Represents an Action-based disposable.
 	/// </summary>
-	internal sealed class AnonymousDisposable : ICancelable
+	internal partial class AnonymousDisposable : ICancelable
 	{
 		private volatile Action? _dispose;
 
