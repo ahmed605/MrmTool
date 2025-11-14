@@ -1,11 +1,11 @@
-﻿using TerraFX.Interop.Windows;
+﻿using Microsoft.Win32;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
+using TerraFX.Interop.Windows;
 using Windows.ApplicationModel.Resources.Core;
-
+using Windows.UI.Xaml;
 using static TerraFX.Interop.Windows.Windows;
-using Microsoft.Win32;
-using System.Runtime.CompilerServices;
 
 namespace MrmTool
 {
@@ -116,6 +116,18 @@ namespace MrmTool
             Guid* riid,
             nint* pCoreWindow);
 
+        [Flags]
+        internal enum ASTA_TEST_MODE_FLAGS
+        {
+            NONE = 0x0,
+            RO_INIT_SINGLETHREADED_CREATES_ASTAS = 0x1,
+            GIT_LIFETIME_EXTENSION_ENABLED = 0x2,
+            ROINITIALIZEASTA_ALLOWED = 0x4,
+        }
+
+        [DllImport("combase.dll", EntryPoint = "#100")]
+        internal static extern void CoSetASTATestMode(ASTA_TEST_MODE_FLAGS flags);
+
         [GuidRVAGen.Guid("79b9d5f2-879e-4b89-b798-79e47598030c")]
         public static partial Guid* IID_ICoreWindow { get; }
 
@@ -157,8 +169,18 @@ namespace MrmTool
             catch
             {
                 void* pManager = default;
-                var managerStatics = ResourceManager.As<IResourceManagerStaticInternal>();
-                ThrowIfFailed((HRESULT)managerStatics.GetCurrentResourceManagerForSystemProfile(&pManager));
+
+                try
+                {
+                    var managerStatics = ResourceManager.As<IResourceManagerStaticInternal>();
+                    ThrowIfFailed((HRESULT)managerStatics.GetCurrentResourceManagerForSystemProfile(&pManager));
+                }
+                catch
+                {
+                    var managerStatics = ResourceManager.As<IResourceManagerStaticInternalOld>();
+                    ThrowIfFailed((HRESULT)managerStatics.GetCurrentResourceManagerForSystemProfile(&pManager));
+                }
+
                 var manager = ResourceManager.FromAbi((nint)pManager);
                 Marshal.Release((nint)pManager);
 
@@ -184,6 +206,19 @@ namespace MrmTool
     [GeneratedComInterface]
     [Guid("4a8eac58-b652-459d-8de1-239471e8b22b")]
     internal unsafe partial interface IResourceManagerStaticInternal
+    {
+        void _stub0();
+        void _stub1();
+        void _stub2();
+        void _stub3();
+
+        [PreserveSig]
+        int GetCurrentResourceManagerForSystemProfile(void** ppResult);
+    }
+
+    [GeneratedComInterface]
+    [Guid("7d9da47a-8bc7-49d3-97aa-f7db06049172")]
+    internal unsafe partial interface IResourceManagerStaticInternalOld
     {
         void _stub0();
         void _stub1();
@@ -232,5 +267,23 @@ namespace MrmTool
         void _stub6();
         void _stub7();
         nint CreateNonImmersiveView();
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WindowCreationParameters
+    {
+        public int Left, Top, Width, Height;
+        public byte TransparentBackground, IsCoreNavigationClient;
+    }
+
+    [GeneratedComInterface, Guid("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")]
+    internal unsafe partial interface IFrameworkApplicationStaticsPrivate
+    {
+        void _stub0();
+        void _stub1();
+        void _stub2();
+
+        void StartInCoreWindowHostingMode(WindowCreationParameters windowParams, void* callback);
+        void EnableFailFastOnStowedException();
     }
 }

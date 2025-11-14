@@ -2,10 +2,19 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Microsoft.UI.Xaml.Controls">
+    xmlns:local="using:Microsoft.UI.Xaml.Controls"
+    xmlns:contract5Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
+    xmlns:contract5NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)">
     
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Dark">
+            <contract5NotPresent:StaticResource x:Key="SystemControlTransparentRevealBackgroundBrush" ResourceKey="SystemControlTransparentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListLowRevealBackgroundBrush" ResourceKey="SystemControlHighlightListLowBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListMediumRevealBackgroundBrush" ResourceKey="SystemControlHighlightListMediumBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent3RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent2RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAltTransparentRevealBorderBrush" ResourceKey="SystemControlHighlightAltTransparentBrush"/>
+            <contract5NotPresent:SolidColorBrush x:Key="SystemControlBackgroundTransparentRevealBorderBrush" Color="Transparent"/>
             <StaticResource x:Key="TreeViewItemBackground" ResourceKey="SystemControlTransparentRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="SystemControlHighlightListLowRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPressed" ResourceKey="SystemControlHighlightListMediumRevealBackgroundBrush" />
@@ -37,6 +46,13 @@
             <x:Double x:Key="TreeViewItemMinHeight">32</x:Double>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Light">
+            <contract5NotPresent:StaticResource x:Key="SystemControlTransparentRevealBackgroundBrush" ResourceKey="SystemControlTransparentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListLowRevealBackgroundBrush" ResourceKey="SystemControlHighlightListLowBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListMediumRevealBackgroundBrush" ResourceKey="SystemControlHighlightListMediumBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent3RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent2RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAltTransparentRevealBorderBrush" ResourceKey="SystemControlHighlightAltTransparentBrush"/>
+            <contract5NotPresent:SolidColorBrush x:Key="SystemControlBackgroundTransparentRevealBorderBrush" Color="Transparent"/>
             <StaticResource x:Key="TreeViewItemBackground" ResourceKey="SystemControlTransparentRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="SystemControlHighlightListLowRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPressed" ResourceKey="SystemControlHighlightListMediumRevealBackgroundBrush" />
@@ -68,6 +84,13 @@
             <x:Double x:Key="TreeViewItemMinHeight">32</x:Double>
         </ResourceDictionary>
         <ResourceDictionary x:Key="HighContrast">
+            <contract5NotPresent:StaticResource x:Key="SystemControlTransparentRevealBackgroundBrush" ResourceKey="SystemControlTransparentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListLowRevealBackgroundBrush" ResourceKey="SystemControlHighlightListLowBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightListMediumRevealBackgroundBrush" ResourceKey="SystemControlHighlightListMediumBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent3RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAccent2RevealBackgroundBrush" ResourceKey="SystemControlHighlightAccentBackgroundBrush"/>
+            <contract5NotPresent:StaticResource x:Key="SystemControlHighlightAltTransparentRevealBorderBrush" ResourceKey="SystemControlHighlightAltTransparentBrush"/>
+            <contract5NotPresent:SolidColorBrush x:Key="SystemControlBackgroundTransparentRevealBorderBrush" Color="Transparent"/>
             <StaticResource x:Key="TreeViewItemBackground" ResourceKey="SystemControlTransparentRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPointerOver" ResourceKey="SystemControlHighlightListLowRevealBackgroundBrush" />
             <StaticResource x:Key="TreeViewItemBackgroundPressed" ResourceKey="SystemControlHighlightListMediumRevealBackgroundBrush" />

@@ -10,6 +10,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using WinRT;
 using static MrmTool.ErrorHelpers;
+using static MrmTool.NativeUtils;
 using static TerraFX.Interop.Windows.Windows;
 using static TerraFX.Interop.Windows.WM;
 using static TerraFX.Interop.Windows.WS;
@@ -31,7 +32,13 @@ namespace MrmTool
         {
             ComWrappersSupport.InitializeComWrappers();
             NativeUtils.InitializeResourceManager();
-            _xamlApp = new App();
+
+            var priv = Windows.UI.Xaml.Application.As<IFrameworkApplicationStaticsPrivate>();
+            var callback = ABI.Windows.UI.Xaml.ApplicationInitializationCallback.CreateMarshaler2((args) => { _xamlApp = new App(); });
+            CoSetASTATestMode(ASTA_TEST_MODE_FLAGS.ROINITIALIZEASTA_ALLOWED);
+            priv.StartInCoreWindowHostingMode(new() { TransparentBackground = 1 }, (void*)callback.GetAbi());
+            MarshalInspectable<object>.DisposeMarshaler(callback);
+            ArgumentNullException.ThrowIfNull(_xamlApp);
 
             ReadOnlySpan<char> className = ['M', 'r', 'm', 'T', 'o', 'o', 'l', 'C', 'l', 'a', 's', 's', '\0'];
             ReadOnlySpan<char> windowName = ['M', 'r', 'm', 'T', 'o', 'o', 'l', '\0'];

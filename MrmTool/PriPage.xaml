@@ -119,8 +119,8 @@
                                     <behaviors:StickyHeaderBehavior/>
                                 </interactivity:Interaction.Behaviors>
 
-                                <wct:DataTable Margin="10,0,0,0" Height="30" ColumnSpacing="16">
-                                    <wct:DataColumn Content="Type" MinWidth="100" CanResize="True"/>
+                                <wct:DataTable Margin="10,0,0,0" Height="30">
+                                    <wct:DataColumn Content="Type" Width="116" MinWidth="100" CanResize="True"/>
                                     <wct:DataColumn Content="Qualifiers"/>
                                 </wct:DataTable>
                             </Border>
@@ -149,7 +149,7 @@
 
                 <wct:GridSplitter Grid.Row="1" Height="12" ResizeBehavior="BasedOnAlignment" ResizeDirection="Rows" Background="Transparent">
                     <wct:GridSplitter.Element>
-                        <TextBlock Text="" FontFamily="Segoe MDL2 Assets" IsHitTestVisible="False" Opacity="0.5" VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        <TextBlock Text="&#xE76F;" FontFamily="Segoe MDL2 Assets" IsHitTestVisible="False" Opacity="0.5" VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center"/>
                     </wct:GridSplitter.Element>
                     <wct:GridSplitter.RenderTransform>
                         <TranslateTransform Y="-5" />

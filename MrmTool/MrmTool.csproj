@@ -10,7 +10,7 @@
     <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
     <UseUwp>true</UseUwp>
     <UseUwpTools>true</UseUwpTools>
-    <DefineConstants>DISABLE_XAML_GENERATED_MAIN;$(DefineConstants)</DefineConstants>
+    <DefineConstants>DISABLE_XAML_GENERATED_MAIN;COREDISPATCHER_FALLBACK;$(DefineConstants)</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64;arm64;x86</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>

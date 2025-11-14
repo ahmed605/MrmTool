@@ -15,8 +15,6 @@
         </Grid>
     </DataTemplate>
 
-    <Style TargetType="local:TreeView" BasedOn="{StaticResource DefaultTreeViewStyle}" />
-
     <Style x:Key="DefaultTreeViewStyle" TargetType="local:TreeView">
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="CanDragItems" Value="True"/>
@@ -56,5 +54,6 @@
     </Style>
     
     <Style TargetType="local:TreeViewItem" BasedOn="{StaticResource MUX_TreeViewItemStyle}"/>
+    <Style TargetType="local:TreeView" BasedOn="{StaticResource DefaultTreeViewStyle}" />
     
 </ResourceDictionary>
