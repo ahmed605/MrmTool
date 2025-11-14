@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-	<WindowsSdkPackageVersion>10.0.26100.73-preview</WindowsSdkPackageVersion>
+	  <WindowsSdkPackageVersion>10.0.26100.73-preview</WindowsSdkPackageVersion>
     <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -22,7 +22,8 @@
     <ProjectPriFileName>resources.pri</ProjectPriFileName>
     <_SupportEmbedFileResources>true</_SupportEmbedFileResources>
     <CsWinRTAotWarningLevel>3</CsWinRTAotWarningLevel>
-	<LangVersion>preview</LangVersion>
+	  <LangVersion>preview</LangVersion>
+    <CsWinRTIIDOptimizerOptOut>true</CsWinRTIIDOptimizerOptOut>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dongle.GuidRVAGen" Version="1.0.5" />
