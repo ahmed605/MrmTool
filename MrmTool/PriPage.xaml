@@ -144,8 +144,18 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Border>
-                <Border Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
-                </Border>
+                
+                <Grid Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                    <TextBlock Margin="4,4,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" />
+                    <StackPanel Margin="4,4,0,0" x:Load="False" x:Name="invalidRootPathContainer">
+                        <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." />
+                        <Button Content="Set root folder" Click="SetRootFolder_Click" />
+                    </StackPanel>
+                    <StackPanel Margin="4,4,0,0" x:Load="False" x:Name="exportContainer">
+                        <TextBlock x:Name="fileSizeLabel" />
+                        <Button Content="Export to disk" Click="ExportButton_Click" />
+                    </StackPanel>
+                </Grid>
 
                 <wct:GridSplitter Grid.Row="1" Height="12" ResizeBehavior="BasedOnAlignment" ResizeDirection="Rows" Background="Transparent">
                     <wct:GridSplitter.Element>

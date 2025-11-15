@@ -247,6 +247,10 @@ namespace MrmTool
         [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
         private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            UnloadObject(invalidRootPathContainer);
+            UnloadObject(valueTextBlock);
+            UnloadObject(exportContainer);
+
             if (e.AddedItems.Count is 1 && e.AddedItems[0] is CandidateItem item)
             {
                 var candidate = item.Candidate;
@@ -269,15 +273,53 @@ namespace MrmTool
 
                     if (file is null)
                     {
-                        // TODO: display an error in the display area suggesting setting the PRI root folder
+                        FindName("invalidRootPathContainer");
                         return;
                     }
 
                     // TODO: display file
                 }
-
-                // TODO: handle other resource types
+                else if (candidate.ValueType is ResourceValueType.EmbeddedData)
+                {
+                    // TODO: Detect the file type
+                    FindName("exportContainer");
+                    fileSizeLabel.Text = $"File size: {candidate.DataValue.Length} bytes";
+                }
+                else
+                {
+                    FindName("valueTextBlock");
+                    valueTextBlock.Text = candidate.StringValue;
+                }
             }
+        }
+
+        private async void ExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            CandidateItem item = (CandidateItem)candidatesList.SelectedItem;
+            byte[] data = item.Candidate.DataValue;
+
+            string resourceName = item.Candidate.ResourceName;
+            int fileNameIndex = resourceName.LastIndexOf('/') + 1;
+
+            string fileName = resourceName[fileNameIndex..];
+            string extension = Path.GetExtension(fileName);
+
+            FileSavePicker picker = new();
+            picker.Initialize();
+            picker.SuggestedFileName = fileName;
+
+            if (!string.IsNullOrEmpty(extension))
+            {
+                picker.FileTypeChoices.Add($"{extension[1..].ToUpper()} file", new string[] { extension });
+            }
+            else
+            {
+                picker.FileTypeChoices.Add("All files", new string[] { "." });
+            }
+
+            StorageFile file = await picker.PickSaveFileAsync();
+            if (file is not null)
+                await FileIO.WriteBytesAsync(file, data);
         }
     }
 }
