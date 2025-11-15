@@ -152,11 +152,11 @@
                 <Border Grid.Row="2" Padding="5" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
                     <Grid>
                         <TextBlock Margin="4,4,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
-                        <StackPanel Margin="4,4,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
                             <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." HorizontalAlignment="Center" />
                             <Button Content="Set root folder" HorizontalAlignment="Center" Margin="0,10,0,0" Click="SetRootFolder_Click" />
                         </StackPanel>
-                        <StackPanel Margin="4,4,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="exportContainer">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="exportContainer">
                             <TextBlock x:Name="fileSizeLabel" HorizontalAlignment="Center" />
                             <Button Content="Export to disk" HorizontalAlignment="Center" Margin="0,10,0,0" Click="ExportButton_Click" />
                         </StackPanel>
