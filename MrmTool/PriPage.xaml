@@ -5,12 +5,14 @@
     xmlns:local="using:MrmTool"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:selectors="using:MrmTool.Selectors"
     xmlns:models="using:MrmTool.Models"
     xmlns:wct="using:CommunityToolkit.WinUI.Controls"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:selectors="using:MrmTool.Selectors"
+    xmlns:selectorsContract5Present="using:MrmTool.Selectors?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
+    xmlns:selectorsContract5NotPresent="using:MrmTool.Selectors?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)"
     xmlns:contract7Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,7)"
     xmlns:contract5Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
     xmlns:contract5NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)"
@@ -18,7 +20,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
     <Page.Resources>
-        <contract5NotPresent:DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
+        <contract5NotPresent:DataTemplate x:Key="ResourceTemplateOld" x:DataType="models:ResourceItem">
             <muxc:TreeViewItemWrapper AutomationProperties.Name="{x:Bind DisplayName}"
                           ItemsSource="{x:Bind Children}" Margin="0,2,0,2">
                 <StackPanel Orientation="Horizontal">
@@ -38,7 +40,9 @@
             </muxc:TreeViewItem>
         </contract5Present:DataTemplate>
 
-        <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector" Resource="{StaticResource ResourceTemplate}" />
+        <selectors:ResourceItemTemplateSelector x:Key="ResourceItemTemplateSelector"
+            selectorsContract5Present:Resource="{StaticResource ResourceTemplate}"
+            selectorsContract5NotPresent:Resource="{StaticResource ResourceTemplateOld}"/>
 
         <SolidColorBrush x:Key="PriBorderBrush" Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
     </Page.Resources>
@@ -145,17 +149,19 @@
                     </ListView>
                 </Border>
                 
-                <Grid Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
-                    <TextBlock Margin="4,4,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" />
-                    <StackPanel Margin="4,4,0,0" x:Load="False" x:Name="invalidRootPathContainer">
-                        <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." />
-                        <Button Content="Set root folder" Click="SetRootFolder_Click" />
-                    </StackPanel>
-                    <StackPanel Margin="4,4,0,0" x:Load="False" x:Name="exportContainer">
-                        <TextBlock x:Name="fileSizeLabel" />
-                        <Button Content="Export to disk" Click="ExportButton_Click" />
-                    </StackPanel>
-                </Grid>
+                <Border Grid.Row="2" Padding="5" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                    <Grid>
+                        <TextBlock Margin="4,4,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" />
+                        <StackPanel Margin="4,4,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
+                            <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." HorizontalAlignment="Center" />
+                            <Button Content="Set root folder" HorizontalAlignment="Center" Margin="0,10,0,0" Click="SetRootFolder_Click" />
+                        </StackPanel>
+                        <StackPanel Margin="4,4,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="exportContainer">
+                            <TextBlock x:Name="fileSizeLabel" HorizontalAlignment="Center" />
+                            <Button Content="Export to disk" HorizontalAlignment="Center" Margin="0,10,0,0" Click="ExportButton_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
                 <wct:GridSplitter Grid.Row="1" Height="12" ResizeBehavior="BasedOnAlignment" ResizeDirection="Rows" Background="Transparent">
                     <wct:GridSplitter.Element>

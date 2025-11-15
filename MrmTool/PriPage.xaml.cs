@@ -1,6 +1,7 @@
 using MrmLib;
 using MrmTool.Models;
 using System.Collections.ObjectModel;
+using System.Text;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -182,6 +183,11 @@ namespace MrmTool
         private async void SetRootFolder_Click(object sender, RoutedEventArgs e)
         {
             await PickRootFolder();
+
+            if (_rootFolder is not null && candidatesList.SelectedItem is CandidateItem item && item.Candidate.ValueType is ResourceValueType.Path)
+            {
+                await DisplayCandidate(item);
+            }
         }
 
         private async void EmbedPathResources_Click(object sender, RoutedEventArgs e)
@@ -243,62 +249,76 @@ namespace MrmTool
             }
         }
 
-        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
-        [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
-        private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void UnloadPreviewElements()
         {
             UnloadObject(invalidRootPathContainer);
             UnloadObject(valueTextBlock);
             UnloadObject(exportContainer);
+        }
 
-            if (e.AddedItems.Count is 1 && e.AddedItems[0] is CandidateItem item)
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
+        [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
+        private async Task DisplayCandidate(CandidateItem item)
+        {
+            UnloadPreviewElements();
+
+            var candidate = item.Candidate;
+            if (candidate.ValueType is ResourceValueType.Path)
             {
-                var candidate = item.Candidate;
-                if (candidate.ValueType is ResourceValueType.Path)
+                StorageFile? file = null;
+
+                var root = _rootFolder ?? await _currentFile?.GetParentAsync();
+                if (await root.TryGetItemAsync(candidate.StringValue) is StorageFile cFile)
                 {
-                    StorageFile? file = null;
-
-                    var root = _rootFolder ?? await _currentFile?.GetParentAsync();
-                    if (await root.TryGetItemAsync(candidate.StringValue) is StorageFile cFile)
-                    {
-                        file = cFile;
-                    }
-                    else
-                    {
-                        if (await root.TryGetItemAsync(_currentFile?.DisplayName) is StorageFolder folder)
-                        {
-                            file = await folder.TryGetItemAsync(candidate.StringValue) as StorageFile;
-                        }
-                    }
-
-                    if (file is null)
-                    {
-                        FindName("invalidRootPathContainer");
-                        return;
-                    }
-
-                    // TODO: display file
-                }
-                else if (candidate.ValueType is ResourceValueType.EmbeddedData)
-                {
-                    // TODO: Detect the file type
-                    FindName("exportContainer");
-                    fileSizeLabel.Text = $"File size: {candidate.DataValue.Length} bytes";
+                    file = cFile;
                 }
                 else
                 {
-                    FindName("valueTextBlock");
-                    valueTextBlock.Text = candidate.StringValue;
+                    if (await root.TryGetItemAsync(_currentFile?.DisplayName) is StorageFolder folder)
+                    {
+                        file = await folder.TryGetItemAsync(candidate.StringValue) as StorageFile;
+                    }
                 }
+
+                if (file is null)
+                {
+                    FindName("invalidRootPathContainer");
+                    return;
+                }
+
+                // TODO: display file
+            }
+            else if (candidate.ValueType is ResourceValueType.EmbeddedData)
+            {
+                // TODO: Detect the file type
+                FindName("exportContainer");
+                fileSizeLabel.Text = $"File Size: {candidate.DataValue.Length} bytes";
+            }
+            else
+            {
+                FindName("valueTextBlock");
+                valueTextBlock.Text = candidate.StringValue;
+            }
+        }
+
+        private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count is 1 && e.AddedItems[0] is CandidateItem item)
+            {
+                await DisplayCandidate(item);
+            }
+            else
+            {
+                UnloadPreviewElements();
             }
         }
 
         private async void ExportButton_Click(object sender, RoutedEventArgs e)
         {
-            CandidateItem item = (CandidateItem)candidatesList.SelectedItem;
-            byte[] data = item.Candidate.DataValue;
+            ResourceCandidate candidate = ((CandidateItem)candidatesList.SelectedItem).Candidate;
+            byte[] data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValue : Encoding.UTF8.GetBytes(candidate.StringValue);
 
-            string resourceName = item.Candidate.ResourceName;
+            string resourceName = candidate.ResourceName;
             int fileNameIndex = resourceName.LastIndexOf('/') + 1;
 
             string fileName = resourceName[fileNameIndex..];
@@ -312,10 +332,8 @@ namespace MrmTool
             {
                 picker.FileTypeChoices.Add($"{extension[1..].ToUpper()} file", new string[] { extension });
             }
-            else
-            {
-                picker.FileTypeChoices.Add("All files", new string[] { "." });
-            }
+
+            picker.FileTypeChoices.Add("All files", new string[] { "." });
 
             StorageFile file = await picker.PickSaveFileAsync();
             if (file is not null)
