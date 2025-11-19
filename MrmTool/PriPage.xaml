@@ -45,6 +45,7 @@
             selectorsContract5NotPresent:Resource="{StaticResource ResourceTemplateOld}"/>
 
         <SolidColorBrush x:Key="PriBorderBrush" Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
+        <SolidColorBrush x:Key="PreviewBorderBrush" Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
     </Page.Resources>
 
     <Grid Background="Transparent" AllowDrop="True" DragOver="Grid_DragOver" Drop="Grid_Drop">
@@ -158,8 +159,8 @@
                         </ListView.ItemTemplate>
                     </ListView>
                 </Border>
-                
-                <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+
+                <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource PreviewBorderBrush}" CornerRadius="8">
                     <Grid>
                         <!-- String values -->
                         <TextBlock Margin="8,8,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
