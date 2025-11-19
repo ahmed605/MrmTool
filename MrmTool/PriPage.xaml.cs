@@ -22,6 +22,7 @@ namespace MrmTool
         private PriFile? _pri;
         private StorageFile? _currentFile;
         private StorageFolder? _rootFolder;
+        private ResourceItem? _selectedResource;
 
         public ObservableCollection<ResourceItem> ResourceItems { get; } = [];
 
@@ -247,6 +248,7 @@ namespace MrmTool
         {
             if (args.AddedItems.Count is 1 && args.AddedItems[0] is ResourceItem item && item.Candidates.Count > 0)
             {
+                _selectedResource = item;
                 candidatesList.ItemsSource = item.Candidates;
             }
         }
@@ -256,7 +258,7 @@ namespace MrmTool
             UnloadObject(invalidRootPathContainer);
             UnloadObject(valueTextBlock);
             UnloadObject(exportContainer);
-            UnloadObject(imagePreviewer);
+            UnloadObject(imagePreviewerContainer);
         }
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
@@ -290,13 +292,13 @@ namespace MrmTool
                 }
 
                 // TODO: display file
-                ResourceType type = ResourceItem.DetermineFileType(candidate.ResourceName);
+                ResourceType type = _selectedResource!.Type;
                 if (type == ResourceType.Image)
                 {
                     using IRandomAccessStream stream = await file.OpenReadAsync();
                     BitmapImage image = new();
                     await image.SetSourceAsync(stream);
-                    FindName("imagePreviewer");
+                    FindName("imagePreviewerContainer");
                     imagePreviewer.Source = image;
                 }
             }

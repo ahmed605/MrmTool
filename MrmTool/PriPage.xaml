@@ -149,10 +149,10 @@
                     </ListView>
                 </Border>
                 
-                <Border Grid.Row="2" Padding="5" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                <Border Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
                     <Grid>
                         <!-- String values -->
-                        <TextBlock Margin="4,4,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+                        <TextBlock Margin="8,8,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
                         
                         <!-- Path error: Invalid root -->
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
@@ -167,7 +167,9 @@
                         </StackPanel>
                         
                         <!-- Image Previewer -->
-                        <Image x:Name="imagePreviewer" x:Load="False" />
+                        <ScrollViewer x:Name="imagePreviewerContainer" x:Load="False" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled">
+                            <Image x:Name="imagePreviewer" Stretch="None" />
+                        </ScrollViewer>
                     </Grid>
                 </Border>
 

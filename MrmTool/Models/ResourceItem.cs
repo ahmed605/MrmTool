@@ -26,7 +26,32 @@ namespace MrmTool.Models
             }
             else
             {
-                Type = DetermineFileType(DisplayName);
+                Type = Path.GetExtension(DisplayName).ToLower() switch
+                {
+                    ".xbf"
+                        => ResourceType.Xbf,
+
+                    ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff"
+                        => ResourceType.Image,
+
+                    ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
+                        => ResourceType.Audio,
+
+                    ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js"
+                        => ResourceType.Text,
+
+                    ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv"
+                        => ResourceType.Video,
+
+                    ".ttf" or ".otf" or ".ttc"
+                        => ResourceType.Font,
+
+                    ".xaml"
+                        => ResourceType.Xaml,
+
+                    _
+                        => ResourceType.Unknown
+                };
 
                 if (Type is ResourceType.Unknown &&
                     Candidates.Count > 0 &&
@@ -55,35 +80,6 @@ namespace MrmTool.Models
                     _ => Icons.Unknown.Value,
                 };
             }
-        }
-
-        internal static ResourceType DetermineFileType(string path)
-        {
-            switch (Path.GetExtension(path).ToLower())
-            {
-                case ".xbf":
-                    return ResourceType.Xbf;
-
-                case ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff":
-                    return ResourceType.Image;
-
-                case ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus":
-                    return ResourceType.Audio;
-
-                case ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js":
-                    return ResourceType.Text;
-
-                case ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv":
-                    return ResourceType.Video;
-
-                case ".ttf" or ".otf" or ".ttc":
-                    return ResourceType.Font;
-
-                case ".xaml":
-                    return ResourceType.Xaml;
-            }
-
-            return ResourceType.Unknown;
         }
     }
 }
