@@ -26,40 +26,7 @@ namespace MrmTool.Models
             }
             else
             {
-                var lower = DisplayName.ToLowerInvariant();
-                if (lower.Length > 3 && lower.LastIndexOf('.') is int idx && idx > 0)
-                {
-                    switch (lower[idx..])
-                    {
-                        case ".xbf":
-                            Type = ResourceType.Xbf;
-                            break;
-
-                        case ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff":
-                            Type = ResourceType.Image;
-                            break;
-
-                        case ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus":
-                            Type = ResourceType.Audio;
-                            break;
-
-                        case ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js":
-                            Type = ResourceType.Text;
-                            break;
-
-                        case ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv":
-                            Type = ResourceType.Video;
-                            break;
-
-                        case ".ttf" or ".otf" or ".ttc":
-                            Type = ResourceType.Font;
-                            break;
-
-                        case ".xaml":
-                            Type = ResourceType.Xaml;
-                            break;
-                    }
-                }
+                Type = DetermineFileType(DisplayName);
 
                 if (Type is ResourceType.Unknown &&
                     Candidates.Count > 0 &&
@@ -88,6 +55,35 @@ namespace MrmTool.Models
                     _ => Icons.Unknown.Value,
                 };
             }
+        }
+
+        internal static ResourceType DetermineFileType(string path)
+        {
+            switch (Path.GetExtension(path).ToLower())
+            {
+                case ".xbf":
+                    return ResourceType.Xbf;
+
+                case ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff":
+                    return ResourceType.Image;
+
+                case ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus":
+                    return ResourceType.Audio;
+
+                case ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js":
+                    return ResourceType.Text;
+
+                case ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv":
+                    return ResourceType.Video;
+
+                case ".ttf" or ".otf" or ".ttc":
+                    return ResourceType.Font;
+
+                case ".xaml":
+                    return ResourceType.Xaml;
+            }
+
+            return ResourceType.Unknown;
         }
     }
 }

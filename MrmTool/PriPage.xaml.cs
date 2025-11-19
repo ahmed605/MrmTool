@@ -5,8 +5,10 @@ using System.Text;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using WinRT;
 
@@ -254,6 +256,7 @@ namespace MrmTool
             UnloadObject(invalidRootPathContainer);
             UnloadObject(valueTextBlock);
             UnloadObject(exportContainer);
+            UnloadObject(imagePreviewer);
         }
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
@@ -287,6 +290,15 @@ namespace MrmTool
                 }
 
                 // TODO: display file
+                ResourceType type = ResourceItem.DetermineFileType(candidate.ResourceName);
+                if (type == ResourceType.Image)
+                {
+                    using IRandomAccessStream stream = await file.OpenReadAsync();
+                    BitmapImage image = new();
+                    await image.SetSourceAsync(stream);
+                    FindName("imagePreviewer");
+                    imagePreviewer.Source = image;
+                }
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
