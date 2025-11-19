@@ -353,5 +353,20 @@ namespace MrmTool
             if (file is not null)
                 await FileIO.WriteBytesAsync(file, data);
         }
+
+        private void SystemTheme_Click(object sender, RoutedEventArgs e)
+        {
+            PreviewContainer.RequestedTheme = ElementTheme.Default;
+        }
+
+        private void LightTheme_Click(object sender, RoutedEventArgs e)
+        {
+            PreviewContainer.RequestedTheme = ElementTheme.Light;
+        }
+
+        private void DarkTheme_Click(object sender, RoutedEventArgs e)
+        {
+            PreviewContainer.RequestedTheme = ElementTheme.Dark;
+        }
     }
 }

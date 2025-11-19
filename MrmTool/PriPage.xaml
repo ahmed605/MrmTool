@@ -99,6 +99,16 @@
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
             </muxc:MenuBarItem>
+            <muxc:MenuBarItem Title="View">
+                <MenuFlyoutSubItem Text="Previewer theme">
+                    <muxc:RadioMenuFlyoutItem Text="System" GroupName="PreviewerTheme" Click="SystemTheme_Click" IsChecked="True" />
+                    <muxc:RadioMenuFlyoutItem Text="Light" GroupName="PreviewerTheme" Click="LightTheme_Click" />
+                    <muxc:RadioMenuFlyoutItem Text="Dark" GroupName="PreviewerTheme" Click="DarkTheme_Click" />
+                    <MenuFlyoutSubItem.Icon>
+                        <FontIcon Glyph="&#xF08C;" />
+                    </MenuFlyoutSubItem.Icon>
+                </MenuFlyoutSubItem>
+            </muxc:MenuBarItem>
         </muxc:MenuBar>
 
         <Grid Grid.Row="1" Margin="0,5,0,0">
@@ -149,7 +159,7 @@
                     </ListView>
                 </Border>
                 
-                <Border Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
+                <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" BorderBrush="{ThemeResource PriBorderBrush}" CornerRadius="8">
                     <Grid>
                         <!-- String values -->
                         <TextBlock Margin="8,8,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" />

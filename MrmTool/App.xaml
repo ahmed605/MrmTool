@@ -17,6 +17,7 @@
                 <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBar_themeresources.xaml" />
                 <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBarItem.xaml" />
                 <ResourceDictionary Source="ms-appx:///Uno/MenuBar/MenuBar.xaml" />
+                <ResourceDictionary Source="ms-appx:///Uno/RadioMenuFlyoutItem/RadioMenuFlyoutItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="Frame">
