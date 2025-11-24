@@ -291,20 +291,17 @@ namespace MrmTool
                     return;
                 }
 
-                // TODO: display file
-                ResourceType type = _selectedResource!.Type;
-                if (type == ResourceType.Image)
-                {
-                    using IRandomAccessStream stream = await file.OpenReadAsync();
-                    BitmapImage image = new();
-                    await image.SetSourceAsync(stream);
-                    FindName("imagePreviewerContainer");
-                    imagePreviewer.Source = image;
-                }
+                // TODO: Add fallback
+                using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
+                await ShowBinaryCandidate(stream, _selectedResource!.Type);
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
-                // TODO: Detect the file type
+                using MemoryStream stream = new(candidate.DataValue);
+                {
+                    if (await ShowBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
+                        return;
+                }
                 FindName("exportContainer");
                 fileSizeLabel.Text = $"File Size: {candidate.DataValue.Length} bytes";
             }
@@ -313,6 +310,20 @@ namespace MrmTool
                 FindName("valueTextBlock");
                 valueTextBlock.Text = candidate.StringValue;
             }
+        }
+
+        private async Task<bool> ShowBinaryCandidate(IRandomAccessStream stream, ResourceType type)
+        {
+            if (type == ResourceType.Image)
+            {
+                BitmapImage image = new();
+                await image.SetSourceAsync(stream);
+                FindName("imagePreviewerContainer");
+                imagePreviewer.Source = image;
+                return true;
+            }
+
+            return false;
         }
 
         private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
