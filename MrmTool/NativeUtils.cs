@@ -188,6 +188,157 @@ namespace MrmTool
                 systemEx.LoadPriFileForSystemUse(AppContext.BaseDirectory + $"\\{priFileName}");
             }
         }
+
+        // Reference: https://ntdoc.m417z.com/peb
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct SWITCH_CONTEXT_ATTRIBUTE
+        {
+            public ulong ContextUpdateCounter;
+            public BOOL AllowContextUpdate;
+            public BOOL EnableTrace;
+            public ulong EtwHandle;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct SWITCH_CONTEXT_DATA
+        {
+            public ulong OsMaxVersionTested;
+            public ulong TargetPlatform;
+            public ulong ContextMinimum;
+            public Guid Platform;
+            public Guid MinPlatform;
+            public ulong ContextSource;
+            public ulong ElementCount;
+            public _Elements Elements;
+
+            [InlineArray(48)]
+            public struct _Elements
+            {
+                public Guid e0;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct SWITCH_CONTEXT
+        {
+            public SWITCH_CONTEXT_ATTRIBUTE Attribute;
+            public SWITCH_CONTEXT_DATA Data;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct SDBQUERYRESULT
+        {
+            public fixed uint Exes[16];
+            public fixed uint ExeFlags[16];
+            public fixed uint Layers[8];
+            public uint LayerFlags;
+            public uint AppHelp;
+            public uint ExeCount;
+            public uint LayerCount;
+            public Guid ID;
+            public uint ExtraFlags;
+            public uint CustomSDBMap;
+            public _DB DB;
+
+            [InlineArray(16)]
+            public struct _DB
+            {
+                public Guid e0;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        struct APPCOMPAT_EXE_DATA
+        {
+            public fixed ulong Reserved[65];
+            public uint Size;
+            public uint Magic;
+            public BOOL LoadShimEngine;
+            public ushort ExeType;
+            public SDBQUERYRESULT SdbQueryResult;
+            public fixed byte DbgLogChannels[1024];
+            public SWITCH_CONTEXT SwitchContext;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static nint OffsetOfAppCompatShimData()
+        {
+            var padding = sizeof(void*) - sizeof(uint);
+
+            PEB peb;
+            return (nint)((byte*)&peb.SessionId - (byte*)&peb) + sizeof(uint) + padding + (2 * sizeof(ulong));
+            //                                                 + SessionId    + Padding + (AppCompatFlags + AppCompatFlagsUser)
+        }
+
+        private static PEB* _peb = null;
+
+        internal static PEB* NtCurrentPeb()
+        {
+            if (_peb is not null)
+                return _peb;
+
+            PROCESS_BASIC_INFORMATION info = new();
+
+            uint len = 0;
+            ThrowIfFailed(HRESULT_FROM_NT(NtQueryInformationProcess(
+                GetCurrentProcess(),
+                PROCESSINFOCLASS.ProcessBasicInformation,
+                &info,
+                (uint)sizeof(PROCESS_BASIC_INFORMATION),
+                &len
+            )));
+
+            _peb = info.PebBaseAddress;
+            return _peb;
+        }
+
+        private static ReadOnlySpan<byte> Windows10_PlatformID => [0x12, 0x7a, 0x0f, 0x8e, 0xb3, 0xbf, 0xe8, 0x4f, 0xb9, 0xa5, 0x48, 0xfd, 0x50, 0xa1, 0x5a, 0x9a];
+
+        private static nint _switchContextOffset = 0;
+
+        private static SWITCH_CONTEXT* GetSwitchContext(APPCOMPAT_EXE_DATA* pShim)
+        {
+            if (_switchContextOffset is 0)
+            {
+                if (Windows10_PlatformID.SequenceEqual(new((byte*)&pShim->SwitchContext.Data.Platform, sizeof(Guid))))
+                {
+                    _switchContextOffset = (nint)((byte*)&pShim->SwitchContext - (byte*)pShim);
+                }
+                else
+                {
+                    var current = (byte*)pShim;
+                    var end = (byte*)&pShim[1] - sizeof(Guid);
+                    var offset = (nint)((byte*)&pShim->SwitchContext.Data.Platform - (byte*)&pShim->SwitchContext);
+
+                    while (current <= end)
+                    {
+                        if (Windows10_PlatformID.SequenceEqual(new(current, sizeof(Guid))))
+                        {
+                            _switchContextOffset = (nint)(current - (byte*)pShim) - offset;
+                            break;
+                        }
+
+                        current++;
+                    }
+                }
+            }
+
+            if (_switchContextOffset is not 0)
+                return (SWITCH_CONTEXT*)((byte*)pShim + _switchContextOffset);
+
+            return null;
+        }
+
+        internal static SWITCH_CONTEXT_DATA* GetSwitchContextData()
+        {
+            var appCompat = *(APPCOMPAT_EXE_DATA**)((nint)NtCurrentPeb() + OffsetOfAppCompatShimData());
+            if (appCompat is null)
+                return null;
+
+            var switchContext = GetSwitchContext(appCompat);
+            return switchContext is not null ? &switchContext->Data : null;
+        }
     }
 
     [CustomMarshaller(typeof(string), MarshalMode.Default, typeof(HStringMarshaller))]

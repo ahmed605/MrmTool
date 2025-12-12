@@ -39,6 +39,12 @@ namespace MrmTool
             }
             else
             {
+                var data = NativeUtils.GetSwitchContextData();
+                if (data is not null)
+                {
+                    data->OsMaxVersionTested = 0x000a00004a610000; // Windows 10 2004, build 19041
+                }
+
                 var priv = Windows.UI.Xaml.Application.As<IFrameworkApplicationStaticsPrivate>();
                 var callback = ABI.Windows.UI.Xaml.ApplicationInitializationCallback.CreateMarshaler2((args) => { _xamlApp = new App(); });
                 CoSetASTATestMode(ASTA_TEST_MODE_FLAGS.ROINITIALIZEASTA_ALLOWED);

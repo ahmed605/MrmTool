@@ -161,6 +161,9 @@
                 </Border>
 
                 <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8">
+                    <contract7Present:Border.BackgroundTransition>
+                        <contract7Present:BrushTransition/>
+                    </contract7Present:Border.BackgroundTransition>
                     <Border.BorderBrush>
                         <SolidColorBrush Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
                     </Border.BorderBrush>
@@ -181,7 +184,7 @@
                         </StackPanel>
                         
                         <!-- Image Previewer -->
-                        <ScrollViewer x:Name="imagePreviewerContainer" x:Load="False" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled">
+                        <ScrollViewer x:Name="imagePreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
                             <Image x:Name="imagePreviewer" Stretch="None" />
                         </ScrollViewer>
                     </Grid>
