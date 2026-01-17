@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
-    <WindowsSdkPackageVersion>10.0.26100.73-preview</WindowsSdkPackageVersion>
+    <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
     <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.15063.0</TargetPlatformMinVersion>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -29,12 +29,13 @@
 
   <ItemGroup>
     <DirectPInvokeList Include="Properties\DirectPInvokeList.txt" />
+    <LinkerArg Include="runtimeobject.lib" />
   </ItemGroup>
   
   <ItemGroup>
     <PackageReference Include="Dongle.GuidRVAGen" Version="1.0.5" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251115.2" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Uwp.Managed" Version="3.0.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Uwp.Managed" Version="3.0.1" />
     <PackageReference Include="MrmLib" Version="1.0.4" />
     <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100.5" />
   </ItemGroup>
@@ -58,6 +59,19 @@
     <Content Remove="Assets\Icons\text.png" />
     <Content Remove="Assets\Icons\video.png" />
     <Content Remove="Assets\Icons\xaml.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Libs\WinUIEdit\WinUIEditorCsWinRT.dll" />
+    <ReferenceCopyLocalPaths Include="Libs\WinUIEdit\WinUIEditorCsWinRT.xml" />
+    <ReferenceCopyLocalPaths Include="Libs\WinUIEdit\WinUIEditor.pri" />
+    <ReferenceCopyLocalPaths Include="Libs\WinUIEdit\$(Platform)\WinUIEditor.dll" />
+    <None Remove="Libs\WinUIEdit\WinUIEditor\**\*" />
+    <Page Remove="Libs\WinUIEdit\WinUIEditor\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
   </ItemGroup>
 
   <Target Name="EmbedAssets" BeforeTargets="_GenerateProjectPriConfigurationFiles">

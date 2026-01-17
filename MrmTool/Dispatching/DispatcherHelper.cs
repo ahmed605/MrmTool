@@ -2,6 +2,8 @@
 using Windows.UI.Core;
 using Windows.Foundation.Metadata;
 
+using DispatcherQueueSynchronizationContext = Microsoft.System.DispatcherQueueSynchronizationContext;
+
 namespace Microsoft.System
 {
     internal static class DispatcherHelper

@@ -1,6 +1,7 @@
 using MrmLib;
 using MrmTool.Models;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -260,7 +261,10 @@ namespace MrmTool
             UnloadObject(failedToOpenFileContainer);
 
             if (item is null || _selectedResource?.Type.IsText() is not true)
-                UnloadObject(valueTextBlock);
+            {
+                //UnloadObject(valueTextBlock);
+                UnloadObject(valueTextEditor);
+            }
 
             if (item?.ValueType is not ResourceValueType.EmbeddedData)
                 UnloadObject(exportContainer);
@@ -324,9 +328,28 @@ namespace MrmTool
             }
             else
             {
-                FindName(nameof(valueTextBlock));
-                valueTextBlock.Text = candidate.StringValue;
+                ShowStringCandidate(candidate.StringValue);
             }
+        }
+
+        private void ShowStringCandidate(string str)
+        {
+            //FindName(nameof(valueTextBlock));
+            //valueTextBlock.Text = str;
+
+            FindName(nameof(valueTextEditor));
+
+            var editor = valueTextEditor.Editor;
+            editor.ReadOnly = false;
+            editor.WrapMode = WinUIEditor.Wrap.Word;
+            editor.CaretStyle = WinUIEditor.CaretStyle.Invisible;
+            editor.SetText(str);
+            editor.ReadOnly = true;
+
+            valueTextEditor.ApplyDefaultsToDocument();
+
+            if (_selectedResource is not null)
+                valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml ? "xml" : _selectedResource.DisplayName.GetExtensionAfterPeriod();
         }
 
         private async Task<bool> ShowBinaryCandidate(IRandomAccessStream stream, ResourceType type)
@@ -337,6 +360,20 @@ namespace MrmTool
                 await image.SetSourceAsync(stream);
                 FindName(nameof(imagePreviewerContainer));
                 imagePreviewer.Source = image;
+                return true;
+            }
+            else if (type.IsText())
+            {
+                var size = (uint)stream.Size;
+                var buffer = WindowsRuntimeBuffer.Create((int)size);
+                await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+                WindowsRuntimeMarshal.TryGetDataUnsafe(buffer, out var ptr);
+
+                unsafe
+                {
+                    ShowStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
+                }
+                
                 return true;
             }
 

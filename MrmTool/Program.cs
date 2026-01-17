@@ -117,7 +117,7 @@ namespace MrmTool
             GetClientRect(WindowHandle, &clientRect);
 
             SetParent(coreHwnd, WindowHandle);
-            SetWindowLong(coreHwnd, GWL.GWL_STYLE, WS_CHILD | WS_VISIBLE);
+            SetWindowLongW(coreHwnd, GWL.GWL_STYLE, WS_CHILD | WS_VISIBLE);
             SetWindowPos(coreHwnd, HWND.NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW | SWP.SWP_NOACTIVATE);
 
             Frame frame = new();
