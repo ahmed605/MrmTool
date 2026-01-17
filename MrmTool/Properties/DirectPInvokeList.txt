@@ -1,0 +1,3 @@
+﻿kernelbase
+combase
+user32

@@ -81,6 +81,12 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string SetDisplayName(this string name, string displayName)
+        {
+            return name.LastIndexOf('/', out var idx) != -1 ? $"{name[..(idx + 1)]}{displayName}" : displayName;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static string? GetParentName(this string name)
         {
             return name.LastIndexOf('/', out var idx) != -1 ? name[..idx] : null;

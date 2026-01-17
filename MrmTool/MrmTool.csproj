@@ -26,6 +26,11 @@
     <LangVersion>preview</LangVersion>
     <CsWinRTIIDOptimizerOptOut>true</CsWinRTIIDOptimizerOptOut>
   </PropertyGroup>
+
+  <ItemGroup>
+    <DirectPInvokeList Include="Properties\DirectPInvokeList.txt" />
+  </ItemGroup>
+  
   <ItemGroup>
     <PackageReference Include="Dongle.GuidRVAGen" Version="1.0.5" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251115.2" />

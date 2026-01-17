@@ -1,4 +1,6 @@
-﻿namespace MrmTool.Models
+﻿using System.Runtime.CompilerServices;
+
+namespace MrmTool.Models
 {
     internal enum ResourceType
     {
@@ -11,5 +13,14 @@
         Audio,
         Video,
         Font
+    }
+
+    internal static class ResourceTypeEx
+    {
+        // TODO: Add XBF to IsText when we include the decompiler,
+        // we probably need to remove it later when we have a proper XAML viewer/editor though
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsText(this ResourceType type) => type is ResourceType.Text or ResourceType.Xaml;
     }
 }

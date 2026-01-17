@@ -1,22 +1,48 @@
 ﻿using MrmLib;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace MrmTool.Models
 {
-    public class ResourceItem(string name)
+    public partial class ResourceItem(string name) : INotifyPropertyChanged
     {
-        public string Name { get; } = name;
+        public string Name { get; private set; } = name;
 
-        public string DisplayName { get; } = name.GetDisplayName();
+        public string DisplayName 
+        {
+            get;
+            set
+            {
+                if (field != value)
+                {
+                    field = value;
+
+                    var newName = Name.SetDisplayName(value);
+                    Name = newName;
+
+                    PropertyChanged?.Invoke(this, new(nameof(DisplayName)));
+                    PropertyChanged?.Invoke(this, new(nameof(Name)));
+
+                    EnsureIconAndType(true);
+
+                    foreach (var candidate in Candidates)
+                    {
+                        candidate.Candidate.ResourceName = newName;
+                    }
+                }
+            }
+        } = name.GetDisplayName();
 
         public ObservableCollection<ResourceItem> Children { get; } = [];
 
-        public List<CandidateItem> Candidates { get; } = [];
+        public ObservableCollection<CandidateItem> Candidates { get; } = [];
 
         public BitmapImage? Icon { get; private set; }
 
         internal ResourceType Type { get; private set; } = ResourceType.Unknown;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private void DetermineType()
         {
@@ -62,9 +88,9 @@ namespace MrmTool.Models
             }
         }
 
-        internal void EnsureIconAndType()
+        internal void EnsureIconAndType(bool changed = false)
         {
-            if (Icon is null || (Type is not ResourceType.Folder && Children.Count > 0))
+            if (changed is true || Icon is null || (Type is not ResourceType.Folder && Children.Count > 0))
             {
                 DetermineType();
 
@@ -79,6 +105,8 @@ namespace MrmTool.Models
                     ResourceType.Xaml or ResourceType.Xbf => Icons.Xaml.Value,
                     _ => Icons.Unknown.Value,
                 };
+
+                PropertyChanged?.Invoke(this, new(nameof(Icon)));
             }
         }
     }

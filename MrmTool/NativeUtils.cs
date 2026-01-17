@@ -189,7 +189,7 @@ namespace MrmTool
             }
         }
 
-        // Reference: https://ntdoc.m417z.com/peb
+        // References: https://gist.github.com/diversenok/930600b5aec5e8d15664662b9176a691, https://ntdoc.m417z.com/peb
 
         [StructLayout(LayoutKind.Sequential)]
         struct SWITCH_CONTEXT_ATTRIBUTE
@@ -204,12 +204,12 @@ namespace MrmTool
         internal struct SWITCH_CONTEXT_DATA
         {
             public ulong OsMaxVersionTested;
-            public ulong TargetPlatform;
+            public uint TargetPlatform;
             public ulong ContextMinimum;
             public Guid Platform;
             public Guid MinPlatform;
-            public ulong ContextSource;
-            public ulong ElementCount;
+            public uint ContextSource;
+            public uint ElementCount;
             public _Elements Elements;
 
             [InlineArray(48)]
@@ -248,7 +248,45 @@ namespace MrmTool
             }
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 8)]
+        /*
+        [StructLayout(LayoutKind.Sequential)]
+        struct APPCOMPAT_EXE_DATA_EIGHT
+        {
+            public fixed ushort ShimEngine[MAX.MAX_PATH];
+            public uint Size;
+            public uint Magic;
+            public ushort ExeType;
+            public SDBQUERYRESULT SdbQueryResult;
+            public fixed byte DbgLogChannels[1024];
+            public SWITCH_CONTEXT SwitchContext; // ulong[128]
+        }
+        */
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct APPCOMPAT_EXE_DATA_TH1
+        {
+            public fixed ushort ShimEngine[MAX.MAX_PATH];
+            public uint Size;
+            public uint Magic;
+            public ushort ExeType;
+            public SDBQUERYRESULT SdbQueryResult;
+            public fixed byte DbgLogChannels[1024];
+            public SWITCH_CONTEXT SwitchContext; // ulong[128]
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct APPCOMPAT_EXE_DATA_RS2
+        {
+            public uint Size;
+            public uint Magic;
+            public BOOL LoadShimEngine;
+            public ushort ExeType;
+            public SDBQUERYRESULT SdbQueryResult;
+            public fixed byte DbgLogChannels[1024];
+            public SWITCH_CONTEXT SwitchContext;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         struct APPCOMPAT_EXE_DATA
         {
             public fixed ulong Reserved[65];
@@ -305,6 +343,18 @@ namespace MrmTool
                 {
                     _switchContextOffset = (nint)((byte*)&pShim->SwitchContext - (byte*)pShim);
                 }
+                else if (Windows10_PlatformID.SequenceEqual(new((byte*)&((APPCOMPAT_EXE_DATA_RS2*)pShim)->SwitchContext.Data.Platform, sizeof(Guid))))
+                {
+                    _switchContextOffset = (nint)((byte*)&((APPCOMPAT_EXE_DATA_RS2*)pShim)->SwitchContext - (byte*)pShim);
+                }
+                else if (Windows10_PlatformID.SequenceEqual(new((byte*)&((APPCOMPAT_EXE_DATA_TH1*)pShim)->SwitchContext.Data.Platform, sizeof(Guid))))
+                {
+                    _switchContextOffset = (nint)((byte*)&((APPCOMPAT_EXE_DATA_TH1*)pShim)->SwitchContext - (byte*)pShim);
+                }
+                /*else if (Windows10_PlatformID.SequenceEqual(new((byte*)&((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext.Data.Platform, sizeof(Guid))))
+                {
+                    _switchContextOffset = (nint)((byte*)&((APPCOMPAT_EXE_DATA_EIGHT*)pShim)->SwitchContext - (byte*)pShim);
+                }*/
                 else
                 {
                     var current = (byte*)pShim;

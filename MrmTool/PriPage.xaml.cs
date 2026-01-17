@@ -240,6 +240,7 @@ namespace MrmTool
                 if (items.Count > 0 && items[0] is StorageFile file && file.Name.ToLowerInvariant().EndsWith(".pri"))
                 {
                     await TryLoadPri(file);
+                    e.Handled = true;
                 }
             }
         }
@@ -253,19 +254,26 @@ namespace MrmTool
             }
         }
 
-        private void UnloadPreviewElements()
+        private void UnloadPreviewElements(CandidateItem? item = null)
         {
             UnloadObject(invalidRootPathContainer);
-            UnloadObject(valueTextBlock);
-            UnloadObject(exportContainer);
-            UnloadObject(imagePreviewerContainer);
+            UnloadObject(failedToOpenFileContainer);
+
+            if (item is null || _selectedResource?.Type.IsText() is not true)
+                UnloadObject(valueTextBlock);
+
+            if (item?.ValueType is not ResourceValueType.EmbeddedData)
+                UnloadObject(exportContainer);
+
+            if (item is null || _selectedResource?.Type is not ResourceType.Image)
+                UnloadObject(imagePreviewerContainer);
         }
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
         private async Task DisplayCandidate(CandidateItem item)
         {
-            UnloadPreviewElements();
+            UnloadPreviewElements(item);
 
             var candidate = item.Candidate;
             if (candidate.ValueType is ResourceValueType.Path)
@@ -287,13 +295,22 @@ namespace MrmTool
 
                 if (file is null)
                 {
-                    FindName("invalidRootPathContainer");
+                    FindName(nameof(invalidRootPathContainer));
                     return;
                 }
 
-                // TODO: Add fallback
-                using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
-                await ShowBinaryCandidate(stream, _selectedResource!.Type);
+                try
+                {
+                    using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
+                    await ShowBinaryCandidate(stream, _selectedResource!.Type);
+                }
+                catch (Exception ex)
+                {
+                    FindName(nameof(failedToOpenFileContainer));
+                    failedFileNameRun.Text = file.Path;
+                    failedExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
+                    failedToOpenFileContainer.Visibility = Visibility.Visible;
+                }
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
@@ -302,12 +319,12 @@ namespace MrmTool
                     if (await ShowBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
                         return;
                 }
-                FindName("exportContainer");
+                FindName(nameof(exportContainer));
                 fileSizeLabel.Text = $"File Size: {candidate.DataValue.Length} bytes";
             }
             else
             {
-                FindName("valueTextBlock");
+                FindName(nameof(valueTextBlock));
                 valueTextBlock.Text = candidate.StringValue;
             }
         }
@@ -318,7 +335,7 @@ namespace MrmTool
             {
                 BitmapImage image = new();
                 await image.SetSourceAsync(stream);
-                FindName("imagePreviewerContainer");
+                FindName(nameof(imagePreviewerContainer));
                 imagePreviewer.Source = image;
                 return true;
             }
@@ -378,6 +395,14 @@ namespace MrmTool
         private void DarkTheme_Click(object sender, RoutedEventArgs e)
         {
             PreviewContainer.RequestedTheme = ElementTheme.Dark;
+        }
+
+        private async void TryAgain_Click(object sender, RoutedEventArgs e)
+        {
+            if (candidatesList.SelectedItem is CandidateItem item)
+            {
+                await DisplayCandidate(item);
+            }
         }
     }
 }

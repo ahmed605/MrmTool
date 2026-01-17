@@ -125,7 +125,7 @@
                     <RowDefinition Height="*" MinHeight="130"/>
                 </Grid.RowDefinitions>
                 
-                <Border Grid.Row="0" Margin="16,0,10,10" BorderThickness="0.5" CornerRadius="8">
+                <Border Grid.Row="0" Margin="16,0,10.5,10.5" BorderThickness="0.5" CornerRadius="8">
                     <Border.BorderBrush>
                         <SolidColorBrush Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
                     </Border.BorderBrush>
@@ -153,14 +153,14 @@
                             <DataTemplate x:DataType="models:CandidateItem">
                                 <wct:DataRow HorizontalAlignment="Left">
                                     <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{x:Bind Qualifers}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{x:Bind Qualifiers}" VerticalAlignment="Center"/>
                                 </wct:DataRow>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                 </Border>
 
-                <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10,10" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8">
+                <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10.5,10.5" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8">
                     <contract7Present:Border.BackgroundTransition>
                         <contract7Present:BrushTransition/>
                     </contract7Present:Border.BackgroundTransition>
@@ -176,7 +176,18 @@
                             <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." HorizontalAlignment="Center" />
                             <Button Content="Set root folder" HorizontalAlignment="Center" Margin="0,10,0,0" Click="SetRootFolder_Click" />
                         </StackPanel>
-                        
+
+                        <!-- Path error: Failed to open file -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" Visibility="Collapsed" x:Name="failedToOpenFileContainer">
+                            <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" >
+                                Failed to open <Bold><Italic>&quot;<Run x:Name="failedFileNameRun"/>&quot;</Italic></Bold>, please make sure the file is valid, accessible, and is not open in any other app.
+                                <LineBreak/>
+                                <LineBreak/>
+                                <Bold>Exception:</Bold> <Run x:Name="failedExceptionMessageRun"/>
+                            </TextBlock>
+                            <Button Content="Try again" HorizontalAlignment="Center" Margin="0,10,0,0" Click="TryAgain_Click" />
+                        </StackPanel>
+
                         <!-- Embedded data fallback -->
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="exportContainer">
                             <TextBlock x:Name="fileSizeLabel" HorizontalAlignment="Center" />
