@@ -17,10 +17,16 @@ namespace MrmTool.Models
 
     internal static class ResourceTypeEx
     {
-        // TODO: Add XBF to IsText when we include the decompiler,
-        // we probably need to remove it later when we have a proper XAML viewer/editor though
+        extension(ResourceType type)
+        {
+            internal bool IsText
+            {
+                // TODO: Add XBF to IsText when we include the decompiler,
+                // we probably need to remove it later when we have a proper XAML viewer/editor though
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsText(this ResourceType type) => type is ResourceType.Text or ResourceType.Xaml;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => type is ResourceType.Text or ResourceType.Xaml;
+            }
+        }
     }
 }

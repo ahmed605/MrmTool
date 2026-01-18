@@ -260,7 +260,7 @@ namespace MrmTool
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
 
-            if (item is null || _selectedResource?.Type.IsText() is not true)
+            if (item is null || _selectedResource?.Type.IsText is not true)
             {
                 //UnloadObject(valueTextBlock);
                 UnloadObject(valueTextEditor);
@@ -362,7 +362,7 @@ namespace MrmTool
                 imagePreviewer.Source = image;
                 return true;
             }
-            else if (type.IsText())
+            else if (type.IsText)
             {
                 var size = (uint)stream.Size;
                 var buffer = WindowsRuntimeBuffer.Create((int)size);
