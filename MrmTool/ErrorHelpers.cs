@@ -1,5 +1,9 @@
-﻿using TerraFX.Interop.Windows;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 
 namespace MrmTool
@@ -104,6 +108,29 @@ namespace MrmTool
             {
                 ThrowExternalException(valueExpression ?? "Method", HRESULT_FROM_WIN32(GetLastError()));
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static HRESULT LOG_IF_FAILED(HRESULT value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        {
+            if (value.FAILED)
+            {
+                Debug.WriteLine($"LOG_IF_FAILED: 0x{value} [{valueExpression ?? "Method"}]");
+            }
+
+            return value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool SUCCEEDED_LOG(HRESULT value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        {
+            if (value.FAILED)
+            {
+                Debug.WriteLine($"SUCCEEDED_LOG: 0x{value} [{valueExpression ?? "Method"}]");
+                return false;
+            }
+
+            return true;
         }
     }
 }

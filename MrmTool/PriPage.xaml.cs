@@ -3,6 +3,7 @@ using MrmTool.Models;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using TerraFX.Interop.Windows;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -12,6 +13,9 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using WinRT;
+
+using static TerraFX.Interop.Windows.Windows;
+using static MrmTool.ErrorHelpers;
 
 namespace MrmTool
 {
@@ -220,7 +224,7 @@ namespace MrmTool
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            TerraFX.Interop.Windows.Windows.SendMessageW(Program.WindowHandle, TerraFX.Interop.Windows.WM.WM_CLOSE, 0, 0);
+            SendMessageW(Program.WindowHandle, WM.WM_CLOSE, 0, 0);
         }
 
         private void Grid_DragOver(object sender, DragEventArgs e)
@@ -259,6 +263,7 @@ namespace MrmTool
         {
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
+            UnloadObject(openFolderContainer);
 
             if (item is null || _selectedResource?.Type.IsText is not true)
             {
@@ -303,10 +308,11 @@ namespace MrmTool
                     return;
                 }
 
+                IRandomAccessStream stream;
+
                 try
                 {
-                    using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
-                    await ShowBinaryCandidate(stream, _selectedResource!.Type);
+                    stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
                 }
                 catch (Exception ex)
                 {
@@ -314,15 +320,26 @@ namespace MrmTool
                     failedFileNameRun.Text = file.Path;
                     failedExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
                     failedToOpenFileContainer.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                var result = await ShowBinaryCandidate(stream, _selectedResource!.Type);
+                stream.Dispose();
+
+                if (!result)
+                {
+                    FindName(nameof(openFolderContainer));
+                    openFolderContainer.Tag = file.Path;
                 }
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
-                using MemoryStream stream = new(candidate.DataValue);
+                using (MemoryStream stream = new(candidate.DataValue))
                 {
                     if (await ShowBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
                         return;
                 }
+
                 FindName(nameof(exportContainer));
                 fileSizeLabel.Text = $"File Size: {candidate.DataValue.Length} bytes";
             }
@@ -439,6 +456,22 @@ namespace MrmTool
             if (candidatesList.SelectedItem is CandidateItem item)
             {
                 await DisplayCandidate(item);
+            }
+        }
+
+        private unsafe void OpenFolder_Click(object sender, RoutedEventArgs e)
+        {
+            if (openFolderContainer.Tag is string path)
+            {
+                fixed (char* pPath = path)
+                {
+                    ITEMIDLIST* pList = default;
+                    if (SUCCEEDED_LOG(SHParseDisplayName(pPath, null, &pList, 0, null)))
+                    {
+                        LOG_IF_FAILED(SHOpenFolderAndSelectItems(pList, 0, null, 0));
+                        ILFree(pList);
+                    }
+                }
             }
         }
     }
