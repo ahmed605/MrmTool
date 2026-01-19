@@ -1,8 +1,14 @@
 ﻿using MrmLib;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using TerraFX.Interop.Windows;
+using System.Runtime.InteropServices;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
+using WinRT;
+
+using TerraFX.Interop.Windows;
+using static TerraFX.Interop.Windows.Windows;
+using static MrmTool.ErrorHelpers;
 
 namespace MrmTool
 {
@@ -136,6 +142,47 @@ namespace MrmTool
         private static bool IsDirectorySeparator(char c)
         {
             return c == DirectorySeparatorChar || c == AltDirectorySeparatorChar;
+        }
+
+        internal unsafe static HDROP* GetHDropUnsafe(this DataPackageView view)
+        {
+            using ComPtr<IDataObject> dataObject = default;
+
+            if(SUCCEEDED_LOG(((IUnknown*)((IWinRTObject)view).NativeObject.ThisPtr)->QueryInterface(
+                (Guid*)Unsafe.AsPointer(in IID.IID_IDataObject),
+                (void**)dataObject.GetAddressOf())))
+            {
+                FORMATETC format = new()
+                {
+                    cfFormat = CF.CF_HDROP,
+                    dwAspect = (uint)DVASPECT.DVASPECT_CONTENT,
+                    lindex = -1,
+                    ptd = null,
+                    tymed = (uint)TYMED.TYMED_HGLOBAL
+                };
+
+                STGMEDIUM medium = new();
+                if (SUCCEEDED_LOG(dataObject.Get()->GetData(&format, &medium)))
+                {
+                    return (HDROP*)medium.Anonymous.hGlobal; // GMEM_FIXED
+                }
+            }
+
+            return null;
+        }
+
+        internal unsafe static string? GetFirstStorageItemPathUnsafe(this DataPackageView view)
+        {
+            var hDrop = view.GetHDropUnsafe();
+            if (hDrop is null) return null;
+
+            var dropFiles = *(DROPFILES**)hDrop;
+            if (dropFiles is null) return null;
+
+            string path = new((char*)((byte*)dropFiles + dropFiles->pFiles));
+            LogLastErrorIfFalse(GlobalFree((HGLOBAL)hDrop).Value is null);
+
+            return path;
         }
 
         extension(QualifierOperator op)

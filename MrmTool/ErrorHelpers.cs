@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 
@@ -11,7 +9,7 @@ namespace MrmTool
     internal static unsafe class ErrorHelpers
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowIfWin32Error(uint value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is not 0)
@@ -21,7 +19,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(void* value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is null)
@@ -31,7 +29,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(nint value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is 0)
@@ -41,7 +39,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(nuint value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is 0)
@@ -51,7 +49,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(ulong value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is 0)
@@ -61,7 +59,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(uint value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is 0)
@@ -71,7 +69,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfNull(ushort value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is 0)
@@ -81,7 +79,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfDefault<T>(T value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null) where T : IEquatable<T>
         {
             if (value.Equals(default))
@@ -91,7 +89,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfFalse(bool value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value is false)
@@ -101,7 +99,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [System.Diagnostics.DebuggerStepThrough, System.Diagnostics.DebuggerHidden, System.Diagnostics.StackTraceHidden]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         internal static void ThrowLastErrorIfFalse(BOOL value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value.Value is 0)
@@ -111,6 +109,27 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
+        internal static void LogLastErrorIfFalse(bool value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        {
+            if (value is false)
+            {
+                Debug.WriteLine($"LogLastErrorIfFalse: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
+        internal static void LogLastErrorIfFalse(BOOL value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        {
+            if (value.Value is 0)
+            {
+                Debug.WriteLine($"LogLastErrorIfFalse: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         public static HRESULT LOG_IF_FAILED(HRESULT value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value.FAILED)
@@ -122,6 +141,7 @@ namespace MrmTool
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
         public static bool SUCCEEDED_LOG(HRESULT value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
             if (value.FAILED)

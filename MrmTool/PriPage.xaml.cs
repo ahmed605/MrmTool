@@ -16,6 +16,7 @@ using WinRT;
 
 using static TerraFX.Interop.Windows.Windows;
 using static MrmTool.ErrorHelpers;
+using System.Runtime.CompilerServices;
 
 namespace MrmTool
 {
@@ -49,11 +50,6 @@ namespace MrmTool
             }
         }
 
-        private void Clear()
-        {
-            ResourceItems.Clear();
-        }
-
         private ResourceItem GetOrAddResourceItem(string name)
         {
             string[] split = name.Split('/');
@@ -70,6 +66,13 @@ namespace MrmTool
             }
 
             return currentParent!;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Clear()
+        {
+            ResourceItems.Clear();
+            // TODO: do we need to do any other cleanup here?
         }
 
         private void LoadPri(PriFile pri)
@@ -167,12 +170,12 @@ namespace MrmTool
 
         private void AddResource_Click(object sender, RoutedEventArgs e)
         {
-
+            // TODO
         }
 
         private void RemoveResources_Click(object sender, RoutedEventArgs e)
         {
-
+            // TODO
         }
 
         private async Task PickRootFolder()
@@ -229,10 +232,20 @@ namespace MrmTool
 
         private void Grid_DragOver(object sender, DragEventArgs e)
         {
-            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            var view = e.DataView;
+            if (view.Contains(StandardDataFormats.StorageItems))
             {
-                e.AcceptedOperation = DataPackageOperation.Copy;
-                e.Handled = true;
+                var path = view.GetFirstStorageItemPathUnsafe();
+                if (path is null || Path.GetExtension(path).ToLowerInvariant() is ".pri")
+                {
+                    e.AcceptedOperation = DataPackageOperation.Copy;
+                    e.DragUIOverride.Caption = "Drop to load the PRI file";
+                    e.Handled = true;
+                }
+                else
+                {
+                    e.AcceptedOperation = DataPackageOperation.None;
+                }
             }
         }
 
@@ -267,7 +280,6 @@ namespace MrmTool
 
             if (item is null || _selectedResource?.Type.IsText is not true)
             {
-                //UnloadObject(valueTextBlock);
                 UnloadObject(valueTextEditor);
             }
 
@@ -279,7 +291,6 @@ namespace MrmTool
         }
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
-        [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
         private async Task DisplayCandidate(CandidateItem item)
         {
             UnloadPreviewElements(item);
@@ -287,56 +298,19 @@ namespace MrmTool
             var candidate = item.Candidate;
             if (candidate.ValueType is ResourceValueType.Path)
             {
-                StorageFile? file = null;
-
-                var root = _rootFolder ?? await _currentFile?.GetParentAsync();
-                if (await root.TryGetItemAsync(candidate.StringValue) is StorageFile cFile)
+                if (await TryResolvePathCandidate(candidate.StringValue) is StorageFile file)
                 {
-                    file = cFile;
-                }
-                else
-                {
-                    if (await root.TryGetItemAsync(_currentFile?.DisplayName) is StorageFolder folder)
-                    {
-                        file = await folder.TryGetItemAsync(candidate.StringValue) as StorageFile;
-                    }
-                }
-
-                if (file is null)
-                {
-                    FindName(nameof(invalidRootPathContainer));
+                    await DisplayPathCandidate(file);
                     return;
                 }
 
-                IRandomAccessStream stream;
-
-                try
-                {
-                    stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
-                }
-                catch (Exception ex)
-                {
-                    FindName(nameof(failedToOpenFileContainer));
-                    failedFileNameRun.Text = file.Path;
-                    failedExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
-                    failedToOpenFileContainer.Visibility = Visibility.Visible;
-                    return;
-                }
-
-                var result = await ShowBinaryCandidate(stream, _selectedResource!.Type);
-                stream.Dispose();
-
-                if (!result)
-                {
-                    FindName(nameof(openFolderContainer));
-                    openFolderContainer.Tag = file.Path;
-                }
+                FindName(nameof(invalidRootPathContainer));
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
                 using (MemoryStream stream = new(candidate.DataValue))
                 {
-                    if (await ShowBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
+                    if (await DisplayBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
                         return;
                 }
 
@@ -345,15 +319,12 @@ namespace MrmTool
             }
             else
             {
-                ShowStringCandidate(candidate.StringValue);
+                DisplayStringCandidate(candidate.StringValue);
             }
         }
 
-        private void ShowStringCandidate(string str)
+        private void DisplayStringCandidate(string str)
         {
-            //FindName(nameof(valueTextBlock));
-            //valueTextBlock.Text = str;
-
             FindName(nameof(valueTextEditor));
 
             var editor = valueTextEditor.Editor;
@@ -369,7 +340,7 @@ namespace MrmTool
                 valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml ? "xml" : _selectedResource.DisplayName.GetExtensionAfterPeriod();
         }
 
-        private async Task<bool> ShowBinaryCandidate(IRandomAccessStream stream, ResourceType type)
+        private async Task<bool> DisplayBinaryCandidate(IRandomAccessStream stream, ResourceType type)
         {
             if (type == ResourceType.Image)
             {
@@ -388,13 +359,66 @@ namespace MrmTool
 
                 unsafe
                 {
-                    ShowStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
+                    DisplayStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
                 }
                 
                 return true;
             }
 
             return false;
+        }
+
+        [DynamicWindowsRuntimeCast(typeof(StorageFile))]
+        [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
+        private async Task<StorageFile?> TryResolvePathCandidate(string fileName)
+        {
+            StorageFile? file = null;
+
+            var root = _rootFolder ?? await _currentFile?.GetParentAsync();
+            if (await root.TryGetItemAsync(fileName) is StorageFile cFile)
+            {
+                file = cFile;
+            }
+            else
+            {
+                if (await root.TryGetItemAsync(_currentFile?.DisplayName) is StorageFolder folder)
+                {
+                    file = await folder.TryGetItemAsync(fileName) as StorageFile;
+                }
+            }
+
+            return file;
+        }
+
+        private async Task DisplayPathCandidate(StorageFile file)
+        {
+            bool result = false;
+            IRandomAccessStream stream;
+
+            if (_selectedResource?.Type.IsPreviewable is true)
+            {
+                try
+                {
+                    stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
+                }
+                catch (Exception ex)
+                {
+                    FindName(nameof(failedToOpenFileContainer));
+                    failedFileNameRun.Text = file.Path;
+                    failedExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
+                    failedToOpenFileContainer.Visibility = Visibility.Visible;
+                    return;
+                }
+
+                result = await DisplayBinaryCandidate(stream, _selectedResource.Type);
+                stream.Dispose();
+            }
+
+            if (!result)
+            {
+                FindName(nameof(openFolderContainer));
+                openFolderContainer.Tag = file.Path;
+            }
         }
 
         private async void candidatesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -414,10 +438,7 @@ namespace MrmTool
             ResourceCandidate candidate = ((CandidateItem)candidatesList.SelectedItem).Candidate;
             byte[] data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValue : Encoding.UTF8.GetBytes(candidate.StringValue);
 
-            string resourceName = candidate.ResourceName;
-            int fileNameIndex = resourceName.LastIndexOf('/') + 1;
-
-            string fileName = resourceName[fileNameIndex..];
+            string fileName = candidate.ResourceName.GetDisplayName();
             string extension = Path.GetExtension(fileName);
 
             FileSavePicker picker = new();
@@ -426,13 +447,12 @@ namespace MrmTool
 
             if (!string.IsNullOrEmpty(extension))
             {
-                picker.FileTypeChoices.Add($"{extension[1..].ToUpper()} file", new string[] { extension });
+                picker.FileTypeChoices.Add($"{extension[1..].ToUpperInvariant()} file", new string[] { extension });
             }
 
             picker.FileTypeChoices.Add("All files", new string[] { "." });
 
-            StorageFile file = await picker.PickSaveFileAsync();
-            if (file is not null)
+            if (await picker.PickSaveFileAsync() is { } file)
                 await FileIO.WriteBytesAsync(file, data);
         }
 

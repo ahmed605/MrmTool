@@ -27,6 +27,12 @@ namespace MrmTool.Models
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => type is ResourceType.Text or ResourceType.Xaml;
             }
+
+            internal bool IsPreviewable // WIP
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => type is ResourceType.Text or ResourceType.Xaml or ResourceType.Image;
+            }
         }
     }
 }

@@ -170,7 +170,6 @@
                     </Border.BorderBrush>
                     <Grid>
                         <!-- String values -->
-                        <!--TextBlock Margin="8,8,0,0" x:Name="valueTextBlock" x:Load="False" TextWrapping="Wrap" IsTextSelectionEnabled="True" /-->
                         <winuieditor:CodeEditorControl Padding="-10,12,0,0" x:Name="valueTextEditor" x:Load="False" />
                         
                         <!-- Path error: Invalid root -->
@@ -180,14 +179,14 @@
                         </StackPanel>
 
                         <!-- Path error: Failed to open file -->
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" Visibility="Collapsed" x:Name="failedToOpenFileContainer">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Padding="20" x:Load="False" Visibility="Collapsed" x:Name="failedToOpenFileContainer">
                             <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" >
-                                Failed to open <Bold><Italic>&quot;<Run x:Name="failedFileNameRun"/>&quot;</Italic></Bold>, please make sure the file is valid, accessible, and is not open in any other app.
+                                Failed to open <Bold>&quot;<Run x:Name="failedFileNameRun"/>&quot;</Bold>, please make sure the file is valid, accessible, and is not open in any other app.
                                 <LineBreak/>
                                 <LineBreak/>
                                 <Bold>Exception:</Bold> <Run x:Name="failedExceptionMessageRun"/>
                             </TextBlock>
-                            <Button Content="Try again" HorizontalAlignment="Center" Margin="0,10,0,0" Click="TryAgain_Click" />
+                            <Button Content="Try again" HorizontalAlignment="Center" Margin="0,20,0,0" Click="TryAgain_Click" />
                         </StackPanel>
 
                         <!-- Path fallback -->

@@ -1,5 +1,6 @@
 using MrmLib;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -8,6 +9,10 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Media;
 using WinRT;
+
+using TerraFX.Interop.Windows;
+using static TerraFX.Interop.Windows.Windows;
+using System.Runtime.InteropServices;
 
 namespace MrmTool
 {
@@ -36,10 +41,20 @@ namespace MrmTool
 
         private void MainGrid_DragOver(object sender, DragEventArgs e)
         {
-            if (e.DataView.Contains(StandardDataFormats.StorageItems))
+            var view = e.DataView;
+            if (view.Contains(StandardDataFormats.StorageItems))
             {
-                e.AcceptedOperation = DataPackageOperation.Copy;
-                e.Handled = true;
+                var path = view.GetFirstStorageItemPathUnsafe();
+                if (path is null || Path.GetExtension(path).ToLowerInvariant() is ".pri")
+                {
+                    e.AcceptedOperation = DataPackageOperation.Copy;
+                    e.DragUIOverride.Caption = "Drop to load the PRI file";
+                    e.Handled = true;
+                }
+                else
+                {
+                    e.AcceptedOperation = DataPackageOperation.None;
+                }
             }
         }
 
@@ -52,6 +67,7 @@ namespace MrmTool
                 if (items.Count > 0 && items[0] is StorageFile file && file.Name.ToLowerInvariant().EndsWith(".pri"))
                 {
                     await LoadPri(file);
+                    e.Handled = true;
                 }
             }
         }
