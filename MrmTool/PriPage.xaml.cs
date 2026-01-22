@@ -377,6 +377,7 @@ namespace MrmTool
                     imagePreviewer.MaxHeight = double.PositiveInfinity;
 
                     imagePreviewerContainer.UpdateLayout();
+                    imagePreviewerContainer.ChangeView(null, null, 1f, true);
 
                     var imageWidth = imagePreviewer.ActualWidth;
                     var imageHeight = imagePreviewer.ActualHeight;
@@ -392,11 +393,12 @@ namespace MrmTool
                             imagePreviewer.MaxWidth = containerWidth / 0.1d;
                             imagePreviewer.MaxHeight = containerHeight / 0.1d;
                             imagePreviewer.Stretch = Stretch.Uniform;
+                            imagePreviewerContainer.UpdateLayout();
 
                             ratio = 0.1d;
                         }
 
-                        imagePreviewerContainer.ChangeView(null, null, (float)ratio);
+                        imagePreviewerContainer.ChangeView(null, null, (float)ratio, true);
                     }
 
                     return true;
