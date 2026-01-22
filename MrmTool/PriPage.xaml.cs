@@ -372,6 +372,15 @@ namespace MrmTool
                     FindName(nameof(imagePreviewerContainer));
                     imagePreviewer.Source = image;
 
+                    imagePreviewerContainer.UpdateLayout();
+
+                    if (imagePreviewer.ActualWidth > imagePreviewerContainer.ActualWidth ||
+                        imagePreviewer.ActualHeight > imagePreviewerContainer.ActualHeight)
+                    {
+                        var ratio = Math.Min(imagePreviewerContainer.ActualWidth / imagePreviewer.ActualWidth, imagePreviewerContainer.ActualHeight / imagePreviewer.ActualHeight);
+                        imagePreviewerContainer.ChangeView(null, null, (float)ratio);
+                    }
+
                     return true;
                 }
                 else if (type.IsText)
