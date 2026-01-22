@@ -53,7 +53,7 @@ namespace MrmTool.Models
             }
             else
             {
-                Type = Path.GetExtension(DisplayName).ToLower() switch
+                Type = Path.GetExtension(DisplayName).ToLowerInvariant() switch
                 {
                     ".xbf"
                         => ResourceType.Xbf,
@@ -64,7 +64,7 @@ namespace MrmTool.Models
                     ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
                         => ResourceType.Audio,
 
-                    ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".css" or ".js"
+                    ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".htm" or ".css" or "scss" or "less" or "hss" or ".js" or ".cs" or ".resw" or ".resx"
                         => ResourceType.Text,
 
                     ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv"

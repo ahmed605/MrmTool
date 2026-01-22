@@ -15,6 +15,8 @@ using WinRT;
 using MrmLib;
 using MrmTool.Models;
 using MrmTool.Common;
+using MrmTool.Scintilla;
+using WinUIEditor;
 
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
@@ -358,7 +360,7 @@ namespace MrmTool
             valueTextEditor.ApplyDefaultsToDocument();
 
             if (_selectedResource is not null)
-                valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml ? "xml" : _selectedResource.DisplayName.GetExtensionAfterPeriod();
+                valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml ? "xml" : _selectedResource.DisplayName.GetExtensionAfterPeriod().ToScintillaLanguage();
         }
 
         private async Task<bool> DisplayBinaryCandidate(IRandomAccessStream stream, ResourceType type)
@@ -553,6 +555,89 @@ namespace MrmTool
         {
             var dialog = new NoticeDialog();
             await dialog.ShowAsync();
+        }
+
+        private unsafe void SyntaxHighlightingApplied(object sender, ElementTheme e)
+        {
+            if (valueTextEditor.HighlightingLanguage is "css")
+            {
+                var editor = valueTextEditor.Editor;
+
+                var lexer = Lexilla.CreateLexer("css");
+                lexer->PropertySetUnsafe("fold"u8, "1"u8);
+                lexer->PropertySetUnsafe("lexer.css.scss.language"u8, "1"u8);
+                editor.SetILexer((ulong)lexer);
+
+                editor.SetKeyWords(0, "color background background-color font font-size font-family font-weight " +
+                                      "margin margin-top margin-right margin-bottom margin-left " +
+                                      "padding padding-top padding-right padding-bottom padding-left " +
+                                      "border border-radius width height display position top right bottom left " +
+                                      "align-items justify-content flex grid gap");
+
+                editor.SetKeyWords(1, "hover active focus visited disabled checked first-child last-child " +
+                                      "nth-child nth-of-type not before after");
+
+                if (e is ElementTheme.Dark)
+                {
+                    editor.StyleSetFore((int)StylesCommon.Default, DarkPlusTheme.DarkPlusEditorForeground);
+                    editor.StyleSetFore((int)StylesCommon.BraceLight, DarkPlusTheme.DarkPlusEditorForeground);
+
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DEFAULT, DarkPlusTheme.DarkPlusEditorForeground);
+                    editor.StyleSetFore(Lexilla.SCE_CSS_TAG, DarkPlusTheme.DarkPlus2(Scope.EntityNameTagCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_CLASS, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NameClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_ID, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NameIdCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_ATTRIBUTE, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_Name));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOCLASS, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOELEMENT, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NamePseudo_ElementCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOCLASS, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOELEMENT, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NamePseudo_ElementCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER2, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER3, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_IDENTIFIER, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_VALUE, DarkPlusTheme.DarkPlus2(Scope.ConstantNumeric));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DOUBLESTRING, DarkPlusTheme.DarkPlus2(Scope.String));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_SINGLESTRING, DarkPlusTheme.DarkPlus2(Scope.String));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_OPERATOR, DarkPlusTheme.DarkPlus2(Scope.KeywordOperator));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_COMMENT, DarkPlusTheme.DarkPlus2(Scope.Comment));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DIRECTIVE, DarkPlusTheme.DarkPlus2(Scope.MetaPreprocessor));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_GROUP_RULE, DarkPlusTheme.DarkPlus2(Scope.MetaPreprocessor));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IMPORTANT, DarkPlusTheme.DarkPlus2(Scope.Keyword));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_VARIABLE, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_PSEUDOCLASS, DarkPlusTheme.DarkPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_IDENTIFIER, DarkPlusTheme.DarkPlus2(Scope.VariableCss));
+                }
+                else
+                {
+                    editor.StyleSetFore((int)StylesCommon.Default, LightPlusTheme.LightPlusEditorForeground);
+                    editor.StyleSetFore((int)StylesCommon.BraceLight, LightPlusTheme.LightPlusEditorForeground);
+
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DEFAULT, LightPlusTheme.LightPlusEditorForeground);
+                    editor.StyleSetFore(Lexilla.SCE_CSS_TAG, LightPlusTheme.LightPlus2(Scope.EntityNameTagCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_CLASS, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NameClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_ID, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NameIdCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_ATTRIBUTE, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_Name));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOCLASS, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOELEMENT, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NamePseudo_ElementCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOCLASS, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOELEMENT, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NamePseudo_ElementCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER2, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER3, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_IDENTIFIER, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_VALUE, LightPlusTheme.LightPlus2(Scope.ConstantNumeric));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DOUBLESTRING, LightPlusTheme.LightPlus2(Scope.String));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_SINGLESTRING, LightPlusTheme.LightPlus2(Scope.String));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_OPERATOR, LightPlusTheme.LightPlus2(Scope.KeywordOperator));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_COMMENT, LightPlusTheme.LightPlus2(Scope.Comment));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_DIRECTIVE, LightPlusTheme.LightPlus2(Scope.MetaPreprocessor));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_GROUP_RULE, LightPlusTheme.LightPlus2(Scope.MetaPreprocessor));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_IMPORTANT, LightPlusTheme.LightPlus2(Scope.Keyword));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_VARIABLE, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_PSEUDOCLASS, LightPlusTheme.LightPlus2(Scope.EntityOtherAttribute_NamePseudo_ClassCss));
+                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_IDENTIFIER, LightPlusTheme.LightPlus2(Scope.VariableCss));
+                }
+            }
         }
     }
 }

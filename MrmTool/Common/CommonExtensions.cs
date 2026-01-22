@@ -112,6 +112,20 @@ namespace MrmTool.Common
             return path.ToLowerInvariant().AsSpan().GetExtensionAfterPeriod().ToString();
         }
 
+        internal static string ToScintillaLanguage(this string extensionAfterPeriod)
+        {
+            return extensionAfterPeriod switch
+            {
+                // "cxx" or "h" or "hpp" or "c" or "cc" => "cpp",
+                "cs" => "csharp",
+                "js" => "javascript",
+                "htm" => "html",
+                "resw" or "resx" or "xaml" => "xml",
+                "scss" or "less" or "hss" => "css",
+                _ => extensionAfterPeriod,
+            };
+        }
+
         internal static ReadOnlySpan<char> GetExtensionAfterPeriod(this ReadOnlySpan<char> path)
         {
             int length = path.Length;

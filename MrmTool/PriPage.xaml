@@ -177,7 +177,7 @@
                     </Border.BorderBrush>
                     <Grid>
                         <!-- String values -->
-                        <winuieditor:CodeEditorControl Padding="-10,12,0,0" x:Name="valueTextEditor" x:Load="False" />
+                        <winuieditor:CodeEditorControl Padding="-10,12,0,0" x:Name="valueTextEditor" SyntaxHighlightingApplied="SyntaxHighlightingApplied" x:Load="False" />
                         
                         <!-- Path error: Invalid root -->
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
