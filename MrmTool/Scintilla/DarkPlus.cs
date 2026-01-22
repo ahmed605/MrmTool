@@ -1,9 +1,225 @@
-﻿namespace MrmTool.Scintilla
+﻿// Ported from
+// https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/dark_plus.json
+// https://github.com/microsoft/vscode/blob/main/extensions/theme-defaults/themes/dark_vs.json
+// under the following license
+
+/*
+    MIT License
+
+    Copyright (c) 2015 - present Microsoft Corporation
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
+namespace MrmTool.Scintilla
 {
     internal static class DarkPlusTheme
     {
         internal const int DarkPlusEditorForeground = unchecked((int)0xFFD4D4D4);
 
+        internal static ReadOnlySpan<int> Colors
+        {
+            get =>
+            [
+                unchecked((int)0xFFD4D4D4), // MetaEmbedded
+                unchecked((int)0xFFD4D4D4), // SourceGroovyEmbedded
+                unchecked((int)0xFFD4D4D4), // String__MetaImageInlineMarkdown
+                unchecked((int)0xFFD4D4D4), // VariableLegacyBuiltinPython
+                unchecked((int)0xFFD69C56), // MetaDiffHeader
+                unchecked((int)0xFF55996A), // Comment
+                unchecked((int)0xFFD69C56), // ConstantLanguage
+                unchecked((int)0xFFA8CEB5), // ConstantNumeric
+                unchecked((int)0xFFFFC14F), // VariableOtherEnummember
+                unchecked((int)0xFFA8CEB5), // KeywordOperatorPlusExponent
+                unchecked((int)0xFFA8CEB5), // KeywordOperatorMinusExponent
+                unchecked((int)0xFF956664), // ConstantRegexp
+                unchecked((int)0xFFD69C56), // EntityNameTag
+                unchecked((int)0xFFD4D4D4), // EntityNameSelector
+                unchecked((int)0xFFFEDC9C), // EntityOtherAttribute_Name
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NameClassCss
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NameClassMixinCss
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NameIdCss
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NameParent_SelectorCss
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NamePseudo_ClassCss
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NamePseudo_ElementCss
+                unchecked((int)0xFF7DBAD7), // SourceCssLess__EntityOtherAttribute_NameId
+                unchecked((int)0xFF7DBAD7), // EntityOtherAttribute_NameScss
+                unchecked((int)0xFF4747F4), // Invalid
+                unchecked((int)0xFFD69C56), // MarkupBold
+                unchecked((int)0xFFD69C56), // MarkupHeading
+                unchecked((int)0xFFA8CEB5), // MarkupInserted
+                unchecked((int)0xFF7891CE), // MarkupDeleted
+                unchecked((int)0xFFD69C56), // MarkupChanged
+                unchecked((int)0xFF55996A), // PunctuationDefinitionQuoteBeginMarkdown
+                unchecked((int)0xFFE69667), // PunctuationDefinitionListBeginMarkdown
+                unchecked((int)0xFF7891CE), // MarkupInlineRaw
+                unchecked((int)0xFF808080), // PunctuationDefinitionTag
+                unchecked((int)0xFF9B9B9B), // MetaPreprocessor
+                unchecked((int)0xFFD69C56), // EntityNameFunctionPreprocessor
+                unchecked((int)0xFF7891CE), // MetaPreprocessorString
+                unchecked((int)0xFFA8CEB5), // MetaPreprocessorNumeric
+                unchecked((int)0xFFFEDC9C), // MetaStructureDictionaryKeyPython
+                unchecked((int)0xFFD69C56), // Storage
+                unchecked((int)0xFFD69C56), // StorageType
+                unchecked((int)0xFFD69C56), // StorageModifier
+                unchecked((int)0xFFD69C56), // KeywordOperatorNoexcept
+                unchecked((int)0xFF7891CE), // String
+                unchecked((int)0xFF7891CE), // MetaEmbeddedAssembly
+                unchecked((int)0xFFD4D4D4), // StringCommentBufferedBlockPug
+                unchecked((int)0xFFD4D4D4), // StringQuotedPug
+                unchecked((int)0xFFD4D4D4), // StringInterpolatedPug
+                unchecked((int)0xFFD4D4D4), // StringUnquotedPlainInYaml
+                unchecked((int)0xFFD4D4D4), // StringUnquotedPlainOutYaml
+                unchecked((int)0xFFD4D4D4), // StringUnquotedBlockYaml
+                unchecked((int)0xFFD4D4D4), // StringQuotedSingleYaml
+                unchecked((int)0xFFD4D4D4), // StringQuotedDoubleXml
+                unchecked((int)0xFFD4D4D4), // StringQuotedSingleXml
+                unchecked((int)0xFFD4D4D4), // StringUnquotedCdataXml
+                unchecked((int)0xFFD4D4D4), // StringQuotedDoubleHtml
+                unchecked((int)0xFFD4D4D4), // StringQuotedSingleHtml
+                unchecked((int)0xFFD4D4D4), // StringUnquotedHtml
+                unchecked((int)0xFFD4D4D4), // StringQuotedSingleHandlebars
+                unchecked((int)0xFFD4D4D4), // StringQuotedDoubleHandlebars
+                unchecked((int)0xFF6969D1), // StringRegexp
+                unchecked((int)0xFFD69C56), // PunctuationDefinitionTemplate_ExpressionBegin
+                unchecked((int)0xFFD69C56), // PunctuationDefinitionTemplate_ExpressionEnd
+                unchecked((int)0xFFD69C56), // PunctuationSectionEmbedded
+                unchecked((int)0xFFD4D4D4), // MetaTemplateExpression
+                unchecked((int)0xFF7891CE), // SupportConstantProperty_Value
+                unchecked((int)0xFF7891CE), // SupportConstantFont_Name
+                unchecked((int)0xFF7891CE), // SupportConstantMedia_Type
+                unchecked((int)0xFF7891CE), // SupportConstantMedia
+                unchecked((int)0xFF7891CE), // ConstantOtherColorRgb_Value
+                unchecked((int)0xFF7891CE), // ConstantOtherRgb_Value
+                unchecked((int)0xFF7891CE), // SupportConstantColor
+                unchecked((int)0xFFFEDC9C), // SupportTypeVendoredProperty_Name
+                unchecked((int)0xFFFEDC9C), // SupportTypeProperty_Name
+                unchecked((int)0xFFFEDC9C), // VariableCss
+                unchecked((int)0xFFFEDC9C), // VariableScss
+                unchecked((int)0xFFFEDC9C), // VariableOtherLess
+                unchecked((int)0xFFFEDC9C), // SourceCoffeeEmbedded
+                unchecked((int)0xFFFEDC9C), // SupportTypeProperty_NameJson
+                unchecked((int)0xFFD69C56), // Keyword
+                unchecked((int)0xFFC086C5), // KeywordControl
+                unchecked((int)0xFFD4D4D4), // KeywordOperator
+                unchecked((int)0xFFD69C56), // KeywordOperatorNew
+                unchecked((int)0xFFD69C56), // KeywordOperatorExpression
+                unchecked((int)0xFFD69C56), // KeywordOperatorCast
+                unchecked((int)0xFFD69C56), // KeywordOperatorSizeof
+                unchecked((int)0xFFD69C56), // KeywordOperatorAlignof
+                unchecked((int)0xFFD69C56), // KeywordOperatorTypeid
+                unchecked((int)0xFFD69C56), // KeywordOperatorAlignas
+                unchecked((int)0xFFD69C56), // KeywordOperatorInstanceof
+                unchecked((int)0xFFD69C56), // KeywordOperatorLogicalPython
+                unchecked((int)0xFFD69C56), // KeywordOperatorWordlike
+                unchecked((int)0xFFA8CEB5), // KeywordOtherUnit
+                unchecked((int)0xFFD69C56), // PunctuationSectionEmbeddedBeginPhp
+                unchecked((int)0xFFD69C56), // PunctuationSectionEmbeddedEndPhp
+                unchecked((int)0xFFFEDC9C), // SupportFunctionGit_Rebase
+                unchecked((int)0xFFA8CEB5), // ConstantShaGit_Rebase
+                unchecked((int)0xFFD4D4D4), // StorageModifierImportJava
+                unchecked((int)0xFFD4D4D4), // VariableLanguageWildcardJava
+                unchecked((int)0xFFD4D4D4), // StorageModifierPackageJava
+                unchecked((int)0xFFD69C56), // VariableLanguage
+                unchecked((int)0xFFAADCDC), // EntityNameFunction
+                unchecked((int)0xFFAADCDC), // SupportFunction
+                unchecked((int)0xFFAADCDC), // SupportConstantHandlebars
+                unchecked((int)0xFFAADCDC), // SourcePowershell__VariableOtherMember
+                unchecked((int)0xFFAADCDC), // EntityNameOperatorCustom_Literal
+                unchecked((int)0xFFB0C94E), // SupportClass
+                unchecked((int)0xFFB0C94E), // SupportType
+                unchecked((int)0xFFB0C94E), // EntityNameType
+                unchecked((int)0xFFB0C94E), // EntityNameNamespace
+                unchecked((int)0xFFB0C94E), // EntityOtherAttribute
+                unchecked((int)0xFFB0C94E), // EntityNameScope_Resolution
+                unchecked((int)0xFFB0C94E), // EntityNameClass
+                unchecked((int)0xFFB0C94E), // StorageTypeNumericGo
+                unchecked((int)0xFFB0C94E), // StorageTypeByteGo
+                unchecked((int)0xFFB0C94E), // StorageTypeBooleanGo
+                unchecked((int)0xFFB0C94E), // StorageTypeStringGo
+                unchecked((int)0xFFB0C94E), // StorageTypeUintptrGo
+                unchecked((int)0xFFB0C94E), // StorageTypeErrorGo
+                unchecked((int)0xFFB0C94E), // StorageTypeRuneGo
+                unchecked((int)0xFFB0C94E), // StorageTypeCs
+                unchecked((int)0xFFB0C94E), // StorageTypeGenericCs
+                unchecked((int)0xFFB0C94E), // StorageTypeModifierCs
+                unchecked((int)0xFFB0C94E), // StorageTypeVariableCs
+                unchecked((int)0xFFB0C94E), // StorageTypeAnnotationJava
+                unchecked((int)0xFFB0C94E), // StorageTypeGenericJava
+                unchecked((int)0xFFB0C94E), // StorageTypeJava
+                unchecked((int)0xFFB0C94E), // StorageTypeObjectArrayJava
+                unchecked((int)0xFFB0C94E), // StorageTypePrimitiveArrayJava
+                unchecked((int)0xFFB0C94E), // StorageTypePrimitiveJava
+                unchecked((int)0xFFB0C94E), // StorageTypeTokenJava
+                unchecked((int)0xFFB0C94E), // StorageTypeGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypeAnnotationGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypeParametersGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypeGenericGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypeObjectArrayGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypePrimitiveArrayGroovy
+                unchecked((int)0xFFB0C94E), // StorageTypePrimitiveGroovy
+                unchecked((int)0xFFB0C94E), // MetaTypeCastExpr
+                unchecked((int)0xFFB0C94E), // MetaTypeNewExpr
+                unchecked((int)0xFFB0C94E), // SupportConstantMath
+                unchecked((int)0xFFB0C94E), // SupportConstantDom
+                unchecked((int)0xFFB0C94E), // SupportConstantJson
+                unchecked((int)0xFFB0C94E), // EntityOtherInherited_Class
+                unchecked((int)0xFFC086C5), // SourceCpp__KeywordOperatorNew
+                unchecked((int)0xFFD4D4D4), // SourceCpp__KeywordOperatorDelete
+                unchecked((int)0xFFC086C5), // KeywordOtherUsing
+                unchecked((int)0xFFC086C5), // KeywordOtherDirectiveUsing
+                unchecked((int)0xFFC086C5), // KeywordOtherOperator
+                unchecked((int)0xFFC086C5), // EntityNameOperator
+                unchecked((int)0xFFFEDC9C), // Variable
+                unchecked((int)0xFFFEDC9C), // MetaDefinitionVariableName
+                unchecked((int)0xFFFEDC9C), // SupportVariable
+                unchecked((int)0xFFFEDC9C), // EntityNameVariable
+                unchecked((int)0xFFFEDC9C), // ConstantOtherPlaceholder
+                unchecked((int)0xFFFFC14F), // VariableOtherConstant
+                unchecked((int)0xFFFEDC9C), // MetaObject_LiteralKey
+                unchecked((int)0xFF7891CE), // PunctuationDefinitionGroupRegexp
+                unchecked((int)0xFF7891CE), // PunctuationDefinitionGroupAssertionRegexp
+                unchecked((int)0xFF7891CE), // PunctuationDefinitionCharacter_ClassRegexp
+                unchecked((int)0xFF7891CE), // PunctuationCharacterSetBeginRegexp
+                unchecked((int)0xFF7891CE), // PunctuationCharacterSetEndRegexp
+                unchecked((int)0xFF7891CE), // KeywordOperatorNegationRegexp
+                unchecked((int)0xFF7891CE), // SupportOtherParenthesisRegexp
+                unchecked((int)0xFF6969D1), // ConstantCharacterCharacter_ClassRegexp
+                unchecked((int)0xFF6969D1), // ConstantOtherCharacter_ClassSetRegexp
+                unchecked((int)0xFF6969D1), // ConstantOtherCharacter_ClassRegexp
+                unchecked((int)0xFF6969D1), // ConstantCharacterSetRegexp
+                unchecked((int)0xFF7DBAD7), // KeywordOperatorQuantifierRegexp
+                unchecked((int)0xFFAADCDC), // KeywordOperatorOrRegexp
+                unchecked((int)0xFFAADCDC), // KeywordControlAnchorRegexp
+                unchecked((int)0xFFD69C56), // ConstantCharacter
+                unchecked((int)0xFFD69C56), // ConstantOtherOption
+                unchecked((int)0xFF7DBAD7), // ConstantCharacterEscape
+                unchecked((int)0xFFC8C8C8), // EntityNameLabel
+                unchecked((int)0xFF800000), // Header
+                unchecked((int)0xFF7DBAD7), // EntityNameTagCss
+                unchecked((int)0xFF7891CE), // StringTag
+                unchecked((int)0xFF7891CE), // StringValue
+                unchecked((int)0xFFC086C5), // KeywordOperatorDelete
+            ];
+        }
+
+#if ENABLE_SLOW_THEME_COLOR_GETTERS
         internal static int DarkPlus(Scope scope)
         {
             switch (scope)
@@ -182,5 +398,6 @@
                 default: return DarkPlus(scope);
             }
         }
+#endif
     }
 }

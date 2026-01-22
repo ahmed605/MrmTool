@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Text;
+using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 namespace MrmTool.Scintilla
@@ -40,6 +41,9 @@ namespace MrmTool.Scintilla
     {
         private readonly void** vtbl;
 
+        /// <summary>
+        /// Unsafe: only safe with string literals (RVA strings)
+        /// </summary>
         internal nint PropertySetUnsafe(ReadOnlySpan<byte> name, ReadOnlySpan<byte> value)
         {
             return ((delegate* unmanaged[Stdcall]<void*, byte *, byte*, nint>)vtbl[5])(
@@ -47,5 +51,36 @@ namespace MrmTool.Scintilla
                 (byte*)Unsafe.AsPointer(in name.GetPinnableReference()),
                 (byte*)Unsafe.AsPointer(in value.GetPinnableReference()));
         }
+
+        /*
+        
+        // Uncomment if needed
+
+        internal nint PropertySet(ReadOnlySpan<byte> name, ReadOnlySpan<byte> value)
+        {
+            fixed(byte* pName = name)
+            fixed(byte* pValue = value)
+            {
+                return ((delegate* unmanaged[Stdcall]<void*, byte*, byte*, nint>)vtbl[5])(
+                    Unsafe.AsPointer(in Unsafe.AsRef(in this)),
+                    pName,
+                    pValue);
+            }
+        }
+
+        internal nint PropertySet(string name, string value)
+        {
+            Span<byte> nameSpan = stackalloc byte[name.Length + 1];
+            Span<byte> valueSpan = stackalloc byte[value.Length + 1];
+
+            Encoding.UTF8.GetBytes(name, nameSpan);
+            Encoding.UTF8.GetBytes(value, valueSpan);
+
+            return ((delegate* unmanaged[Stdcall]<void*, byte*, byte*, nint>)vtbl[5])(
+                Unsafe.AsPointer(in Unsafe.AsRef(in this)),
+                (byte*)Unsafe.AsPointer(in nameSpan.GetPinnableReference()),
+                (byte*)Unsafe.AsPointer(in valueSpan.GetPinnableReference()));
+        }
+        */
     }
 }
