@@ -1,8 +1,6 @@
 ﻿using MrmLib;
-using System;
-using System.Collections.Generic;
+using MrmTool.Common;
 using System.ComponentModel;
-using System.Text;
 
 namespace MrmTool.Models
 {

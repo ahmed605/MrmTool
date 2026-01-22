@@ -1,0 +1,80 @@
+<Project>
+  <UsingTask TaskName="CreateReswFromFiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <InputItems ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Resources" />
+      <Reference Include="System.Windows.Forms" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+        try
+        {
+            string dir = Path.GetDirectoryName(OutputFile);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+            using (ResXResourceWriter writer = new ResXResourceWriter(OutputFile))
+            {
+                foreach (var item in InputItems)
+                {
+                    string name = item.GetMetadata("Name");
+                    string filePath = item.GetMetadata("FullPath");
+
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Log.LogError("Item '{0}' is missing the 'Name' metadata property.", filePath);
+                        continue;
+                    }
+
+                    if (File.Exists(filePath))
+                    {
+                        writer.AddResource(name, File.ReadAllText(filePath));
+                    }
+                    else
+                    {
+                        Log.LogError("File not found: {0}", filePath);
+                    }
+                }
+                writer.Generate();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.LogErrorFromException(ex);
+            return false;
+        }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  
+  <Target Name="EmbedAssets" BeforeTargets="_GenerateProjectPriConfigurationFiles">
+    <ItemGroup>
+      <None Remove="@(EmbeddedPriResource)" />
+      <Content Remove="@(EmbeddedPriResource)" />
+      <_EmbedFile Include="@(EmbeddedPriResource)">
+        <TargetPath>%(EmbeddedPriResource.Identity)</TargetPath>
+      </_EmbedFile>
+    </ItemGroup>
+
+    <CreateReswFromFiles InputItems="@(EmbeddedPriStringResource)" OutputFile="$(IntermediateOutputPath)PriInt\Strings.resw" />
+
+    <ItemGroup>
+      <None Remove="@(EmbeddedPriStringResource)" />
+      <Content Remove="@(EmbeddedPriStringResource)" />
+      <PRIResource Include="$(IntermediateOutputPath)PriInt\Strings.resw" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="RemovePriItemsFromDefaultBuildActions" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <None Remove="@(EmbeddedPriResource)" />
+      <None Remove="@(EmbeddedPriStringResource)" />
+      <Content Remove="@(EmbeddedPriResource)" />
+      <Content Remove="@(EmbeddedPriStringResource)" />
+    </ItemGroup>
+  </Target>
+</Project>

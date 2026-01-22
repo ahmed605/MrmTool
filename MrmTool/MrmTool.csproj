@@ -39,6 +39,7 @@
     <PackageReference Include="MrmLib" Version="1.0.4" />
     <PackageReference Include="TerraFX.Interop.Windows" Version="10.0.26100.5" />
   </ItemGroup>
+  
   <ItemGroup>
     <EmbeddedPriResource Include="Assets\Icons\audio.png" />
     <EmbeddedPriResource Include="Assets\Icons\folder.png" />
@@ -48,17 +49,9 @@
     <EmbeddedPriResource Include="Assets\Icons\text.png" />
     <EmbeddedPriResource Include="Assets\Icons\video.png" />
     <EmbeddedPriResource Include="Assets\Icons\xaml.png" />
-  </ItemGroup>
-    
-  <ItemGroup>
-    <Content Remove="Assets\Icons\audio.png" />
-    <Content Remove="Assets\Icons\folder.png" />
-    <Content Remove="Assets\Icons\font.png" />
-    <Content Remove="Assets\Icons\generic.png" />
-    <Content Remove="Assets\Icons\image.png" />
-    <Content Remove="Assets\Icons\text.png" />
-    <Content Remove="Assets\Icons\video.png" />
-    <Content Remove="Assets\Icons\xaml.png" />
+    <EmbeddedPriStringResource Include="..\NOTICE.txt">
+      <Name>NOTICE</Name>
+    </EmbeddedPriStringResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -70,16 +63,5 @@
     <Page Remove="Libs\WinUIEdit\WinUIEditor\**\*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Properties\PublishProfiles\" />
-  </ItemGroup>
-
-  <Target Name="EmbedAssets" BeforeTargets="_GenerateProjectPriConfigurationFiles">
-    <ItemGroup>
-      <Content Remove="@(EmbeddedPriResource)" />
-      <_EmbedFile Include="@(EmbeddedPriResource)">
-        <TargetPath>%(EmbeddedPriResource.Identity)</TargetPath>
-      </_EmbedFile>
-    </ItemGroup>
-  </Target>
+  <Import Project="Targets\PriTargets.targets" />
 </Project>

@@ -1,4 +1,5 @@
 ﻿using MrmLib;
+using MrmTool.Common;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Windows.UI.Xaml.Media.Imaging;

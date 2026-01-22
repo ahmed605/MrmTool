@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using TerraFX.Interop.Windows;
 using TerraFX.Interop.WinRT;
 using WinRT;
 
-namespace MrmTool
+namespace MrmTool.Polyfills
 {
     internal unsafe struct LegacyNonImmersiveView
     {

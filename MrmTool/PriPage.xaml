@@ -108,6 +108,13 @@
                     </MenuFlyoutSubItem.Icon>
                 </MenuFlyoutSubItem>
             </muxc:MenuBarItem>
+            <muxc:MenuBarItem Title="Help">
+                <MenuFlyoutItem Text="Third Party Notices" Click="Notice_Click">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="ContactInfo"/>
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </muxc:MenuBarItem>
         </muxc:MenuBar>
 
         <Grid Grid.Row="1" Margin="0,5,0,0">
@@ -174,7 +181,7 @@
                         
                         <!-- Path error: Invalid root -->
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
-                            <TextBlock TextWrapping="Wrap" Text="The root path is incorrect. You can specify one below." HorizontalAlignment="Center" />
+                            <TextBlock TextWrapping="Wrap" Text="The root path doesn't contain the the file. You can specify another one below." HorizontalAlignment="Center" />
                             <Button Content="Set root folder" HorizontalAlignment="Center" Margin="0,10,0,0" Click="SetRootFolder_Click" />
                         </StackPanel>
 

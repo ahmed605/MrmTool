@@ -13,5 +13,12 @@
             <TextBlock Text="MrmTool" FontWeight="SemiLight" FontSize="42" />
             <Button Content="Open PRI File" HorizontalAlignment="Center" Margin="0,15,0,0" Click="OnOpenFileClicked" />
         </StackPanel>
+
+        <HyperlinkButton
+            Content="Third Party Notices"
+            VerticalAlignment="Bottom"
+            HorizontalAlignment="Right"
+            Margin="0,0,15,10"
+            Click="NoticeButtonClick"/>
     </Grid>
 </Page>

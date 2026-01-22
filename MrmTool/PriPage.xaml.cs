@@ -1,22 +1,24 @@
-using MrmLib;
-using MrmTool.Models;
+using System.Text;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using TerraFX.Interop.Windows;
-using Windows.ApplicationModel.DataTransfer;
+using System.Runtime.CompilerServices;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.ApplicationModel.DataTransfer;
 using WinRT;
+using MrmLib;
+using MrmTool.Models;
 
+using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
-using static MrmTool.ErrorHelpers;
-using System.Runtime.CompilerServices;
+using static MrmTool.Common.ErrorHelpers;
+using MrmTool.Common;
+using System.Threading.Tasks;
 
 namespace MrmTool
 {
@@ -34,7 +36,7 @@ namespace MrmTool
 
         public PriPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
         [DynamicWindowsRuntimeCast(typeof(PriFile))]
@@ -272,28 +274,46 @@ namespace MrmTool
             }
         }
 
-        private void UnloadPreviewElements(CandidateItem? item = null)
+        private void UnloadOtherPreviewElements(CandidateItem item)
         {
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
-            UnloadObject(openFolderContainer);
 
-            if (item is null || _selectedResource?.Type.IsText is not true)
-            {
+            if (_selectedResource?.Type.IsText is not true)
                 UnloadObject(valueTextEditor);
-            }
 
-            if (item?.ValueType is not ResourceValueType.EmbeddedData)
+            if (_selectedResource?.Type is not ResourceType.Image)
+                UnloadObject(imagePreviewerContainer);
+
+            if (!(item.ValueType is ResourceValueType.EmbeddedData && _selectedResource?.Type.IsPreviewable is not true))
                 UnloadObject(exportContainer);
 
-            if (item is null || _selectedResource?.Type is not ResourceType.Image)
-                UnloadObject(imagePreviewerContainer);
+            if (!(item.ValueType is ResourceValueType.Path && _selectedResource?.Type.IsPreviewable is not true))
+                UnloadObject(openFolderContainer);
+        }
+
+        private void UnloadAllPreviewElements()
+        {
+            UnloadObject(invalidRootPathContainer);
+            UnloadObject(failedToOpenFileContainer);
+            UnloadObject(valueTextEditor);
+            UnloadObject(imagePreviewerContainer);
+            UnloadObject(exportContainer);
+            UnloadObject(openFolderContainer);
+        }
+
+        private void UnloadNonErrorPreviewElements()
+        {
+            UnloadObject(valueTextEditor);
+            UnloadObject(imagePreviewerContainer);
+            UnloadObject(exportContainer);
+            UnloadObject(openFolderContainer);
         }
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         private async Task DisplayCandidate(CandidateItem item)
         {
-            UnloadPreviewElements(item);
+            UnloadOtherPreviewElements(item);
 
             var candidate = item.Candidate;
             if (candidate.ValueType is ResourceValueType.Path)
@@ -304,6 +324,7 @@ namespace MrmTool
                     return;
                 }
 
+                UnloadNonErrorPreviewElements();
                 FindName(nameof(invalidRootPathContainer));
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
@@ -342,28 +363,30 @@ namespace MrmTool
 
         private async Task<bool> DisplayBinaryCandidate(IRandomAccessStream stream, ResourceType type)
         {
-            if (type == ResourceType.Image)
+            try
             {
-                BitmapImage image = new();
-                await image.SetSourceAsync(stream);
-                FindName(nameof(imagePreviewerContainer));
-                imagePreviewer.Source = image;
-                return true;
-            }
-            else if (type.IsText)
-            {
-                var size = (uint)stream.Size;
-                var buffer = WindowsRuntimeBuffer.Create((int)size);
-                await stream.ReadAsync(buffer, size, InputStreamOptions.None);
-                WindowsRuntimeMarshal.TryGetDataUnsafe(buffer, out var ptr);
-
-                unsafe
+                if (type == ResourceType.Image)
                 {
-                    DisplayStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
+                    BitmapImage image = new();
+                    await image.SetSourceAsync(stream);
+                    FindName(nameof(imagePreviewerContainer));
+                    imagePreviewer.Source = image;
+
+                    return true;
                 }
-                
-                return true;
-            }
+                else if (type.IsText)
+                {
+                    var size = (uint)stream.Size;
+                    var buffer = WindowsRuntimeBuffer.Create((int)size);
+                    await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+
+                    if (WindowsRuntimeMarshal.TryGetDataUnsafe(buffer, out var ptr)) unsafe
+                    {
+                        DisplayStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
+                        return true;
+                    }
+                }
+            } catch { }
 
             return false;
         }
@@ -403,7 +426,9 @@ namespace MrmTool
                 }
                 catch (Exception ex)
                 {
+                    UnloadNonErrorPreviewElements();
                     FindName(nameof(failedToOpenFileContainer));
+
                     failedFileNameRun.Text = file.Path;
                     failedExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
                     failedToOpenFileContainer.Visibility = Visibility.Visible;
@@ -429,7 +454,7 @@ namespace MrmTool
             }
             else
             {
-                UnloadPreviewElements();
+                UnloadAllPreviewElements();
             }
         }
 
@@ -493,6 +518,12 @@ namespace MrmTool
                     }
                 }
             }
+        }
+
+        private async void Notice_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new NoticeDialog();
+            await dialog.ShowAsync();
         }
     }
 }

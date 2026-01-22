@@ -1,15 +1,19 @@
-﻿using Microsoft.System;
+﻿using Common;
+using Microsoft.System;
+using MrmTool.Polyfills;
+using MrmTool.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TerraFX.Interop.Windows;
 using TerraFX.Interop.WinRT;
 using Windows.ApplicationModel.Core;
-using Windows.System;
+using Windows.ApplicationModel.Resources.Core;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Resources;
 using WinRT;
-using static MrmTool.ErrorHelpers;
+using static MrmTool.Common.ErrorHelpers;
 using static MrmTool.NativeUtils;
 using static TerraFX.Interop.Windows.Windows;
 using static TerraFX.Interop.Windows.WM;
@@ -19,21 +23,23 @@ namespace MrmTool
 {
     internal class Program
     {
-        static private App? _xamlApp = null;
-        static private HWND _coreHwnd;
+        private static App? _xamlApp = null;
+        public static ResourceMap? _resourceMap = null;
+        private static HWND _coreHwnd;
         public static HWND WindowHandle;
 
         #nullable disable
         public static App Application => _xamlApp;
+        public static ResourceMap ResourceMap => _resourceMap;
         #nullable enable
 
         [STAThread]
         static unsafe void Main()
         {
             ComWrappersSupport.InitializeComWrappers();
-            NativeUtils.InitializeResourceManager();
+            _resourceMap = NativeUtils.InitializeResourceManager().MainResourceMap;
 
-            if (Common.Features.IsXamlRootAvailable)
+            if (Features.IsXamlRootAvailable)
             {
                 _xamlApp = new App();
             }
@@ -75,14 +81,14 @@ namespace MrmTool
 
             char empty = '\0';
 
-            NativeUtils.PrivateCreateCoreWindow(
+            ThrowIfFailed(NativeUtils.PrivateCreateCoreWindow(
                     NativeUtils.CoreWindowType.IMMERSIVE_HOSTED,
                     &empty,
                     0, 0, 0, 0,
                     0,
                     WindowHandle,
                     NativeUtils.IID_ICoreWindow,
-                    &pCoreWindow);
+                    &pCoreWindow));
 
             DispatcherHelper.SetSynchronizationContext();
 
@@ -119,6 +125,8 @@ namespace MrmTool
             SetParent(coreHwnd, WindowHandle);
             SetWindowLongW(coreHwnd, GWL.GWL_STYLE, WS_CHILD | WS_VISIBLE);
             SetWindowPos(coreHwnd, HWND.NULL, 0, 0, clientRect.right - clientRect.left, clientRect.bottom - clientRect.top, SWP.SWP_NOZORDER | SWP.SWP_SHOWWINDOW | SWP.SWP_NOACTIVATE);
+
+            CustomXamlResourceLoader.Current = new XamlResourceLoader();
 
             Frame frame = new();
             frame.Navigate(typeof(MainPage));

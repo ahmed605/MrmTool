@@ -159,12 +159,14 @@ namespace MrmTool
             AllowDarkModeForWindow(hwnd, true);
         }
 
-        internal static void InitializeResourceManager(string priFileName = "resources.pri")
+        internal static ResourceManager InitializeResourceManager(string priFileName = "resources.pri")
         {
+            ResourceManager manager;
+
             try
             {
-                // This is in a Try-Catch because because Current throws in unpackaged apps
-                ArgumentNullException.ThrowIfNull(ResourceManager.Current);
+                // This is in a try-catch because Current throws in unpackaged apps on old Windows builds
+                ArgumentNullException.ThrowIfNull(manager = ResourceManager.Current);
             }
             catch
             {
@@ -181,12 +183,14 @@ namespace MrmTool
                     ThrowIfFailed((HRESULT)managerStatics.GetCurrentResourceManagerForSystemProfile(&pManager));
                 }
 
-                var manager = ResourceManager.FromAbi((nint)pManager);
+                manager = ResourceManager.FromAbi((nint)pManager);
                 Marshal.Release((nint)pManager);
 
                 var systemEx = (ISystemResourceManagerExtensions2)(object)manager;
                 systemEx.LoadPriFileForSystemUse(AppContext.BaseDirectory + $"\\{priFileName}");
             }
+
+            return manager;
         }
 
         // References: https://gist.github.com/diversenok/930600b5aec5e8d15664662b9176a691, https://ntdoc.m417z.com/peb

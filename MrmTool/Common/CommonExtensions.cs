@@ -8,9 +8,10 @@ using WinRT;
 
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
-using static MrmTool.ErrorHelpers;
+using static MrmTool.Common.ErrorHelpers;
+using MrmTool.Common;
 
-namespace MrmTool
+namespace MrmTool.Common
 {
     internal static class CommonExtensions
     {
@@ -108,7 +109,7 @@ namespace MrmTool
             if (path == null)
                 return null;
 
-            return GetExtensionAfterPeriod(path.ToLowerInvariant().AsSpan()).ToString();
+            return path.ToLowerInvariant().AsSpan().GetExtensionAfterPeriod().ToString();
         }
 
         internal static ReadOnlySpan<char> GetExtensionAfterPeriod(this ReadOnlySpan<char> path)
@@ -180,7 +181,7 @@ namespace MrmTool
             if (dropFiles is null) return null;
 
             string path = new((char*)((byte*)dropFiles + dropFiles->pFiles));
-            LogLastErrorIfFalse(GlobalFree((HGLOBAL)hDrop).Value is null);
+            LOG_LAST_ERROR_IF(GlobalFree((HGLOBAL)hDrop).Value is not null);
 
             return path;
         }

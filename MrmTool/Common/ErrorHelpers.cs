@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 
-namespace MrmTool
+namespace MrmTool.Common
 {
     internal static unsafe class ErrorHelpers
     {
@@ -110,21 +110,21 @@ namespace MrmTool
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
-        internal static void LogLastErrorIfFalse(bool value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        internal static void LOG_LAST_ERROR_IF(bool value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
-            if (value is false)
+            if (value is true)
             {
-                Debug.WriteLine($"LogLastErrorIfFalse: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
+                Debug.WriteLine($"LOG_LAST_ERROR_IF: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [DebuggerStepThrough, DebuggerHidden, StackTraceHidden]
-        internal static void LogLastErrorIfFalse(BOOL value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
+        internal static void LOG_LAST_ERROR_IF(BOOL value, [CallerArgumentExpression(nameof(value))] string? valueExpression = null)
         {
-            if (value.Value is 0)
+            if (value.Value is not 0)
             {
-                Debug.WriteLine($"LogLastErrorIfFalse: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
+                Debug.WriteLine($"LOG_LAST_ERROR_IF: 0x{HRESULT_FROM_WIN32(GetLastError())} [{valueExpression ?? "Method"}]");
             }
         }
 

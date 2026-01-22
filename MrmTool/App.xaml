@@ -6,8 +6,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="ms-appx:///Colors.xaml" />
-                <ResourceDictionary Source="ms-appx:///ControlTemplates.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Colors.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/ControlTemplates.xaml" />
                 <ResourceDictionary Source="ms-appx:///WCT/GridSplitter.xaml" />
                 <ResourceDictionary Source="ms-appx:///WCT/SizerBase.xaml" />
                 <ResourceDictionary Source="ms-appx:///WCT/DataColumn.xaml" />

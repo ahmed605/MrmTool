@@ -1,18 +1,11 @@
+using WinRT;
 using MrmLib;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Windows.ApplicationModel.DataTransfer;
+using MrmTool.Common;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Maps;
-using Windows.UI.Xaml.Media;
-using WinRT;
-
-using TerraFX.Interop.Windows;
-using static TerraFX.Interop.Windows.Windows;
-using System.Runtime.InteropServices;
 
 namespace MrmTool
 {
@@ -93,6 +86,12 @@ namespace MrmTool
 
                 await dialog.ShowAsync();
             }
+        }
+
+        private async void NoticeButtonClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new NoticeDialog();
+            await dialog.ShowAsync();
         }
     }
 }
