@@ -6,6 +6,7 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Media.Imaging;
@@ -13,12 +14,11 @@ using Windows.ApplicationModel.DataTransfer;
 using WinRT;
 using MrmLib;
 using MrmTool.Models;
+using MrmTool.Common;
 
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 using static MrmTool.Common.ErrorHelpers;
-using MrmTool.Common;
-using System.Threading.Tasks;
 
 namespace MrmTool
 {
@@ -372,12 +372,30 @@ namespace MrmTool
                     FindName(nameof(imagePreviewerContainer));
                     imagePreviewer.Source = image;
 
+                    imagePreviewer.Stretch = Stretch.None;
+                    imagePreviewer.MaxWidth = double.PositiveInfinity;
+                    imagePreviewer.MaxHeight = double.PositiveInfinity;
+
                     imagePreviewerContainer.UpdateLayout();
 
-                    if (imagePreviewer.ActualWidth > imagePreviewerContainer.ActualWidth ||
-                        imagePreviewer.ActualHeight > imagePreviewerContainer.ActualHeight)
+                    var imageWidth = imagePreviewer.ActualWidth;
+                    var imageHeight = imagePreviewer.ActualHeight;
+                    var containerWidth = imagePreviewerContainer.ActualWidth;
+                    var containerHeight = imagePreviewerContainer.ActualHeight;
+
+                    if (imageWidth > containerWidth ||
+                        imageHeight > containerHeight)
                     {
-                        var ratio = Math.Min(imagePreviewerContainer.ActualWidth / imagePreviewer.ActualWidth, imagePreviewerContainer.ActualHeight / imagePreviewer.ActualHeight);
+                        var ratio = Math.Min(containerWidth / imageWidth, containerHeight / imageHeight);
+                        if (ratio < 0.1d)
+                        {
+                            imagePreviewer.MaxWidth = containerWidth / 0.1d;
+                            imagePreviewer.MaxHeight = containerHeight / 0.1d;
+                            imagePreviewer.Stretch = Stretch.Uniform;
+
+                            ratio = 0.1d;
+                        }
+
                         imagePreviewerContainer.ChangeView(null, null, (float)ratio);
                     }
 
