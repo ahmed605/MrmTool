@@ -1,18 +1,16 @@
-﻿using MrmLib;
+﻿using WinRT;
+using MrmLib;
+using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
-using WinRT;
+using Windows.Storage.Streams;
+using Windows.ApplicationModel.DataTransfer;
+using MrmTool.Common;
 
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 using static MrmTool.Common.ErrorHelpers;
-using MrmTool.Common;
-using Windows.Storage.Streams;
-using System.Text;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace MrmTool.Common
 {

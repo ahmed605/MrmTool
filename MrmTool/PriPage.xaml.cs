@@ -577,5 +577,18 @@ namespace MrmTool
         {
             valueTextEditor.HandleSyntaxHighlightingApplied(e);
         }
+
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private void DeleteCandiate_Click(object sender, RoutedEventArgs e)
+        {
+            if (_pri is not null &&
+                _selectedResource is not null &&
+                sender is MenuFlyoutItem item &&
+                item.DataContext is CandidateItem candidateItem)
+            {
+                _selectedResource.Candidates.Remove(candidateItem);
+                _pri.ResourceCandidates.Remove(candidateItem.Candidate);
+            }
+        }
     }
 }

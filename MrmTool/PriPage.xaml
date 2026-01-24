@@ -177,6 +177,11 @@
                                                     <SymbolIcon Symbol="Folder"/>
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Delete" Click="DeleteCandiate_Click">
+                                                <MenuFlyoutItem.Icon>
+                                                    <SymbolIcon Symbol="Delete"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
                                         </MenuFlyout>
                                     </Grid.ContextFlyout>
                                 </Grid>
