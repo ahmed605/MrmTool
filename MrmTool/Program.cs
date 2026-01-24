@@ -21,7 +21,7 @@ using static TerraFX.Interop.Windows.WS;
 
 namespace MrmTool
 {
-    internal class Program
+    internal static class Program
     {
         private static App? _xamlApp = null;
         public static ResourceMap? _resourceMap = null;
@@ -169,5 +169,8 @@ namespace MrmTool
             }
             return 0;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void Exit() => SendMessageW(WindowHandle, WM_CLOSE, 0, 0);
     }
 }

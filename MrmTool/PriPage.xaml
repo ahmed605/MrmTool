@@ -154,15 +154,32 @@
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
                             </Style>
                         </ListView.ItemContainerStyle>
 
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="models:CandidateItem">
-                                <wct:DataRow HorizontalAlignment="Left">
-                                    <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{x:Bind Qualifiers}" VerticalAlignment="Center"/>
-                                </wct:DataRow>
+                                <Grid Background="Transparent">
+                                    <wct:DataRow HorizontalAlignment="Left">
+                                        <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind Qualifiers}" VerticalAlignment="Center"/>
+                                    </wct:DataRow>
+                                    <Grid.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="Export" Visibility="{x:Bind IsExportable}" Click="ExportButton_Click">
+                                                <MenuFlyoutItem.Icon>
+                                                    <SymbolIcon Symbol="Save"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Try show in Explorer" Visibility="{x:Bind IsPathCandidate}" Click="OpenFolder_Click">
+                                                <MenuFlyoutItem.Icon>
+                                                    <SymbolIcon Symbol="Folder"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </Grid.ContextFlyout>
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>

@@ -1,6 +1,7 @@
 ﻿using MrmLib;
 using MrmTool.Common;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace MrmTool.Models
 {
@@ -24,17 +25,21 @@ namespace MrmTool.Models
 
         public ResourceValueType ValueType
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Candidate.ValueType;
             set
             {
                 Candidate.ValueType = value;
                 PropertyChanged?.Invoke(this, new(nameof(Type)));
                 PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+                PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+                PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
             }
         }
 
         public string StringValue
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Candidate.StringValue;
             set
             {
@@ -42,11 +47,14 @@ namespace MrmTool.Models
                 PropertyChanged?.Invoke(this, new(nameof(StringValue)));
                 PropertyChanged?.Invoke(this, new(nameof(Type)));
                 PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+                PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+                PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
             }
         }
 
         public byte[] DataValue
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Candidate.DataValue;
             set
             {
@@ -54,11 +62,14 @@ namespace MrmTool.Models
                 PropertyChanged?.Invoke(this, new(nameof(DataValue)));
                 PropertyChanged?.Invoke(this, new(nameof(Type)));
                 PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+                PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+                PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
             }
         }
 
         public IReadOnlyList<Qualifier> CandidateQualifiers
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Candidate.Qualifiers;
             set
             {
@@ -68,12 +79,26 @@ namespace MrmTool.Models
             }
         }
 
+        public bool IsExportable
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Candidate.ValueType is not ResourceValueType.Path;
+        }
+
+        public bool IsPathCandidate
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Candidate.ValueType is ResourceValueType.Path;
+        }
+
         public void SetValue(string value)
         {
             Candidate.SetValue(value);
             PropertyChanged?.Invoke(this, new(nameof(StringValue)));
             PropertyChanged?.Invoke(this, new(nameof(Type)));
             PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+            PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+            PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
         }
 
         public void SetValue(byte[] value)
@@ -82,6 +107,8 @@ namespace MrmTool.Models
             PropertyChanged?.Invoke(this, new(nameof(DataValue)));
             PropertyChanged?.Invoke(this, new(nameof(Type)));
             PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+            PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+            PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
         }
 
         public void SetValue(ResourceValueType valueType, string value)
@@ -89,6 +116,8 @@ namespace MrmTool.Models
             Candidate.SetValue(valueType, value);
             PropertyChanged?.Invoke(this, new(nameof(Type)));
             PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+            PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+            PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
         }
 
         public static implicit operator CandidateItem(ResourceCandidate candidate) => new(candidate);

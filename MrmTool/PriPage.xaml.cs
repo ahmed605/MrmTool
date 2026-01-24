@@ -231,7 +231,7 @@ namespace MrmTool
 
         private void Exit_Click(object sender, RoutedEventArgs e)
         {
-            SendMessageW(Program.WindowHandle, WM.WM_CLOSE, 0, 0);
+            Program.Exit();
         }
 
         private void Grid_DragOver(object sender, DragEventArgs e)
@@ -320,7 +320,7 @@ namespace MrmTool
             var candidate = item.Candidate;
             if (candidate.ValueType is ResourceValueType.Path)
             {
-                if (await TryResolvePathCandidate(candidate.StringValue) is StorageFile file)
+                if (await TryResolvePathCandidateAsync(candidate.StringValue) is StorageFile file)
                 {
                     await DisplayPathCandidate(file);
                     return;
@@ -352,8 +352,8 @@ namespace MrmTool
 
             var editor = valueTextEditor.Editor;
             editor.ReadOnly = false;
-            editor.WrapMode = WinUIEditor.Wrap.Word;
-            editor.CaretStyle = WinUIEditor.CaretStyle.Invisible;
+            editor.WrapMode = Wrap.Word;
+            editor.CaretStyle = CaretStyle.Invisible;
             editor.SetText(str);
             editor.ReadOnly = true;
 
@@ -372,6 +372,7 @@ namespace MrmTool
                     BitmapImage image = new();
                     await image.SetSourceAsync(stream);
                     FindName(nameof(imagePreviewerContainer));
+                    imagePreviewer.Opacity = 0;
                     imagePreviewer.Source = image;
 
                     imagePreviewer.Stretch = Stretch.None;
@@ -400,9 +401,15 @@ namespace MrmTool
                             ratio = 0.1d;
                         }
 
+                        if (imagePreviewerContainer.ZoomFactor is not 1f)
+                        {
+                            await imagePreviewerContainer.WaitForZoomFactorChangeAsync();
+                        }
+
                         imagePreviewerContainer.ChangeView(null, null, (float)ratio, true);
                     }
 
+                    imagePreviewer.Opacity = 1;
                     return true;
                 }
                 else if (type.IsText)
@@ -424,7 +431,7 @@ namespace MrmTool
 
         [DynamicWindowsRuntimeCast(typeof(StorageFile))]
         [DynamicWindowsRuntimeCast(typeof(StorageFolder))]
-        private async Task<StorageFile?> TryResolvePathCandidate(string fileName)
+        private async Task<StorageFile?> TryResolvePathCandidateAsync(string fileName)
         {
             StorageFile? file = null;
 
@@ -489,27 +496,33 @@ namespace MrmTool
             }
         }
 
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
         private async void ExportButton_Click(object sender, RoutedEventArgs e)
         {
-            ResourceCandidate candidate = ((CandidateItem)candidatesList.SelectedItem).Candidate;
-            byte[] data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValue : Encoding.UTF8.GetBytes(candidate.StringValue);
+            var candidate = sender is MenuFlyoutItem item && item.DataContext is CandidateItem candidateItem ?
+                candidateItem.Candidate : (candidatesList.SelectedItem as CandidateItem)?.Candidate;
 
-            string fileName = candidate.ResourceName.GetDisplayName();
-            string extension = Path.GetExtension(fileName);
-
-            FileSavePicker picker = new();
-            picker.Initialize();
-            picker.SuggestedFileName = fileName;
-
-            if (!string.IsNullOrEmpty(extension))
+            if (candidate is not null)
             {
-                picker.FileTypeChoices.Add($"{extension[1..].ToUpperInvariant()} file", new string[] { extension });
+                byte[] data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValue : Encoding.UTF8.GetBytes(candidate.StringValue);
+
+                string fileName = candidate.ResourceName.GetDisplayName();
+                string extension = Path.GetExtension(fileName);
+
+                FileSavePicker picker = new();
+                picker.Initialize();
+                picker.SuggestedFileName = fileName;
+
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    picker.FileTypeChoices.Add($"{extension[1..].ToUpperInvariant()} file", new string[] { extension });
+                }
+
+                picker.FileTypeChoices.Add("All files", new string[] { "." });
+
+                if (await picker.PickSaveFileAsync() is { } file)
+                    await FileIO.WriteBytesAsync(file, data);
             }
-
-            picker.FileTypeChoices.Add("All files", new string[] { "." });
-
-            if (await picker.PickSaveFileAsync() is { } file)
-                await FileIO.WriteBytesAsync(file, data);
         }
 
         private void SystemTheme_Click(object sender, RoutedEventArgs e)
@@ -535,19 +548,17 @@ namespace MrmTool
             }
         }
 
-        private unsafe void OpenFolder_Click(object sender, RoutedEventArgs e)
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private async void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            if (openFolderContainer.Tag is string path)
+            var path = sender is MenuFlyoutItem item &&
+                       item.DataContext is CandidateItem candidateItem &&
+                       await TryResolvePathCandidateAsync(candidateItem.StringValue) is { } file ?
+                file.Path : openFolderContainer?.Tag as string;
+
+            if (path is not null)
             {
-                fixed (char* pPath = path)
-                {
-                    ITEMIDLIST* pList = default;
-                    if (SUCCEEDED_LOG(SHParseDisplayName(pPath, null, &pList, 0, null)))
-                    {
-                        LOG_IF_FAILED(SHOpenFolderAndSelectItems(pList, 0, null, 0));
-                        ILFree(pList);
-                    }
-                }
+                NativeUtils.ShowFileInExplorer(path);
             }
         }
 
@@ -559,85 +570,7 @@ namespace MrmTool
 
         private unsafe void SyntaxHighlightingApplied(object sender, ElementTheme e)
         {
-            if (valueTextEditor.HighlightingLanguage is "css")
-            {
-                var editor = valueTextEditor.Editor;
-
-                var lexer = Lexilla.CreateLexer("css");
-                lexer->PropertySetUnsafe("fold"u8, "1"u8);
-                lexer->PropertySetUnsafe("lexer.css.scss.language"u8, "1"u8);
-                editor.SetILexer((ulong)lexer);
-
-                editor.SetKeyWords(0, "color background background-color font font-size font-family font-weight " +
-                                      "margin margin-top margin-right margin-bottom margin-left " +
-                                      "padding padding-top padding-right padding-bottom padding-left " +
-                                      "border border-radius width height display position top right bottom left " +
-                                      "align-items justify-content flex grid gap");
-
-                editor.SetKeyWords(1, "hover active focus visited disabled checked first-child last-child " +
-                                      "nth-child nth-of-type not before after");
-
-                if (e is ElementTheme.Dark)
-                {
-                    editor.StyleSetFore((int)StylesCommon.Default, DarkPlusTheme.DarkPlusEditorForeground);
-                    editor.StyleSetFore((int)StylesCommon.BraceLight, DarkPlusTheme.DarkPlusEditorForeground);
-
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DEFAULT, DarkPlusTheme.DarkPlusEditorForeground);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_TAG, DarkPlusTheme.Colors[(int)Scope.EntityNameTagCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_CLASS, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NameClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_ID, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NameIdCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_ATTRIBUTE, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_Name]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOCLASS, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOELEMENT, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ElementCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOCLASS, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOELEMENT, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ElementCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER2, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER3, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_IDENTIFIER, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_VALUE, DarkPlusTheme.Colors[(int)Scope.ConstantNumeric]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DOUBLESTRING, DarkPlusTheme.Colors[(int)Scope.String]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_SINGLESTRING, DarkPlusTheme.Colors[(int)Scope.String]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_OPERATOR, DarkPlusTheme.Colors[(int)Scope.KeywordOperator]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_COMMENT, DarkPlusTheme.Colors[(int)Scope.Comment]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DIRECTIVE, DarkPlusTheme.Colors[(int)Scope.MetaPreprocessor]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_GROUP_RULE, DarkPlusTheme.Colors[(int)Scope.MetaPreprocessor]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IMPORTANT, DarkPlusTheme.Colors[(int)Scope.Keyword]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_VARIABLE, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_PSEUDOCLASS, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_IDENTIFIER, DarkPlusTheme.Colors[(int)Scope.VariableCss]);
-                }
-                else
-                {
-                    editor.StyleSetFore((int)StylesCommon.Default, LightPlusTheme.LightPlusEditorForeground);
-                    editor.StyleSetFore((int)StylesCommon.BraceLight, LightPlusTheme.LightPlusEditorForeground);
-
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DEFAULT, LightPlusTheme.LightPlusEditorForeground);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_TAG, LightPlusTheme.Colors[(int)Scope.EntityNameTagCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_CLASS, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NameClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_ID, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NameIdCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_ATTRIBUTE, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_Name]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOCLASS, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_PSEUDOELEMENT, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ElementCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOCLASS, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_PSEUDOELEMENT, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ElementCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER2, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IDENTIFIER3, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_EXTENDED_IDENTIFIER, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_VALUE, LightPlusTheme.Colors[(int)Scope.ConstantNumeric]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DOUBLESTRING, LightPlusTheme.Colors[(int)Scope.String]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_SINGLESTRING, LightPlusTheme.Colors[(int)Scope.String]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_OPERATOR, LightPlusTheme.Colors[(int)Scope.KeywordOperator]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_COMMENT, LightPlusTheme.Colors[(int)Scope.Comment]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_DIRECTIVE, LightPlusTheme.Colors[(int)Scope.MetaPreprocessor]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_GROUP_RULE, LightPlusTheme.Colors[(int)Scope.MetaPreprocessor]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_IMPORTANT, LightPlusTheme.Colors[(int)Scope.Keyword]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_VARIABLE, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_PSEUDOCLASS, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
-                    editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_IDENTIFIER, LightPlusTheme.Colors[(int)Scope.VariableCss]);
-                }
-            }
+            valueTextEditor.HandleSyntaxHighlightingApplied(e);
         }
     }
 }

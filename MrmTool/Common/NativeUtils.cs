@@ -1,11 +1,12 @@
 ﻿using Microsoft.Win32;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.Marshalling;
-using TerraFX.Interop.Windows;
 using Windows.ApplicationModel.Resources.Core;
-using Windows.UI.Xaml;
+
+using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
+using static MrmTool.Common.ErrorHelpers;
 
 namespace MrmTool
 {
@@ -392,6 +393,19 @@ namespace MrmTool
 
             var switchContext = GetSwitchContext(appCompat);
             return switchContext is not null ? &switchContext->Data : null;
+        }
+
+        internal static void ShowFileInExplorer(string path)
+        {
+            fixed (char* pPath = path)
+            {
+                ITEMIDLIST* pList = default;
+                if (SUCCEEDED_LOG(SHParseDisplayName(pPath, null, &pList, 0, null)))
+                {
+                    LOG_IF_FAILED(SHOpenFolderAndSelectItems(pList, 0, null, 0));
+                    ILFree(pList);
+                }
+            }
         }
     }
 
