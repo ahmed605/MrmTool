@@ -100,11 +100,7 @@ namespace MrmTool.Common
 
         public void Seek(ulong position)
         {
-            if (position > _buffer.Length)
-            {
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(position, _buffer.Length, nameof(position));
-            }
-
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(position, _buffer.Length, nameof(position));
             _position = position;
         }
 
