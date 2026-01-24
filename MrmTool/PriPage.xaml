@@ -22,11 +22,11 @@
     
     <Page.Resources>
         <contract5NotPresent:DataTemplate x:Key="ResourceTemplateOld" x:DataType="models:ResourceItem">
-            <muxc:TreeViewItemWrapper AutomationProperties.Name="{x:Bind DisplayName}"
+            <muxc:TreeViewItemWrapper AutomationProperties.Name="{x:Bind DisplayName, Mode = OneWay}"
                           ItemsSource="{x:Bind Children}" Margin="0,2,0,2" Background="Transparent">
                 <StackPanel Orientation="Horizontal">
-                    <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
-                    <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
+                    <Image Width="28" Source="{x:Bind Icon, Mode = OneWay}" Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind DisplayName, Mode = OneWay}" VerticalAlignment="Center" />
                 </StackPanel>
                 <muxc:TreeViewItemWrapper.ContextFlyout>
                     <MenuFlyout>
@@ -41,11 +41,11 @@
         </contract5NotPresent:DataTemplate>
 
         <contract5Present:DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
-            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}"
+            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName, Mode = OneWay}"
                         ItemsSource="{x:Bind Children}" Margin="0,2,0,2" Background="Transparent">
                 <StackPanel Orientation="Horizontal">
-                    <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
-                    <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
+                    <Image Width="28" Source="{x:Bind Icon, Mode = OneWay}" Margin="0,0,10,0"/>
+                    <TextBlock Text="{x:Bind DisplayName, Mode = OneWay}" VerticalAlignment="Center" />
                 </StackPanel>
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
@@ -180,19 +180,24 @@
                             <DataTemplate x:DataType="models:CandidateItem">
                                 <Grid Background="Transparent">
                                     <wct:DataRow HorizontalAlignment="Left">
-                                        <TextBlock Text="{x:Bind Type}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{x:Bind Qualifiers}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind Type, Mode = OneWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{x:Bind Qualifiers, Mode = OneWay}" VerticalAlignment="Center"/>
                                     </wct:DataRow>
                                     <Grid.ContextFlyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem Text="Export" Visibility="{x:Bind IsExportable}" Click="ExportButton_Click">
+                                            <MenuFlyoutItem Text="Export" Visibility="{x:Bind IsExportable, Mode = OneWay}" Click="ExportButton_Click">
                                                 <MenuFlyoutItem.Icon>
                                                     <SymbolIcon Symbol="Save"/>
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="Try Show In Explorer" Visibility="{x:Bind IsPathCandidate}" Click="OpenFolder_Click">
+                                            <MenuFlyoutItem Text="Try Show in Explorer" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="OpenFolder_Click">
                                                 <MenuFlyoutItem.Icon>
                                                     <SymbolIcon Symbol="Folder"/>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                            <MenuFlyoutItem Text="Try Embed Into PRI" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="EmbedPathCandidate_Click">
+                                                <MenuFlyoutItem.Icon>
+                                                    <SymbolIcon Symbol="Import"/>
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
                                             <MenuFlyoutItem Text="Delete" Click="DeleteCandiate_Click">

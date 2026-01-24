@@ -2,6 +2,7 @@
 using MrmTool.Common;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Windows.Storage.Streams;
 
 namespace MrmTool.Models
 {
@@ -60,6 +61,23 @@ namespace MrmTool.Models
             {
                 Candidate.DataValue = value;
                 PropertyChanged?.Invoke(this, new(nameof(DataValue)));
+                PropertyChanged?.Invoke(this, new(nameof(DataValueBuffer)));
+                PropertyChanged?.Invoke(this, new(nameof(Type)));
+                PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+                PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+                PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
+            }
+        }
+
+        public IBuffer DataValueBuffer
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => Candidate.DataValueBuffer;
+            set
+            {
+                Candidate.DataValueBuffer = value;
+                PropertyChanged?.Invoke(this, new(nameof(DataValue)));
+                PropertyChanged?.Invoke(this, new(nameof(DataValueBuffer)));
                 PropertyChanged?.Invoke(this, new(nameof(Type)));
                 PropertyChanged?.Invoke(this, new(nameof(ValueType)));
                 PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
@@ -105,6 +123,18 @@ namespace MrmTool.Models
         {
             Candidate.SetValue(value);
             PropertyChanged?.Invoke(this, new(nameof(DataValue)));
+            PropertyChanged?.Invoke(this, new(nameof(DataValueBuffer)));
+            PropertyChanged?.Invoke(this, new(nameof(Type)));
+            PropertyChanged?.Invoke(this, new(nameof(ValueType)));
+            PropertyChanged?.Invoke(this, new(nameof(IsExportable)));
+            PropertyChanged?.Invoke(this, new(nameof(IsPathCandidate)));
+        }
+
+        public void SetValue(IBuffer value)
+        {
+            Candidate.SetValue(value);
+            PropertyChanged?.Invoke(this, new(nameof(DataValue)));
+            PropertyChanged?.Invoke(this, new(nameof(DataValueBuffer)));
             PropertyChanged?.Invoke(this, new(nameof(Type)));
             PropertyChanged?.Invoke(this, new(nameof(ValueType)));
             PropertyChanged?.Invoke(this, new(nameof(IsExportable)));

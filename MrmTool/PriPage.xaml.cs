@@ -1,26 +1,26 @@
-using System.Text;
+using MrmLib;
+using MrmTool.Common;
+using MrmTool.Models;
+using MrmTool.Scintilla;
 using System.Collections.ObjectModel;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
+using TerraFX.Interop.Windows;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
-using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Xaml.Navigation;
 using WinRT;
-using MrmLib;
-using MrmTool.Models;
-using MrmTool.Common;
-using MrmTool.Scintilla;
 using WinUIEditor;
-
-using TerraFX.Interop.Windows;
-using static TerraFX.Interop.Windows.Windows;
 using static MrmTool.Common.ErrorHelpers;
+using static TerraFX.Interop.Windows.Windows;
 
 namespace MrmTool
 {
@@ -281,7 +281,9 @@ namespace MrmTool
 
         private void treeView_SelectionChanged(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewSelectionChangedEventArgs args)
         {
-            if (args.AddedItems.Count is 1 && args.AddedItems[0] is ResourceItem item && item.Candidates.Count > 0)
+            if (args.AddedItems.Count is 1 &&
+                args.AddedItems[0] is ResourceItem item /*&&
+                item.Candidates.Count > 0*/)
             {
                 _selectedResource = item;
                 candidatesList.ItemsSource = item.Candidates;
@@ -600,6 +602,25 @@ namespace MrmTool
             {
                 _selectedResource.Candidates.Remove(candidateItem);
                 _pri.ResourceCandidates.Remove(candidateItem.Candidate);
+            }
+        }
+
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private async void EmbedPathCandidate_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem item &&
+                item.DataContext is CandidateItem candidateItem
+                && await TryResolvePathCandidateAsync(candidateItem.StringValue) is { } file)
+            {
+                try
+                {
+                    using var stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
+                    var buffer = new Windows.Storage.Streams.Buffer((uint)stream.Size) { Length = (uint)stream.Size };
+                    
+                    await stream.ReadAsync(buffer, (uint)stream.Size, InputStreamOptions.None);
+                    candidateItem.DataValueBuffer = buffer;
+                }
+                catch { }
             }
         }
     }
