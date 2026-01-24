@@ -23,21 +23,39 @@
     <Page.Resources>
         <contract5NotPresent:DataTemplate x:Key="ResourceTemplateOld" x:DataType="models:ResourceItem">
             <muxc:TreeViewItemWrapper AutomationProperties.Name="{x:Bind DisplayName}"
-                          ItemsSource="{x:Bind Children}" Margin="0,2,0,2">
+                          ItemsSource="{x:Bind Children}" Margin="0,2,0,2" Background="Transparent">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
                 </StackPanel>
+                <muxc:TreeViewItemWrapper.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Delete"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </muxc:TreeViewItemWrapper.ContextFlyout>
             </muxc:TreeViewItemWrapper>
         </contract5NotPresent:DataTemplate>
 
         <contract5Present:DataTemplate x:Key="ResourceTemplate" x:DataType="models:ResourceItem">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind DisplayName}"
-                        ItemsSource="{x:Bind Children}" Margin="0,2,0,2">
+                        ItemsSource="{x:Bind Children}" Margin="0,2,0,2" Background="Transparent">
                 <StackPanel Orientation="Horizontal">
                     <Image Width="28" Source="{x:Bind Icon}" Margin="0,0,10,0"/>
                     <TextBlock Text="{x:Bind DisplayName}" VerticalAlignment="Center" />
                 </StackPanel>
+                <muxc:TreeViewItem.ContextFlyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Delete"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </muxc:TreeViewItem.ContextFlyout>
             </muxc:TreeViewItem>
         </contract5Present:DataTemplate>
 
@@ -172,7 +190,7 @@
                                                     <SymbolIcon Symbol="Save"/>
                                                 </MenuFlyoutItem.Icon>
                                             </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="Try show in Explorer" Visibility="{x:Bind IsPathCandidate}" Click="OpenFolder_Click">
+                                            <MenuFlyoutItem Text="Try Show In Explorer" Visibility="{x:Bind IsPathCandidate}" Click="OpenFolder_Click">
                                                 <MenuFlyoutItem.Icon>
                                                     <SymbolIcon Symbol="Folder"/>
                                                 </MenuFlyoutItem.Icon>

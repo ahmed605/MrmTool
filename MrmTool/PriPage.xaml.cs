@@ -64,7 +64,7 @@ namespace MrmTool
                 currentParent = currentList.FirstOrDefault(i => i.Name == item);
                 if (currentParent is null)
                 {
-                    currentParent = new ResourceItem(item);
+                    currentParent = new ResourceItem(item, currentList);
                     currentList.Add(currentParent);
                 }
             }
@@ -177,9 +177,21 @@ namespace MrmTool
             // TODO
         }
 
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
         private void RemoveResources_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            if (_pri is not null &&
+                sender is MenuFlyoutItem item &&
+                item.DataContext is ResourceItem resourceItem)
+            {
+                if (resourceItem == _selectedResource)
+                {
+                    _selectedResource = null;
+                    UnloadAllPreviewElements();
+                }
+
+                resourceItem.Delete(_pri);
+            }
         }
 
         private async Task PickRootFolder()

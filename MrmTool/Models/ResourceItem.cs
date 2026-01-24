@@ -6,8 +6,10 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace MrmTool.Models
 {
-    public partial class ResourceItem(string name) : INotifyPropertyChanged
+    public partial class ResourceItem(string name, ObservableCollection<ResourceItem> parent) : INotifyPropertyChanged
     {
+        internal ObservableCollection<ResourceItem> Parent = parent;
+
         public string Name { get; private set; } = name;
 
         public string DisplayName 
@@ -109,6 +111,28 @@ namespace MrmTool.Models
 
                 PropertyChanged?.Invoke(this, new(nameof(Icon)));
             }
+        }
+
+        internal void Delete(PriFile pri, bool isChild = false)
+        {
+            foreach (var candidate in Candidates)
+            {
+                pri.ResourceCandidates.Remove(candidate.Candidate);
+            }
+
+            Candidates.Clear();
+
+            foreach (var child in Children)
+            {
+                child.Delete(pri, true);
+            }
+
+            if (!isChild)
+            {
+                Parent.Remove(this);
+            }
+
+            Children.Clear();
         }
     }
 }
