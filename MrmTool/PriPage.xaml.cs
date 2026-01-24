@@ -331,14 +331,15 @@ namespace MrmTool
             }
             else if (candidate.ValueType is ResourceValueType.EmbeddedData)
             {
-                using (MemoryStream stream = new(candidate.DataValue))
+                var dataValue = candidate.DataValueReference;
+                using (RandomAccessStreamOverBuffer stream = new(dataValue))
                 {
-                    if (await DisplayBinaryCandidate(stream.AsRandomAccessStream(), _selectedResource!.Type))
+                    if (await DisplayBinaryCandidate(stream, _selectedResource!.Type))
                         return;
                 }
 
                 FindName(nameof(exportContainer));
-                fileSizeLabel.Text = $"File Size: {candidate.DataValue.Length} bytes";
+                fileSizeLabel.Text = $"File Size: {dataValue.Length} bytes";
             }
             else
             {
@@ -415,13 +416,17 @@ namespace MrmTool
                 else if (type.IsText)
                 {
                     var size = (uint)stream.Size;
-                    var buffer = WindowsRuntimeBuffer.Create((int)size);
+                    var buffer = new Windows.Storage.Streams.Buffer(size) { Length = size };
                     await stream.ReadAsync(buffer, size, InputStreamOptions.None);
 
-                    if (WindowsRuntimeMarshal.TryGetDataUnsafe(buffer, out var ptr)) unsafe
+                    unsafe
                     {
-                        DisplayStringCandidate(Encoding.UTF8.GetString((byte*)ptr, (int)size));
-                        return true;
+                        var ptr = buffer.GetData();
+                        if (ptr is not null)
+                        {
+                            DisplayStringCandidate(Encoding.UTF8.GetString(ptr, (int)size));
+                            return true;
+                        }
                     }
                 }
             } catch { }
@@ -504,7 +509,7 @@ namespace MrmTool
 
             if (candidate is not null)
             {
-                byte[] data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValue : Encoding.UTF8.GetBytes(candidate.StringValue);
+                IBuffer data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValueReference : Encoding.UTF8.GetBuffer(candidate.StringValue);
 
                 string fileName = candidate.ResourceName.GetDisplayName();
                 string extension = Path.GetExtension(fileName);
@@ -521,7 +526,7 @@ namespace MrmTool
                 picker.FileTypeChoices.Add("All files", new string[] { "." });
 
                 if (await picker.PickSaveFileAsync() is { } file)
-                    await FileIO.WriteBytesAsync(file, data);
+                    await FileIO.WriteBufferAsync(file, data);
             }
         }
 

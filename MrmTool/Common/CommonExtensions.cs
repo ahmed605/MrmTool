@@ -10,6 +10,9 @@ using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
 using static MrmTool.Common.ErrorHelpers;
 using MrmTool.Common;
+using Windows.Storage.Streams;
+using System.Text;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace MrmTool.Common
 {
@@ -198,6 +201,31 @@ namespace MrmTool.Common
             LOG_LAST_ERROR_IF(GlobalFree((HGLOBAL)hDrop).Value is not null);
 
             return path;
+        }
+
+        internal unsafe static byte* GetData(this IBuffer buffer)
+        {
+            using ComPtr<TerraFX.Interop.WinRT.IBufferByteAccess> bufferByteAccess = default;
+            if (SUCCEEDED_LOG(((IUnknown*)((IWinRTObject)buffer).NativeObject.ThisPtr)->QueryInterface(
+                (Guid*)Unsafe.AsPointer(in IID.IID_IBufferByteAccess),
+                (void**)bufferByteAccess.GetAddressOf())))
+            {
+                byte* dataPtr = null;
+                bufferByteAccess.Get()->Buffer(&dataPtr);
+                return dataPtr;
+            }
+
+            return null;
+        }
+
+        internal unsafe static IBuffer GetBuffer(this Encoding encoding, string s)
+        {
+            var span = s.AsSpan();
+            var size = encoding.GetByteCount(span);
+            var buffer = new Windows.Storage.Streams.Buffer((uint)size) { Length = (uint)size };
+
+            encoding.GetBytes(span, new(buffer.GetData(), size));
+            return buffer;
         }
 
         extension(QualifierOperator op)
