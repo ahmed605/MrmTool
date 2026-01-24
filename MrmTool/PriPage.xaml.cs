@@ -283,7 +283,7 @@ namespace MrmTool
         {
             if (args.AddedItems.Count is 1 &&
                 args.AddedItems[0] is ResourceItem item &&
-                /*item.Candidates.Count > 0*/ item.Type is not ResourceType.Folder)
+                /*item.Candidates.Count > 0*/ item.Type is not (ResourceType.Folder or ResourceType.Unknown))
             {
                 _selectedResource = item;
                 candidatesList.ItemsSource = item.Candidates;
