@@ -1,4 +1,5 @@
-﻿using Windows.UI.Xaml;
+﻿using System.Runtime.CompilerServices;
+using Windows.UI.Xaml;
 using WinUIEditor;
 
 namespace MrmTool.Scintilla
@@ -121,6 +122,25 @@ namespace MrmTool.Scintilla
 
                 editor.StyleSetItalic(Lexilla.SCE_PROPS_KEY, true);
                 editor.StyleSetItalic(Lexilla.SCE_PROPS_COMMENT, true);
+            }
+        }
+
+        extension(CodeEditorControl control)
+        {
+            internal string Text
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get
+                {
+                    var editor = control.Editor;
+                    return editor.GetText(editor.TextLength);
+                }
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                set
+                {
+                    control.Editor.SetText(value);
+                }
             }
         }
     }

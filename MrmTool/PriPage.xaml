@@ -30,6 +30,11 @@
                 </StackPanel>
                 <muxc:TreeViewItemWrapper.ContextFlyout>
                     <MenuFlyout>
+                        <MenuFlyoutItem Text="Add Resource" Visibility="{x:Bind IsFolder}" Click="AddResource_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Add"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Delete"/>
@@ -49,6 +54,11 @@
                 </StackPanel>
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
+                        <MenuFlyoutItem Text="Add Resource" Visibility="{x:Bind IsFolder}" Click="AddResource_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Add"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Delete"/>
@@ -99,7 +109,7 @@
                         <SymbolIcon Symbol="Add"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Remove Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
+                <MenuFlyoutItem x:Name="RemoveResourcesItem" Text="Remove Selected Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Delete"/>
                     </MenuFlyoutItem.Icon>

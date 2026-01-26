@@ -8,34 +8,52 @@ namespace MrmTool.Models
 {
     public partial class ResourceItem(string name, ObservableCollection<ResourceItem> parent) : INotifyPropertyChanged
     {
+        private string _name = name;
+        private string _displayName = name.GetDisplayName();
+
         internal ObservableCollection<ResourceItem> Parent = parent;
 
-        public string Name { get; private set; } = name;
-
-        public string DisplayName 
+        public string Name
         {
-            get;
+            get => _name;
             set
             {
-                if (field != value)
+                if (!_name.Equals(value, StringComparison.Ordinal))
                 {
-                    field = value;
+                    var oldNameLength = _name.Length;
 
-                    var newName = Name.SetDisplayName(value);
-                    Name = newName;
-
-                    PropertyChanged?.Invoke(this, new(nameof(DisplayName)));
-                    PropertyChanged?.Invoke(this, new(nameof(Name)));
-
-                    EnsureIconAndType(true);
+                    _name = value;
+                    _displayName = value.GetDisplayName();
 
                     foreach (var candidate in Candidates)
                     {
-                        candidate.Candidate.ResourceName = newName;
+                        candidate.Candidate.ResourceName = value;
                     }
+
+                    foreach (var child in Children)
+                    {
+                        child.Name = value + child.Name[oldNameLength..];
+                    }
+
+                    PropertyChanged?.Invoke(this, new(nameof(Name)));
+                    PropertyChanged?.Invoke(this, new(nameof(DisplayName)));
+
+                    EnsureIconAndType(true);
                 }
             }
-        } = name.GetDisplayName();
+        }
+
+        public string DisplayName 
+        {
+            get => _displayName;
+            set
+            {
+                if (!_displayName.Equals(value, StringComparison.Ordinal))
+                {
+                    Name = Name.SetDisplayName(value);
+                }
+            }
+        }
 
         public ObservableCollection<ResourceItem> Children { get; } = [];
 
@@ -44,6 +62,8 @@ namespace MrmTool.Models
         public BitmapImage? Icon { get; private set; }
 
         internal ResourceType Type { get; private set; } = ResourceType.Unknown;
+
+        internal bool IsFolder => Type is ResourceType.Folder || Children.Count > 0;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -55,35 +75,7 @@ namespace MrmTool.Models
             }
             else
             {
-                Type = Path.GetExtension(DisplayName).ToLowerInvariant() switch
-                {
-                    ".xbf"
-                        => ResourceType.Xbf,
-
-                    ".xaml"
-                        => ResourceType.Xaml,
-
-                    ".ttf" or ".otf" or ".ttc"
-                        => ResourceType.Font,
-
-                    ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv"
-                        => ResourceType.Video,
-
-                    ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
-                        => ResourceType.Audio,
-
-                    ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or
-                    ".webp" or ".heif" or ".tiff"
-                        => ResourceType.Image,
-
-                    ".txt" or ".xml" or ".csv" or ".ini" or ".inf" or ".json" or ".html" or
-                    ".htm" or ".css" or ".scss" or ".less" or ".hss" or ".js" or ".cs" or
-                    ".resw" or ".resx"
-                        => ResourceType.Text,
-
-                    _
-                        => ResourceType.Unknown
-                };
+                Type = DisplayName.DetermineResourceType();
 
                 if (Type is ResourceType.Unknown &&
                     Candidates.Count > 0 &&
@@ -100,18 +92,7 @@ namespace MrmTool.Models
             {
                 DetermineType();
 
-                Icon = Type switch
-                {
-                    ResourceType.Folder => Icons.Folder.Value,
-                    ResourceType.Text => Icons.Text.Value,
-                    ResourceType.Image => Icons.Image.Value,
-                    ResourceType.Audio => Icons.Audio.Value,
-                    ResourceType.Video => Icons.Video.Value,
-                    ResourceType.Font => Icons.Font.Value,
-                    ResourceType.Xaml or ResourceType.Xbf => Icons.Xaml.Value,
-                    _ => Icons.Unknown.Value,
-                };
-
+                Icon = Type.GetCorrespondingIcon();
                 PropertyChanged?.Invoke(this, new(nameof(Icon)));
             }
         }

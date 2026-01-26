@@ -1,6 +1,6 @@
 ﻿using Windows.UI.Xaml.Controls;
 
-namespace MrmTool
+namespace MrmTool.Dialogs
 {
     public sealed partial class NoticeDialog : ContentDialog
     {

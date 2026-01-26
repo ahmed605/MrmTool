@@ -6,7 +6,9 @@ using System.Runtime.CompilerServices;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.UI.Xaml.Media.Imaging;
 using MrmTool.Common;
+using MrmTool.Models;
 
 using TerraFX.Interop.Windows;
 using static TerraFX.Interop.Windows.Windows;
@@ -128,6 +130,69 @@ namespace MrmTool.Common
             };
         }
 
+        internal static ResourceType DetermineResourceType(this string name)
+        {
+            return Path.GetExtension(name).ToLowerInvariant() switch
+            {
+                ".xbf"
+                    => ResourceType.Xbf,
+
+                ".xaml"
+                    => ResourceType.Xaml,
+
+                ".ttf" or ".otf" or ".ttc"
+                    => ResourceType.Font,
+
+                ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv" or ".webm"
+                    => ResourceType.Video,
+
+                ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
+                    => ResourceType.Audio,
+
+                ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or
+                ".webp" or ".heif" or ".tiff"
+                    => ResourceType.Image,
+
+                ".txt" or ".xml" or ".csv" or ".ini" or ".inf" or ".json" or ".html" or
+                ".htm" or ".css" or ".scss" or ".less" or ".hss" or ".js" or ".cs" or
+                ".resw" or ".resx"
+                    => ResourceType.Text,
+
+                _
+                    => ResourceType.Unknown
+            };
+        }
+
+        internal static BitmapImage GetCorrespondingIcon(this ResourceType type)
+        {
+            return type switch
+            {
+                ResourceType.Folder => Icons.Folder.Value,
+                ResourceType.Text => Icons.Text.Value,
+                ResourceType.Image => Icons.Image.Value,
+                ResourceType.Audio => Icons.Audio.Value,
+                ResourceType.Video => Icons.Video.Value,
+                ResourceType.Font => Icons.Font.Value,
+                ResourceType.Xaml or ResourceType.Xbf => Icons.Xaml.Value,
+                _ => Icons.Unknown.Value,
+            };
+        }
+
+        internal static BitmapImage GetCorrespondingLargeIcon(this ResourceType type)
+        {
+            return type switch
+            {
+                ResourceType.Folder => Icons.FolderLarge.Value,
+                ResourceType.Text => Icons.TextLarge.Value,
+                ResourceType.Image => Icons.ImageLarge.Value,
+                ResourceType.Audio => Icons.AudioLarge.Value,
+                ResourceType.Video => Icons.VideoLarge.Value,
+                ResourceType.Font => Icons.FontLarge.Value,
+                ResourceType.Xaml or ResourceType.Xbf => Icons.XamlLarge.Value,
+                _ => Icons.UnknownLarge.Value,
+            };
+        }
+
         internal static ReadOnlySpan<char> GetExtensionAfterPeriod(this ReadOnlySpan<char> path)
         {
             int length = path.Length;
@@ -159,6 +224,29 @@ namespace MrmTool.Common
         private static bool IsDirectorySeparator(char c)
         {
             return c == DirectorySeparatorChar || c == AltDirectorySeparatorChar;
+        }
+
+        internal static string[] SplitIntoResourceNames(this string resourceName)
+        {
+            int count = resourceName.Count('/');
+
+            if (count is 0)
+            {
+                return [resourceName];
+            }
+
+            int resultIdx = 0;
+            int currentIdx = -1;
+            var result = new string[count + 1];
+
+            while ((currentIdx = resourceName.IndexOf('/', currentIdx + 1)) >= 0)
+            {
+                result[resultIdx++] = resourceName.Substring(0, currentIdx);
+            }
+
+            result[resultIdx] = resourceName;
+
+            return result;
         }
 
         internal unsafe static HDROP* GetHDropUnsafe(this DataPackageView view)

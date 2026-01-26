@@ -1,0 +1,100 @@
+﻿<ContentDialog
+    x:Class="MrmTool.Dialogs.NewResourceDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MrmTool.Dialogs"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:winuieditor="using:WinUIEditor"
+    mc:Ignorable="d"
+    Title="Create New Resource"
+    PrimaryButtonText="Create"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    Loaded="ContentDialog_Loaded">
+    
+    <ContentDialog.Resources>
+        <x:Double x:Key="ContentDialogMinWidth">500</x:Double>
+        <x:Double x:Key="ContentDialogMaxWidth">1200</x:Double>
+        <x:Double x:Key="ContentDialogMaxHeight">1200</x:Double>
+    </ContentDialog.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Grid.Column="1" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Image x:Name="icon" Grid.Column="0" VerticalAlignment="Top" Width="80" Margin="0,0,5,0" HorizontalAlignment="Left" Source="ms-appx:///Assets/Icons/generic.png"/>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Name" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,5,5,0" Grid.Column="0"/>
+                <TextBox x:Name="nameBox" Text="Files/New/Resource" IsSpellCheckEnabled="False" PlaceholderText="Resource name (e.g. &quot;Files/New/Resource&quot;)" TextChanged="nameBox_TextChanged" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="5,5,0,0" Grid.Column="1"/>
+
+                <TextBlock Text="Type" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,5,5,0" Grid.Row="1" Grid.Column="0"/>
+                <ComboBox x:Name="typeBox" VerticalAlignment="Top" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,5,0,0" Grid.Row="1" Grid.Column="1" SelectionChanged="typeBox_SelectionChanged">
+                    <ComboBoxItem Content="String"/>
+                    <ComboBoxItem Content="File Path"/>
+                    <ComboBoxItem Content="Embedded Data"/>
+                </ComboBox>
+            </Grid>
+        </Grid>
+
+        <StackPanel x:Name="stringContainer" x:Load="False" Grid.Row="1" VerticalAlignment="Top" Orientation="Vertical" Margin="10,10,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="Content:" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" Grid.Column="0"/>
+                <Button HorizontalAlignment="Right" Content="Import from file" MinWidth="150" Grid.Column="1" Margin="5,0,0,0" Click="ImportButton_Click"/>
+            </Grid>
+        </StackPanel>
+
+        <Grid x:Name="pathContainer" x:Load="False" Grid.Row="1" VerticalAlignment="Top" Margin="10,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="File Path" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" Grid.Column="0"/>
+            <TextBox x:Name="pathBox" Text="Assets\New\Resource.png" IsSpellCheckEnabled="False" PlaceholderText="File path in relation to PRI root folder" TextChanged="pathBox_TextChanged" VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="5,0,0,0" Grid.Column="1"/>
+        </Grid>
+
+        <Grid x:Name="dataContainer" x:Load="False" Grid.Row="1" VerticalAlignment="Top" Margin="10,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="Data Source" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="0,0,5,0" Grid.Column="0"/>
+            <ComboBox x:Name="sourceBox" VerticalAlignment="Top" SelectedIndex="0" HorizontalAlignment="Stretch" Margin="5,0,0,0" Grid.Row="1" Grid.Column="1" SelectionChanged="sourceBox_SelectionChanged">
+                <ComboBoxItem Content="File"/>
+                <ComboBoxItem Content="Text String (UTF-8)"/>
+                <ComboBoxItem Content="Text String (UTF-16LE)"/>
+            </ComboBox>
+        </Grid>
+
+        <winuieditor:CodeEditorControl x:Name="editorControl" x:Load="False" Grid.Row="2" Padding="-10,12,0,0" HorizontalAlignment="Stretch" MinHeight="250"/>
+        <Button x:Name="browseButton" x:Load="False" HorizontalAlignment="Stretch" Margin="0,10,0,0" Grid.Row="2" Click="browseButton_Click">
+            <TextBlock x:Name="browseBlock" Text="Browse..." TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+        </Button>
+    </Grid>
+</ContentDialog>

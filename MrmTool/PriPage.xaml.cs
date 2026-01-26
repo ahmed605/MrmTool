@@ -1,13 +1,11 @@
 using MrmLib;
 using MrmTool.Common;
+using MrmTool.Dialogs;
 using MrmTool.Models;
 using MrmTool.Scintilla;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using TerraFX.Interop.Windows;
+using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -23,6 +21,7 @@ using WinUIEditor;
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MrmTool
 {
@@ -58,12 +57,13 @@ namespace MrmTool
 
         private ResourceItem GetOrAddResourceItem(string name)
         {
-            string[] split = name.Split('/');
+            string[] split = name.SplitIntoResourceNames();
+
             ResourceItem? currentParent = null;
             foreach (var item in split)
             {
                 ObservableCollection<ResourceItem> currentList = currentParent?.Children ?? ResourceItems;
-                currentParent = currentList.FirstOrDefault(i => i.Name == item);
+                currentParent = currentList.FirstOrDefault(i => i.Name.Equals(item, StringComparison.Ordinal));
                 if (currentParent is null)
                 {
                     currentParent = new ResourceItem(item, currentList);
@@ -174,9 +174,39 @@ namespace MrmTool
             }
         }
 
-        private void AddResource_Click(object sender, RoutedEventArgs e)
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
+        private async void AddResource_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            var parent = sender is MenuFlyoutItem item &&
+                         item.DataContext is ResourceItem resourceItem ?
+                resourceItem.Name :
+                         (ResourceItem)treeView.SelectedItem is ResourceItem resItem && resItem.IsFolder ?
+                resItem.Name : null;
+
+            var dialog = new NewResourceDialog(_pri!, parent);
+            
+            try
+            {
+                if (await dialog.ShowAsync() is { } candidate)
+                {
+                    var newItem = GetOrAddResourceItem(candidate.Candidate.ResourceName);
+                    newItem.Candidates.Add(candidate);
+                }
+            }
+            catch (Exception ex)
+            {
+                ContentDialog errorDialog = new()
+                {
+                    Title = "Error",
+                    Content = $"Failed to create resource.\r\nException: {ex.GetType().Name} (0x{ex.HResult:X8})\r\nException Message: {ex.Message}\r\nStacktrace:\r\n\r\n{ex.StackTrace}",
+                    CloseButtonText = "OK",
+                    DefaultButton = ContentDialogButton.Close,
+                    Template = (ControlTemplate)Program.Application.Resources["ScrollableContentDialogTemplate"]
+                };
+
+                await errorDialog.ShowAsync();
+            }
         }
 
         [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
@@ -189,6 +219,7 @@ namespace MrmTool
                 if (resourceItem == _selectedResource)
                 {
                     _selectedResource = null;
+                    RemoveResourcesItem.IsEnabled = false;
                     UnloadAllPreviewElements();
                 }
 
@@ -285,10 +316,11 @@ namespace MrmTool
         {
             if (args.AddedItems.Count is 1 &&
                 args.AddedItems[0] is ResourceItem item &&
-                /*item.Candidates.Count > 0*/ item.Type is not ResourceType.Folder)
+                (item.Type is not ResourceType.Folder || item.Candidates.Count > 0))
             {
                 _selectedResource = item;
                 candidatesList.ItemsSource = item.Candidates;
+                RemoveResourcesItem.IsEnabled = true;
             }
         }
 
