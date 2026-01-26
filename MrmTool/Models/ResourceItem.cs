@@ -60,23 +60,26 @@ namespace MrmTool.Models
                     ".xbf"
                         => ResourceType.Xbf,
 
-                    ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or ".webp" or ".heif" or ".tiff"
-                        => ResourceType.Image,
-
-                    ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
-                        => ResourceType.Audio,
-
-                    ".txt" or ".xml" or ".csv" or ".ini" or ".json" or ".html" or ".htm" or ".css" or "scss" or "less" or "hss" or ".js" or ".cs" or ".resw" or ".resx"
-                        => ResourceType.Text,
-
-                    ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv"
-                        => ResourceType.Video,
+                    ".xaml"
+                        => ResourceType.Xaml,
 
                     ".ttf" or ".otf" or ".ttc"
                         => ResourceType.Font,
 
-                    ".xaml"
-                        => ResourceType.Xaml,
+                    ".mp4" or ".avi" or ".mov" or ".wmv" or ".mkv"
+                        => ResourceType.Video,
+
+                    ".mp3" or ".wav" or ".wma" or ".ogg" or ".flac" or ".opus"
+                        => ResourceType.Audio,
+
+                    ".png" or ".jpg" or ".gif" or ".bmp" or ".svg" or ".jpeg" or
+                    ".webp" or ".heif" or ".tiff"
+                        => ResourceType.Image,
+
+                    ".txt" or ".xml" or ".csv" or ".ini" or ".inf" or ".json" or ".html" or
+                    ".htm" or ".css" or ".scss" or ".less" or ".hss" or ".js" or ".cs" or
+                    ".resw" or ".resx"
+                        => ResourceType.Text,
 
                     _
                         => ResourceType.Unknown

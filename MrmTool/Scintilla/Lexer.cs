@@ -34,6 +34,13 @@ namespace MrmTool.Scintilla
         internal const int SCE_CSS_EXTENDED_PSEUDOELEMENT = 21;
         internal const int SCE_CSS_GROUP_RULE = 22;
         internal const int SCE_CSS_VARIABLE = 23;
+
+        internal const int SCE_PROPS_DEFAULT = 0;
+        internal const int SCE_PROPS_COMMENT = 1;
+        internal const int SCE_PROPS_SECTION = 2;
+        internal const int SCE_PROPS_ASSIGNMENT = 3;
+        internal const int SCE_PROPS_DEFVAL = 4;
+        internal const int SCE_PROPS_KEY = 5;
     }
 
     [StructLayout(LayoutKind.Sequential)]

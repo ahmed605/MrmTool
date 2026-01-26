@@ -7,10 +7,11 @@ namespace MrmTool.Scintilla
     {
         internal static void HandleSyntaxHighlightingApplied(this CodeEditorControl control, ElementTheme theme)
         {
-            if (control.HighlightingLanguage is "css")
-            {
-                var editor = control.Editor;
+            var editor = control.Editor;
+            var langauge = control.HighlightingLanguage;
 
+            if (langauge is "css")
+            {
                 var lexer = Lexilla.CreateLexer("css");
                 lexer->PropertySetUnsafe("fold"u8, "1"u8);
                 lexer->PropertySetUnsafe("lexer.css.scss.language"u8, "1"u8);
@@ -85,6 +86,41 @@ namespace MrmTool.Scintilla
                     editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_PSEUDOCLASS, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute_NamePseudo_ClassCss]);
                     editor.StyleSetFore(Lexilla.SCE_CSS_UNKNOWN_IDENTIFIER, LightPlusTheme.Colors[(int)Scope.VariableCss]);
                 }
+            }
+            else if (langauge is "props")
+            {
+                var lexer = Lexilla.CreateLexer("props");
+                lexer->PropertySetUnsafe("fold"u8, "1"u8);
+                lexer->PropertySetUnsafe("lexer.props.allow.initial.spaces"u8, "1"u8);
+                editor.SetILexer((ulong)lexer);
+
+                if (theme is ElementTheme.Dark)
+                {
+                    editor.StyleSetFore((int)StylesCommon.Default, DarkPlusTheme.DarkPlusEditorForeground);
+                    editor.StyleSetFore((int)StylesCommon.BraceLight, DarkPlusTheme.DarkPlusEditorForeground);
+
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_DEFAULT, DarkPlusTheme.DarkPlusEditorForeground);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_COMMENT, DarkPlusTheme.Colors[(int)Scope.Comment]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_SECTION, DarkPlusTheme.Colors[(int)Scope.EntityOtherAttribute]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_ASSIGNMENT, DarkPlusTheme.Colors[(int)Scope.KeywordOtherOperator]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_DEFVAL, DarkPlusTheme.Colors[(int)Scope.String]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_KEY, DarkPlusTheme.Colors[(int)Scope.Variable]);
+                }
+                else
+                {
+                    editor.StyleSetFore((int)StylesCommon.Default, LightPlusTheme.LightPlusEditorForeground);
+                    editor.StyleSetFore((int)StylesCommon.BraceLight, LightPlusTheme.LightPlusEditorForeground);
+
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_DEFAULT, LightPlusTheme.LightPlusEditorForeground);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_COMMENT, LightPlusTheme.Colors[(int)Scope.Comment]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_SECTION, LightPlusTheme.Colors[(int)Scope.EntityOtherAttribute]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_ASSIGNMENT, LightPlusTheme.Colors[(int)Scope.KeywordOtherOperator]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_DEFVAL, LightPlusTheme.Colors[(int)Scope.String]);
+                    editor.StyleSetFore(Lexilla.SCE_PROPS_KEY, LightPlusTheme.Colors[(int)Scope.Variable]);
+                }
+
+                editor.StyleSetItalic(Lexilla.SCE_PROPS_KEY, true);
+                editor.StyleSetItalic(Lexilla.SCE_PROPS_COMMENT, true);
             }
         }
     }

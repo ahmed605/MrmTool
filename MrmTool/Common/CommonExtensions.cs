@@ -121,6 +121,7 @@ namespace MrmTool.Common
                 "cs" => "csharp",
                 "js" => "javascript",
                 "htm" => "html",
+                "ini" or "inf" => "props",
                 "resw" or "resx" or "xaml" => "xml",
                 "scss" or "less" or "hss" => "css",
                 _ => extensionAfterPeriod,
