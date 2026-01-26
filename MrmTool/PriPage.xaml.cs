@@ -19,8 +19,10 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using WinRT;
 using WinUIEditor;
+
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
+using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace MrmTool
 {
@@ -523,8 +525,6 @@ namespace MrmTool
 
             if (candidate is not null)
             {
-                IBuffer data = candidate.ValueType is ResourceValueType.EmbeddedData ? candidate.DataValueReference : Encoding.UTF8.GetBuffer(candidate.StringValue);
-
                 string fileName = candidate.ResourceName.GetDisplayName();
                 string extension = Path.GetExtension(fileName);
 
@@ -540,7 +540,12 @@ namespace MrmTool
                 picker.FileTypeChoices.Add("All files", new string[] { "." });
 
                 if (await picker.PickSaveFileAsync() is { } file)
-                    await FileIO.WriteBufferAsync(file, data);
+                {
+                    if (candidate.ValueType is ResourceValueType.EmbeddedData)
+                        await FileIO.WriteBufferAsync(file, candidate.DataValueReference);
+                    else
+                        await FileIO.WriteTextAsync(file, candidate.StringValue, UnicodeEncoding.Utf8);
+                }
             }
         }
 
