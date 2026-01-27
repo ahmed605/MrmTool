@@ -686,9 +686,22 @@ namespace MrmTool
             }
         }
 
-        private void FullRename_Click(object sender, RoutedEventArgs e)
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private async void FullRename_Click(object sender, RoutedEventArgs e)
         {
-            // TODO
+            if (sender is MenuFlyoutItem item &&
+                item.DataContext is ResourceItem resourceItem)
+            {
+                var dialog = new RenameDialog(resourceItem, false);
+                await dialog.ShowAsync();
+
+                resourceItem.Parent.Remove(resourceItem);
+                var parent = resourceItem.Name.GetParentName() is { } parentName ?
+                    GetOrAddResourceItem(parentName).Children :
+                    ResourceItems;
+
+                parent.Add(resourceItem);
+            }
         }
     }
 }

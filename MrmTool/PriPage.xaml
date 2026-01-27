@@ -35,18 +35,13 @@
                                 <SymbolIcon Symbol="Add"/>
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <!--MenuFlyoutSubItem Text="Rename">
+                        <MenuFlyoutSubItem Text="Rename">
                             <MenuFlyoutSubItem.Icon>
                                 <SymbolIcon Symbol="Rename"/>
                             </MenuFlyoutSubItem.Icon>
                             <MenuFlyoutItem Text="Simple Rename" Click="SimpleRename_Click"/>
                             <MenuFlyoutItem Text="Full Rename" Click="FullRename_Click"/>
-                        </MenuFlyoutSubItem-->
-                        <MenuFlyoutItem Text="Rename" Click="SimpleRename_Click">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Rename"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
+                        </MenuFlyoutSubItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Delete"/>
@@ -71,18 +66,13 @@
                                 <SymbolIcon Symbol="Add"/>
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
-                        <!--MenuFlyoutSubItem Text="Rename">
+                        <MenuFlyoutSubItem Text="Rename">
                             <MenuFlyoutSubItem.Icon>
                                 <SymbolIcon Symbol="Rename"/>
                             </MenuFlyoutSubItem.Icon>
                             <MenuFlyoutItem Text="Simple Rename" Click="SimpleRename_Click"/>
                             <MenuFlyoutItem Text="Full Rename" Click="FullRename_Click"/>
-                        </MenuFlyoutSubItem-->
-                        <MenuFlyoutItem Text="Rename" Click="SimpleRename_Click">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Rename"/>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
+                        </MenuFlyoutSubItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Delete"/>

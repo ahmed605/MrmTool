@@ -1,10 +1,5 @@
 ﻿using MrmTool.Models;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.UI.Xaml.Controls;
 
 namespace MrmTool.Dialogs
@@ -12,40 +7,36 @@ namespace MrmTool.Dialogs
     public sealed partial class RenameDialog : ContentDialog
     {
         private readonly ResourceItem _item;
+        private readonly bool _simpleRename;
 
         public RenameDialog(ResourceItem item, bool simpleRename = true)
         {
             _item = item;
-
-            if (!simpleRename)
-            {
-                ThrowNotSupportedException();
-            }
+            _simpleRename = simpleRename;
 
             this.InitializeComponent();
 
-            nameBox.Text = item.DisplayName;
+            nameBox.Text = simpleRename ? item.DisplayName : item.Name;
         }
-
-        [DoesNotReturn]
-        private static void ThrowNotSupportedException()
-            => throw new NotSupportedException("Full rename is not supported yet");
 
         internal new async Task ShowAsync()
         {
             if (await base.ShowAsync() is ContentDialogResult.Primary)
             {
-                // TODO: handle full rename
-                _item.DisplayName = nameBox.Text;
+                if (_simpleRename)
+                    _item.DisplayName = nameBox.Text;
+                else
+                    _item.Name = nameBox.Text;
             }
         }
 
         private void ValidateInput()
         {
-            // TODO: handle full rename validation
             var name = nameBox.Text;
             IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(name) &&
-                                     !name.Contains('/', StringComparison.Ordinal);
+                                     (_simpleRename ? !name.Contains('/', StringComparison.Ordinal) :
+                                     !name.StartsWith('/') &&
+                                     !name.EndsWith('/'));
         }
 
         private void nameBox_TextChanged(object sender, TextChangedEventArgs e)
