@@ -1,5 +1,4 @@
 ﻿using MrmTool.Models;
-using System.Diagnostics.CodeAnalysis;
 using Windows.UI.Xaml.Controls;
 
 namespace MrmTool.Dialogs

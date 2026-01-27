@@ -11,7 +11,7 @@ namespace MrmTool.Common
     internal unsafe partial class NativeBuffer : IBuffer, IDisposable, IBufferByteAccess_NativeBuffer
     {
         readonly uint _size;
-        readonly byte* _buffer;
+        byte* _buffer;
 
         internal byte* Buffer => _buffer;
 
@@ -33,13 +33,22 @@ namespace MrmTool.Common
 
         public void Dispose()
         {
-            NativeMemory.Free(_buffer);
+            if (_buffer is not null)
+            {
+                NativeMemory.Free(_buffer);
+                _buffer = null;
+            }
+
             GC.SuppressFinalize(this);
         }
 
         ~NativeBuffer()
         {
-            NativeMemory.Free(_buffer);
+            if (_buffer is not null)
+            {
+                NativeMemory.Free(_buffer);
+                _buffer = null;
+            }
         }
     }
 

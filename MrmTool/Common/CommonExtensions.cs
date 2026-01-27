@@ -249,6 +249,36 @@ namespace MrmTool.Common
             return result;
         }
 
+        internal static bool Matches(this Qualifier left, Qualifier right)
+        {
+            return left.Attribute == right.Attribute &&
+                   left.Operator == right.Operator &&
+                   left.Value.Equals(right.Value, StringComparison.Ordinal) &&
+                   left.Priority == right.Priority &&
+                   left.FallbackScore == right.FallbackScore;
+        }
+
+        internal static bool Matches(this Qualifier left, QualifierAttribute attribute, QualifierOperator op, string value, int priority, double fallbackScore)
+        {
+            return left.Attribute == attribute &&
+                   left.Operator == op &&
+                   left.Value.Equals(value, StringComparison.Ordinal) &&
+                   left.Priority == priority &&
+                   left.FallbackScore == fallbackScore;
+        }
+
+        /*internal static string Format(this IReadOnlyList<Qualifier> qualifiers)
+        {
+            return qualifiers.Count is 0 ? "(None)" : string.Join(", ",
+                   qualifiers.Select(q => $"({q.AttributeName} {q.Operator.Symbol} {q.Value}{(q.Priority is { } p && p != 0 ? $", Priority = {p}" : string.Empty)}{(q.FallbackScore is { } s && s != 0 ? $", Fallback Score = {s}" : string.Empty)})"));
+        }*/
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static string Format(this Qualifier qualifier)
+        {
+            return $"{qualifier.AttributeName} {qualifier.Operator.Symbol} {qualifier.Value}{(qualifier.Priority is { } p && p != 0 ? $", Priority = {p}" : string.Empty)}{(qualifier.FallbackScore is { } s && s != 0 ? $", Fallback Score = {s}" : string.Empty)}";
+        }
+
         internal unsafe static HDROP* GetHDropUnsafe(this DataPackageView view)
         {
             using ComPtr<IDataObject> dataObject = default;
@@ -305,13 +335,13 @@ namespace MrmTool.Common
             return null;
         }
 
-        internal unsafe static IBuffer GetBuffer(this Encoding encoding, string s)
+        internal unsafe static NativeBuffer GetBuffer(this Encoding encoding, string s)
         {
             var span = s.AsSpan();
             var size = encoding.GetByteCount(span);
-            var buffer = new Windows.Storage.Streams.Buffer((uint)size) { Length = (uint)size };
+            var buffer = new NativeBuffer((uint)size);
 
-            encoding.GetBytes(span, new(buffer.GetData(), size));
+            encoding.GetBytes(span, new(buffer.Buffer, size));
             return buffer;
         }
 

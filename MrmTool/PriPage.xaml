@@ -179,62 +179,106 @@
                     <Border.BorderBrush>
                         <SolidColorBrush Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
                     </Border.BorderBrush>
-                    <ListView x:Name="candidatesList" SelectionChanged="candidatesList_SelectionChanged">
-                        <ListView.Header>
-                            <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
-                                <interactivity:Interaction.Behaviors>
-                                    <behaviors:StickyHeaderBehavior/>
-                                </interactivity:Interaction.Behaviors>
+                    <Grid>
+                        <ListView x:Name="candidatesList" SelectionChanged="candidatesList_SelectionChanged">
+                            <ListView.Header>
+                                <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
+                                    <interactivity:Interaction.Behaviors>
+                                        <behaviors:StickyHeaderBehavior/>
+                                    </interactivity:Interaction.Behaviors>
 
-                                <wct:DataTable Margin="10,0,0,0" Height="30">
-                                    <wct:DataColumn Content="Type" Width="120" MinWidth="100" CanResize="True"/>
-                                    <wct:DataColumn Content="Qualifiers"/>
-                                </wct:DataTable>
-                            </Border>
-                        </ListView.Header>
+                                    <wct:DataTable Margin="10,0,0,0" Height="30">
+                                        <wct:DataColumn Content="Type" Width="120" MinWidth="100" CanResize="True"/>
+                                        <wct:DataColumn Content="Qualifiers"/>
+                                    </wct:DataTable>
+                                </Border>
+                            </ListView.Header>
 
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                <Setter Property="VerticalContentAlignment" Value="Stretch"/>
-                            </Style>
-                        </ListView.ItemContainerStyle>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListView.ItemContainerStyle>
 
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:CandidateItem">
-                                <Grid Background="Transparent">
-                                    <wct:DataRow HorizontalAlignment="Left">
-                                        <TextBlock Text="{x:Bind Type, Mode = OneWay}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="{x:Bind Qualifiers, Mode = OneWay}" VerticalAlignment="Center"/>
-                                    </wct:DataRow>
-                                    <Grid.ContextFlyout>
-                                        <MenuFlyout>
-                                            <MenuFlyoutItem Text="Export" Visibility="{x:Bind IsExportable, Mode = OneWay}" Click="ExportButton_Click">
-                                                <MenuFlyoutItem.Icon>
-                                                    <SymbolIcon Symbol="Save"/>
-                                                </MenuFlyoutItem.Icon>
-                                            </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="Try Show in Explorer" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="OpenFolder_Click">
-                                                <MenuFlyoutItem.Icon>
-                                                    <SymbolIcon Symbol="Folder"/>
-                                                </MenuFlyoutItem.Icon>
-                                            </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="Try Embed Into PRI" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="EmbedPathCandidate_Click">
-                                                <MenuFlyoutItem.Icon>
-                                                    <SymbolIcon Symbol="Import"/>
-                                                </MenuFlyoutItem.Icon>
-                                            </MenuFlyoutItem>
-                                            <MenuFlyoutItem Text="Delete" Click="DeleteCandiate_Click">
-                                                <MenuFlyoutItem.Icon>
-                                                    <SymbolIcon Symbol="Delete"/>
-                                                </MenuFlyoutItem.Icon>
-                                            </MenuFlyoutItem>
-                                        </MenuFlyout>
-                                    </Grid.ContextFlyout>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="models:CandidateItem">
+                                    <Grid Background="Transparent">
+                                        <wct:DataRow HorizontalAlignment="Left">
+                                            <TextBlock Text="{x:Bind Type, Mode = OneWay}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{x:Bind Qualifiers, Mode = OneWay}" VerticalAlignment="Center"/>
+                                        </wct:DataRow>
+
+                                        <Grid.ContextFlyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="Export" Visibility="{x:Bind IsExportable, Mode = OneWay}" Click="ExportButton_Click">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <SymbolIcon Symbol="Save"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Try Show in Explorer" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="OpenFolder_Click">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <SymbolIcon Symbol="Folder"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Try Embed Into PRI" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="EmbedPathCandidate_Click">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <SymbolIcon Symbol="Import"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Modify" Click="CreateOrModifyCandidate_Click">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <SymbolIcon Symbol="Edit"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Delete" Click="DeleteCandiate_Click">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <SymbolIcon Symbol="Delete"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                            </MenuFlyout>
+                                        </Grid.ContextFlyout>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+
+                        <Viewbox ToolTipService.ToolTip="Add Candidate" Width="28" Height="28" Margin="0,2,2,0" VerticalAlignment="Top" HorizontalAlignment="Right" Tapped="CreateOrModifyCandidate_Click">
+                            <Grid Padding="5" Background="Transparent">
+                                <SymbolIcon x:Name="addSymbol" Symbol="Add"/>
+                            </Grid>
+
+                            <Viewbox.Resources>
+                                <SineEase x:Name="easingFunction" EasingMode="EaseIn"/>
+
+                                <Storyboard x:Name="HoverBoard">
+                                    <ColorAnimation Duration="0:0:0.2" From="{ThemeResource SystemBaseHighColor}" To="IndianRed"
+                                        Storyboard.TargetProperty="(UIElement.Foreground).(SolidColorBrush.Color)"
+                                        Storyboard.TargetName="addSymbol" EasingFunction="{StaticResource easingFunction}"
+                                        d:IsOptimized="True"/>
+                                </Storyboard>
+
+                                <Storyboard x:Name="UnhoverBoard">
+                                    <ColorAnimation Duration="0:0:0.2" From="IndianRed" To="{ThemeResource SystemBaseHighColor}"
+                                        Storyboard.TargetProperty="(UIElement.Foreground).(SolidColorBrush.Color)"
+                                        Storyboard.TargetName="addSymbol" EasingFunction="{StaticResource easingFunction}"
+                                        d:IsOptimized="True"/>
+                                </Storyboard>
+                            </Viewbox.Resources>
+
+                            <interactivity:Interaction.Behaviors>
+                                <interactivity:EventTriggerBehavior EventName="PointerEntered">
+                                    <interactivity:ControlStoryboardAction Storyboard="{StaticResource UnhoverBoard}" ControlStoryboardOption="Stop"/>
+                                    <interactivity:ControlStoryboardAction Storyboard="{StaticResource HoverBoard}" ControlStoryboardOption="Play"/>
+                                </interactivity:EventTriggerBehavior>
+
+                                <interactivity:EventTriggerBehavior EventName="PointerExited">
+                                    <interactivity:ControlStoryboardAction Storyboard="{StaticResource HoverBoard}" ControlStoryboardOption="Stop"/>
+                                    <interactivity:ControlStoryboardAction Storyboard="{StaticResource UnhoverBoard}" ControlStoryboardOption="Play"/>
+                                </interactivity:EventTriggerBehavior>
+                            </interactivity:Interaction.Behaviors>
+                        </Viewbox>
+                    </Grid>
                 </Border>
 
                 <Border x:Name="PreviewContainer" Grid.Row="2" Margin="16,0,10.5,10.5" BorderThickness="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" CornerRadius="8">

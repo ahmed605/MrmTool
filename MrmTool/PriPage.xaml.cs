@@ -21,6 +21,7 @@ using WinUIEditor;
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
+using System.Threading.Tasks;
 
 namespace MrmTool
 {
@@ -701,6 +702,30 @@ namespace MrmTool
                     ResourceItems;
 
                 parent.Add(resourceItem);
+            }
+        }
+
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private async void CreateOrModifyCandidate_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedResource is not null && _pri is not null)
+            {
+                if (sender is MenuFlyoutItem item &&
+                    item.DataContext is CandidateItem candidateItem)
+                {
+                    var dialog = new CreateOrModifyCandidateDialog(_selectedResource, candidateItem);
+                    await dialog.ShowAsync();
+                }
+                else
+                {
+                    var dialog = new CreateOrModifyCandidateDialog(_selectedResource);
+
+                    if (await dialog.ShowAsync() is { } candidate)
+                    {
+                        _selectedResource.Candidates.Add(candidate);
+                        _pri.ResourceCandidates.Add(candidate);
+                    }
+                }
             }
         }
     }

@@ -66,9 +66,9 @@ namespace MrmTool.Dialogs
                         }
                         else
                         {
-                            var data = idx is 1 ?
-                                Encoding.UTF8.GetBytes(editorControl.Text) :
-                                Encoding.Unicode.GetBytes(editorControl.Text);
+                            using var data = idx is 1 ?
+                                Encoding.UTF8.GetBuffer(editorControl.Text) :
+                                Encoding.Unicode.GetBuffer(editorControl.Text);
 
                             return ResourceCandidate.Create(name, data);
                         }
