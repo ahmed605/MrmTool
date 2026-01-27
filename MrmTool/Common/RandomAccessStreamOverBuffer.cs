@@ -19,6 +19,10 @@ namespace MrmTool.Common
         private readonly bool _readOnly;
         private ulong _position;
 
+        internal IBuffer Buffer => _buffer;
+
+        internal IBufferByteAccess* BufferByteAccess => _bufferByteAccess.Get();
+
         internal RandomAccessStreamOverBuffer(IBuffer buffer, bool readOnly = true)
         {
             _buffer = buffer;

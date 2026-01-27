@@ -21,7 +21,6 @@ using WinUIEditor;
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
-using System.Diagnostics.CodeAnalysis;
 
 namespace MrmTool
 {
@@ -463,16 +462,31 @@ namespace MrmTool
                 }
                 else if (type.IsText)
                 {
-                    var size = (uint)stream.Size;
-                    var buffer = new Windows.Storage.Streams.Buffer(size) { Length = size };
-                    await stream.ReadAsync(buffer, size, InputStreamOptions.None);
-
-                    unsafe
+                    if (stream is RandomAccessStreamOverBuffer rasob)
                     {
-                        var ptr = buffer.GetData();
-                        if (ptr is not null)
+                        unsafe
                         {
-                            DisplayStringCandidate(Encoding.UTF8.GetString(ptr, (int)size));
+#pragma warning disable CS9123 // The '&' operator should not be used on parameters or local variables in async methods.
+                            byte* ptr = default;
+                            rasob.BufferByteAccess->Buffer(&ptr);
+#pragma warning restore CS9123 // The '&' operator should not be used on parameters or local variables in async methods.
+
+                            if (ptr is not null)
+                            {
+                                DisplayStringCandidate(Encoding.UTF8.GetString(ptr, (int)rasob.Size));
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var size = (uint)stream.Size;
+                        using var buffer = new NativeBuffer(size);
+                        await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+
+                        unsafe
+                        {
+                            DisplayStringCandidate(Encoding.UTF8.GetString(buffer.Buffer, (int)size));
                             return true;
                         }
                     }
