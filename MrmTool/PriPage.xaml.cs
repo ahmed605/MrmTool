@@ -674,5 +674,21 @@ namespace MrmTool
                 catch { }
             }
         }
+
+        [DynamicWindowsRuntimeCast(typeof(MenuFlyoutItem))]
+        private async void SimpleRename_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem item &&
+                item.DataContext is ResourceItem resourceItem)
+            {
+                var dialog = new RenameDialog(resourceItem, true);
+                await dialog.ShowAsync();
+            }
+        }
+
+        private void FullRename_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO
+        }
     }
 }

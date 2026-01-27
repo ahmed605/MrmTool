@@ -35,6 +35,18 @@
                                 <SymbolIcon Symbol="Add"/>
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
+                        <!--MenuFlyoutSubItem Text="Rename">
+                            <MenuFlyoutSubItem.Icon>
+                                <SymbolIcon Symbol="Rename"/>
+                            </MenuFlyoutSubItem.Icon>
+                            <MenuFlyoutItem Text="Simple Rename" Click="SimpleRename_Click"/>
+                            <MenuFlyoutItem Text="Full Rename" Click="FullRename_Click"/>
+                        </MenuFlyoutSubItem-->
+                        <MenuFlyoutItem Text="Rename" Click="SimpleRename_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Rename"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Delete"/>
@@ -57,6 +69,18 @@
                         <MenuFlyoutItem Text="Add Resource" Visibility="{x:Bind IsFolder}" Click="AddResource_Click">
                             <MenuFlyoutItem.Icon>
                                 <SymbolIcon Symbol="Add"/>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <!--MenuFlyoutSubItem Text="Rename">
+                            <MenuFlyoutSubItem.Icon>
+                                <SymbolIcon Symbol="Rename"/>
+                            </MenuFlyoutSubItem.Icon>
+                            <MenuFlyoutItem Text="Simple Rename" Click="SimpleRename_Click"/>
+                            <MenuFlyoutItem Text="Full Rename" Click="FullRename_Click"/>
+                        </MenuFlyoutSubItem-->
+                        <MenuFlyoutItem Text="Rename" Click="SimpleRename_Click">
+                            <MenuFlyoutItem.Icon>
+                                <SymbolIcon Symbol="Rename"/>
                             </MenuFlyoutItem.Icon>
                         </MenuFlyoutItem>
                         <MenuFlyoutItem Text="Delete" Click="RemoveResources_Click">
