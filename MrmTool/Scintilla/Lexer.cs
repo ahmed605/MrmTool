@@ -48,15 +48,12 @@ namespace MrmTool.Scintilla
     {
         private readonly void** vtbl;
 
-        /// <summary>
-        /// Unsafe: only safe with string literals (RVA strings)
-        /// </summary>
-        internal nint PropertySetUnsafe(ReadOnlySpan<byte> name, ReadOnlySpan<byte> value)
+        internal nint PropertySetUnsafe(byte* name, byte* value)
         {
             return ((delegate* unmanaged[Stdcall]<void*, byte *, byte*, nint>)vtbl[5])(
-                Unsafe.AsPointer(in Unsafe.AsRef(in this)),
-                (byte*)Unsafe.AsPointer(in name.GetPinnableReference()),
-                (byte*)Unsafe.AsPointer(in value.GetPinnableReference()));
+                Unsafe.AsPointer(in this),
+                name,
+                value);
         }
 
         /*
