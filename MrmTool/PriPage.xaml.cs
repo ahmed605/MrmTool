@@ -21,7 +21,6 @@ using WinUIEditor;
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
-using System.Threading.Tasks;
 
 namespace MrmTool
 {
