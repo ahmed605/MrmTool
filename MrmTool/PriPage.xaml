@@ -319,7 +319,18 @@
                             <TextBlock x:Name="fileSizeLabel" HorizontalAlignment="Center" />
                             <Button Content="Export to disk" HorizontalAlignment="Center" Margin="0,10,0,0" Click="ExportButton_Click" />
                         </StackPanel>
-                        
+
+                        <!-- XBF fallback -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Padding="20" x:Load="False" Visibility="Collapsed" x:Name="xbfFallbackContainer">
+                            <TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" >
+                                Failed to decompile <Bold>&quot;<Run x:Name="xbfFileNameRun"/>&quot;</Bold>.
+                                <LineBreak/>
+                                <LineBreak/>
+                                <Bold>Exception:</Bold> <Run x:Name="failedXbfExceptionMessageRun"/>
+                            </TextBlock>
+                            <Button Content="Export to disk" HorizontalAlignment="Center" Margin="0,20,0,0" Click="ExportButton_Click" />
+                        </StackPanel>
+
                         <!-- Image Previewer -->
                         <ScrollViewer x:Name="imagePreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
                             <Image x:Name="imagePreviewer" Stretch="None" />

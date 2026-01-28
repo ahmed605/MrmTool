@@ -348,7 +348,11 @@ namespace MrmTool.Dialogs
 
             if (await picker.PickSingleFileAsync() is { } file)
             {
-                editorControl.Text = await FileIO.ReadTextAsync(file);
+                try
+                {
+                    editorControl.Text = await FileIO.ReadTextAsync(file);
+                }
+                catch { }
             }
         }
 

@@ -2,6 +2,7 @@
 using MrmTool.Common;
 using MrmTool.Models;
 using MrmTool.Scintilla;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -17,7 +18,7 @@ namespace MrmTool.Dialogs
 
         private StorageFile? _fileToEmbed;
 
-        public NewResourceDialog(PriFile priFile, string? parentName = null)
+        public NewResourceDialog([NotNull] PriFile priFile, string? parentName = null)
         {
             _priFile = priFile;
             _parentName = parentName;
@@ -244,7 +245,11 @@ namespace MrmTool.Dialogs
 
             if (await picker.PickSingleFileAsync() is { } file)
             {
-                editorControl.Text = await FileIO.ReadTextAsync(file);
+                try
+                {
+                    editorControl.Text = await FileIO.ReadTextAsync(file);
+                }
+                catch { }
             }
         }
     }

@@ -21,17 +21,20 @@ namespace MrmTool.Models
         {
             internal bool IsText
             {
-                // TODO: Add XBF to IsText when we include the decompiler,
-                // we probably need to remove it later when we have a proper XAML viewer/editor though
-
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => type is ResourceType.Text or ResourceType.Xaml;
+            }
+
+            internal bool IsPreviewedAsText
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => type is ResourceType.Text or ResourceType.Xaml or ResourceType.Xbf;
             }
 
             internal bool IsPreviewable // WIP
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => type is ResourceType.Text or ResourceType.Xaml or ResourceType.Image;
+                get => type is ResourceType.Text or ResourceType.Xaml or ResourceType.Xbf or ResourceType.Image;
             }
         }
     }

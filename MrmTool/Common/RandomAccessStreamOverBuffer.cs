@@ -94,9 +94,10 @@ namespace MrmTool.Common
                     _bufferByteAccess.Get()->Buffer(&srcData);
 
                     uint dataToCopy = (uint)Math.Min(_buffer.Length - _position, count);
-                    buffer.Length = Math.Max(dataToCopy, buffer.Length);
-
                     NativeMemory.Copy(srcData + _position, data, dataToCopy);
+                    buffer.Length = dataToCopy;
+
+                    _position += dataToCopy;
                     return buffer;
                 });
             });

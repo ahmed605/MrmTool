@@ -192,6 +192,7 @@ namespace MrmTool
                 {
                     var newItem = GetOrAddResourceItem(candidate.Candidate.ResourceName);
                     newItem.Candidates.Add(candidate);
+                    _pri.ResourceCandidates.Add(candidate.Candidate);
                 }
             }
             catch (Exception ex)
@@ -328,8 +329,9 @@ namespace MrmTool
         {
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
+            UnloadObject(xbfFallbackContainer);
 
-            if (_selectedResource?.Type.IsText is not true)
+            if (_selectedResource?.Type.IsPreviewedAsText is not true)
                 UnloadObject(valueTextEditor);
 
             if (_selectedResource?.Type is not ResourceType.Image)
@@ -346,6 +348,7 @@ namespace MrmTool
         {
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
+            UnloadObject(xbfFallbackContainer);
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(exportContainer);
@@ -409,14 +412,16 @@ namespace MrmTool
             valueTextEditor.ApplyDefaultsToDocument();
 
             if (_selectedResource is not null)
-                valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml ? "xml" : _selectedResource.DisplayName.GetExtensionAfterPeriod().ToScintillaLanguage();
+                valueTextEditor.HighlightingLanguage = _selectedResource.Type is ResourceType.Xaml or ResourceType.Xbf ?
+                    "xml" :
+                    _selectedResource.DisplayName.GetExtensionAfterPeriod().ToScintillaLanguage();
         }
 
         private async Task<bool> DisplayBinaryCandidate(IRandomAccessStream stream, ResourceType type)
         {
             try
             {
-                if (type == ResourceType.Image)
+                if (type is ResourceType.Image)
                 {
                     BitmapImage image = new();
                     await image.SetSourceAsync(stream);
@@ -459,6 +464,33 @@ namespace MrmTool
                     }
 
                     imagePreviewer.Opacity = 1;
+                    return true;
+                }
+                else if (type is ResourceType.Xbf)
+                {
+                    try
+                    {
+                        // TEMPORARY: we are temporary using XbfAnalyzer to decompile XBF files for now
+                        // until we implement our own XBF decompiler/recompiler based on WinUI 3' native
+                        // XBF parser and its "WidgetSpinner" XBF decompiler, since the native parser support
+                        // XBF v1 and is architectured in a way that allows us to build a recompiler on top easily.
+
+                        var reader = new XbfAnalyzer.Xbf.XbfReader(stream.AsStream());
+                        DisplayStringCandidate(reader.RootObject.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        UnloadNonErrorPreviewElements();
+                        FindName(nameof(xbfFallbackContainer));
+
+                        xbfFileNameRun.Text = _selectedResource is not null ?
+                            _selectedResource.DisplayName :
+                            "the XBF file";
+
+                        failedXbfExceptionMessageRun.Text = $"{ex.GetType().Name} (0x{ex.HResult:X8}) -> {ex.Message}";
+                        xbfFallbackContainer.Visibility = Visibility.Visible;
+                    }
+
                     return true;
                 }
                 else if (type.IsText)
@@ -715,6 +747,8 @@ namespace MrmTool
                 {
                     var dialog = new CreateOrModifyCandidateDialog(_selectedResource, candidateItem);
                     await dialog.ShowAsync();
+
+                    await DisplayCandidate(candidateItem);
                 }
                 else
                 {

@@ -1,18 +1,19 @@
-﻿using WinRT;
-using MrmLib;
-using System.Text;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.UI.Xaml.Media.Imaging;
+﻿using MrmLib;
 using MrmTool.Common;
 using MrmTool.Models;
-
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using TerraFX.Interop.Windows;
-using static TerraFX.Interop.Windows.Windows;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
+using Windows.UI.Xaml.Media.Imaging;
+using WinRT;
+
 using static MrmTool.Common.ErrorHelpers;
+using static TerraFX.Interop.Windows.Windows;
 
 namespace MrmTool.Common
 {
@@ -322,6 +323,12 @@ namespace MrmTool.Common
 
         internal unsafe static byte* GetData(this IBuffer buffer)
         {
+            if (buffer is WindowsRuntimeBuffer winrtBuffer)
+            {
+                WindowsRuntimeMarshal.TryGetDataUnsafe(winrtBuffer, out nint data);
+                return (byte*)data;
+            }
+
             using ComPtr<TerraFX.Interop.WinRT.IBufferByteAccess> bufferByteAccess = default;
             if (SUCCEEDED_LOG(((IUnknown*)((IWinRTObject)buffer).NativeObject.ThisPtr)->QueryInterface(
                 (Guid*)Unsafe.AsPointer(in IID.IID_IBufferByteAccess),
