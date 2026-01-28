@@ -1,5 +1,6 @@
 ﻿using MrmTool.Common;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Storage.Streams;
@@ -64,11 +65,12 @@ namespace MrmTool.Common
 
 namespace ABI.MrmTool.Common
 {
+    [StructLayout(LayoutKind.Sequential)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [Guid("905a0fef-bc53-11df-8c49-001e4fc686da")]
     internal unsafe struct IBufferByteAccess_NativeBuffer_ABI
     {
-        public void** lpVtbl;
+        private void** lpVtbl;
 
         [Guid("905a0fef-bc53-11df-8c49-001e4fc686da")]
         public struct Vftbl

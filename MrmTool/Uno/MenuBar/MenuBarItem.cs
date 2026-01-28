@@ -1,15 +1,10 @@
 ﻿#nullable disable
 
+using Common;
 using CommunityToolkit.WinUI;
-using Microsoft.UI.Xaml.Automation.Peers;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using TerraFX.Interop.Windows;
 using Uno.Disposables;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using Windows.Foundation.Metadata;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Automation.Peers;
@@ -19,6 +14,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
 using WinRT;
+
 using MenuBarItemAutomationPeer = Microsoft.UI.Xaml.Automation.Peers.MenuBarItemAutomationPeer;
 
 namespace Microsoft.UI.Xaml.Controls
@@ -26,8 +22,6 @@ namespace Microsoft.UI.Xaml.Controls
 	[ContentProperty(Name = nameof(Items))]
 	public partial class MenuBarItem : Control
 	{
-		private static readonly bool s_isFlyoutShowOptionsPresent = ApiInformation.IsTypePresent("Windows.UI.Xaml.Controls.Primitives.FlyoutShowOptions");
-
         private readonly SerialDisposable _registrations = new SerialDisposable();
 
 		private MenuBar m_menuBar;
@@ -275,7 +269,7 @@ namespace Microsoft.UI.Xaml.Controls
 				var width = m_button.ActualWidth;
 				var height = m_button.ActualHeight;
 
-				if (s_isFlyoutShowOptionsPresent)
+				if (Features.IsFlyoutShowOptionsAvailable)
 				{
                     // Sets an exclusion rect over the button that generates the flyout so that even if the menu opens upwards
                     // (which is the default in touch mode) it doesn't cover the menu bar button.

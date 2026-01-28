@@ -1,5 +1,7 @@
-﻿using Windows.System;
+﻿using Common;
+using Windows.System;
 using Windows.UI.Core;
+using System.Runtime.Versioning;
 using Windows.Foundation.Metadata;
 
 using DispatcherQueueSynchronizationContext = Microsoft.System.DispatcherQueueSynchronizationContext;
@@ -8,14 +10,10 @@ namespace Microsoft.System
 {
     internal static class DispatcherHelper
     {
-#if COREDISPATCHER_FALLBACK
-        private static readonly bool IsDispatcherQueueSupported = ApiInformation.IsTypePresent("Windows.System.DispatcherQueue");
-#endif
-
         internal static void SetSynchronizationContext()
         {
 #if COREDISPATCHER_FALLBACK
-            if (IsDispatcherQueueSupported)
+            if (Features.IsDispatcherQueueSupported)
             {
                 SynchronizationContext.SetSynchronizationContext(new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
                 return;

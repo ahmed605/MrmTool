@@ -9,6 +9,7 @@
     xmlns:wct="using:CommunityToolkit.WinUI.Controls"
     xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
     xmlns:behaviors="using:CommunityToolkit.WinUI.Behaviors"
+    xmlns:mbehaviors="using:MrmTool.Behaviors"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:selectors="using:MrmTool.Selectors"
     xmlns:winuieditor="using:WinUIEditor"
@@ -221,7 +222,7 @@
                                                         <SymbolIcon Symbol="Folder"/>
                                                     </MenuFlyoutItem.Icon>
                                                 </MenuFlyoutItem>
-                                                <MenuFlyoutItem Text="Try Embed Into PRI" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="EmbedPathCandidate_Click">
+                                                <MenuFlyoutItem Text="Try Embed into PRI" Visibility="{x:Bind IsPathCandidate, Mode = OneWay}" Click="EmbedPathCandidate_Click">
                                                     <MenuFlyoutItem.Icon>
                                                         <SymbolIcon Symbol="Import"/>
                                                     </MenuFlyoutItem.Icon>
@@ -267,15 +268,15 @@
                             </Viewbox.Resources>
 
                             <interactivity:Interaction.Behaviors>
-                                <interactivity:EventTriggerBehavior EventName="PointerEntered">
+                                <mbehaviors:PointerEnteredBehavior>
                                     <interactivity:ControlStoryboardAction Storyboard="{StaticResource UnhoverBoard}" ControlStoryboardOption="Stop"/>
                                     <interactivity:ControlStoryboardAction Storyboard="{StaticResource HoverBoard}" ControlStoryboardOption="Play"/>
-                                </interactivity:EventTriggerBehavior>
+                                </mbehaviors:PointerEnteredBehavior>
 
-                                <interactivity:EventTriggerBehavior EventName="PointerExited">
+                                <mbehaviors:PointerExitedBehavior>
                                     <interactivity:ControlStoryboardAction Storyboard="{StaticResource HoverBoard}" ControlStoryboardOption="Stop"/>
                                     <interactivity:ControlStoryboardAction Storyboard="{StaticResource UnhoverBoard}" ControlStoryboardOption="Play"/>
-                                </interactivity:EventTriggerBehavior>
+                                </mbehaviors:PointerExitedBehavior>
                             </interactivity:Interaction.Behaviors>
                         </Viewbox>
                     </Grid>

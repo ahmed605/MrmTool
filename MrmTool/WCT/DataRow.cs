@@ -2,19 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Common;
 using Windows.Foundation;
-using Windows.Foundation.Metadata;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using WinRT;
-using TreeView = Windows.UI.Xaml.Controls.TreeView;
+
+using TreeView = Microsoft.UI.Xaml.Controls.TreeView;
 
 namespace CommunityToolkit.WinUI.Controls;
 
 public partial class DataRow : Panel
 {
-    private static readonly bool IsColumnSpacingAvailable = ApiInformation.IsPropertyPresent("Windows.UI.Xaml.Controls.Grid", "ColumnSpacing");
-
     // TODO: Create our own helper class here for the Header as well vs. straight-Grid.
     // TODO: WeakReference?
     private Panel? _parentPanel;
@@ -185,7 +184,7 @@ public partial class DataRow : Panel
         double x = 0;
 
         // Try and grab Column Spacing from DataTable, if not a parent Grid, if not 0.
-        double spacing =  _parentTable?.ColumnSpacing ?? (IsColumnSpacingAvailable ? (_parentPanel as Grid)?.ColumnSpacing ?? 0 : 0);
+        double spacing =  _parentTable?.ColumnSpacing ?? (Features.IsColumnSpacingAvailable ? (_parentPanel as Grid)?.ColumnSpacing ?? 0 : 0);
 
         double width = 0;
 
