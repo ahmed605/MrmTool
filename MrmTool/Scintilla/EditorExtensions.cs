@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Windows.UI.Xaml;
 using WinUIEditor;
 
@@ -14,8 +15,8 @@ namespace MrmTool.Scintilla
             if (langauge is "css")
             {
                 var lexer = Lexilla.CreateLexer("css");
-                lexer->PropertySetUnsafe("fold"u8, "1"u8);
-                lexer->PropertySetUnsafe("lexer.css.scss.language"u8, "1"u8);
+                lexer->PropertySetUnsafe(Utf8Constants.Fold, Utf8Constants.One);
+                lexer->PropertySetUnsafe(Utf8Constants.LexerCssScssLanguage, Utf8Constants.One);
                 editor.SetILexer((ulong)lexer);
 
                 editor.SetKeyWords(0, "color background background-color font font-size font-family font-weight " +
@@ -91,8 +92,8 @@ namespace MrmTool.Scintilla
             else if (langauge is "props")
             {
                 var lexer = Lexilla.CreateLexer("props");
-                lexer->PropertySetUnsafe("fold"u8, "1"u8);
-                lexer->PropertySetUnsafe("lexer.props.allow.initial.spaces"u8, "1"u8);
+                lexer->PropertySetUnsafe(Utf8Constants.Fold, Utf8Constants.One);
+                lexer->PropertySetUnsafe(Utf8Constants.LexerPropsAllowInitialSpaces, Utf8Constants.One);
                 editor.SetILexer((ulong)lexer);
 
                 if (theme is ElementTheme.Dark)
@@ -142,6 +143,17 @@ namespace MrmTool.Scintilla
                     control.Editor.SetText(value);
                 }
             }
+        }
+
+        public static class Utf8Constants
+        {
+            public static byte* Fold => (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("fold"u8));
+
+            public static byte* LexerCssScssLanguage => (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("lexer.css.scss.language"u8));
+
+            public static byte* LexerPropsAllowInitialSpaces => (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("lexer.props.allow.initial.spaces"u8));
+
+            public static byte* One => (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("1"u8));
         }
     }
 }
