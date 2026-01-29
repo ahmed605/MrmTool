@@ -17,4 +17,4 @@ It also includes an **XBF** (XAML Binary Format) decompiler, it currently uses a
 
 ### Screenshot
 
-<img width="1557" height="914" alt="MrmTool_0" src="https://github.com/user-attachments/assets/da515d3e-ff34-4173-8691-9f2ad9a3f429" />
+![MrmTool_0](https://github.com/user-attachments/assets/da515d3e-ff34-4173-8691-9f2ad9a3f429)
