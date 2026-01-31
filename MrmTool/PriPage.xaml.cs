@@ -745,9 +745,9 @@ namespace MrmTool
                     item.DataContext is CandidateItem candidateItem)
                 {
                     var dialog = new CreateOrModifyCandidateDialog(_selectedResource, candidateItem);
-                    await dialog.ShowAsync();
-
-                    await DisplayCandidate(candidateItem);
+                    
+                    if (await dialog.ShowAsync() is not null)
+                        await DisplayCandidate(candidateItem);
                 }
                 else
                 {
