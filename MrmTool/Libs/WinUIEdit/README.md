@@ -1,4 +1,4 @@
-﻿### These binary blobs are compiled from https://github.com/BreeceW/WinUIEdit (1b3a340cc3957b7b063ceb4e32f1eb5e487e4447)
+﻿### These binary blobs are compiled from https://github.com/ahmed605/WinUIEdit (be85c42a9dc23d5043b93f5e07695be0b47d85a0)
 
 To build your own binaries,
 1. Clone the repository and follow the **UWP** [build instructions](https://github.com/BreeceW/WinUIEdit#how-to-build-this-project) from the repository's README
