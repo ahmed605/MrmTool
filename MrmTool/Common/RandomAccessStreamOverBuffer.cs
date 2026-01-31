@@ -15,7 +15,7 @@ namespace MrmTool.Common
     internal unsafe partial class RandomAccessStreamOverBuffer : IRandomAccessStream
     {
         private readonly IBuffer _buffer;
-        private readonly ComPtr<IBufferByteAccess> _bufferByteAccess;
+        private ComPtr<IBufferByteAccess> _bufferByteAccess;
         private readonly bool _readOnly;
         private ulong _position;
 
