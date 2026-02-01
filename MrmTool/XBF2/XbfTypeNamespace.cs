@@ -25,6 +25,7 @@ namespace XbfAnalyzer.Xbf
         }
 
         public XbfAssembly Assembly { get; private set; }
+
         public string Name { get; set; }
     }
 }

@@ -82,7 +82,7 @@ namespace XbfAnalyzer.Xbf
 
                 string propertyName;
 
-                if (property.Name.Contains(":"))
+                if (property.Name.Contains(':'))
                 {
                     var seperatorIndex = property.Name.IndexOf(":");
                     var prefix = property.Name.Substring(0, seperatorIndex);

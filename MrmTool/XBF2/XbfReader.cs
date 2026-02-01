@@ -2,23 +2,33 @@
 
 using MrmTool.XBF2;
 using System.Text;
+using System.Xml.Linq;
 
 namespace XbfAnalyzer.Xbf
 {
     public class XbfReader
     {
         public XbfHeader Header { get; private set; }
+
         public string[] StringTable { get; private set; }
+
         public XbfAssembly[] AssemblyTable { get; private set; }
+
         public XbfTypeNamespace[] TypeNamespaceTable { get; private set; }
+
         public XbfType[] TypeTable { get; private set; }
+
         public XbfProperty[] PropertyTable { get; private set; }
+
         public string[] XmlNamespaceTable { get; private set; }
+
         public XbfNodeSection[] NodeSectionTable { get; private set; }
+
         public XbfObject RootObject { get; private set; }
 
+        public List<XbfXmlNamespace> Namespaces { get; } = [];
+
         private int _firstNodeSectionPosition;
-        private Dictionary<string, string> _namespacePrefixes = new Dictionary<string, string>();
         private Stack<XbfObject> _rootObjectStack = new Stack<XbfObject>();
         private Stack<XbfObject> _objectStack = new Stack<XbfObject>();
         private Stack<XbfObjectCollection> _objectCollectionStack = new Stack<XbfObjectCollection>();
@@ -198,11 +208,13 @@ namespace XbfAnalyzer.Xbf
                             {
                                 string namespaceName = XmlNamespaceTable[reader.ReadUInt16()];
                                 string prefix = ReadString(reader);
-                                _namespacePrefixes[namespaceName] = prefix;
+                                Namespaces.Add(new(prefix, namespaceName));
+
                                 if (!string.IsNullOrEmpty(prefix))
                                     prefix = "xmlns:" + prefix;
                                 else
                                     prefix = "xmlns";
+
                                 rootObject.Properties.Add(new XbfObjectProperty(prefix, namespaceName));
                             }
                             break;
@@ -262,6 +274,9 @@ namespace XbfAnalyzer.Xbf
 
         private void ReadNodes(BinaryReaderEx reader, int endPosition, bool readSingleObject = false, bool readSingleNode = false)
         {
+            string xamlPredicate = null;
+            string xamlPredicatePrefix = null;
+
             XbfObject singleObject = null;
             while (reader.BaseStream.Position < endPosition)
             {
@@ -320,20 +335,21 @@ namespace XbfAnalyzer.Xbf
                     case 0x1A: // Property
                     case 0x1B: // Property (not sure what the difference from 0x1A is)
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             object propertyValue = GetPropertyValue(reader);
                             if (propertyName == "KeyTime")
                             {
                                 TimeSpan time = TimeSpan.FromSeconds((double) new decimal((float)propertyValue));
                                 propertyValue = time.ToString("c");
                             }
+
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
                         }
                         break;
 
                     case 0x1D: // Style
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16()); // Always "TargetType"
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix); // Always "TargetType"
                             string targetTypeName = GetTypeName(reader.ReadUInt16());
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, targetTypeName));
                         }
@@ -341,7 +357,7 @@ namespace XbfAnalyzer.Xbf
 
                     case 0x1E: // StaticResource
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             object propertyValue = GetPropertyValue(reader);
                             propertyValue = string.Format("{{StaticResource {0}}}", propertyValue);
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
@@ -350,7 +366,7 @@ namespace XbfAnalyzer.Xbf
 
                     case 0x1F: // TemplateBinding
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             string bindingPath = GetPropertyName(reader.ReadUInt16());
                             bindingPath = string.Format("{{TemplateBinding {0}}}", bindingPath);
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, bindingPath));
@@ -359,7 +375,7 @@ namespace XbfAnalyzer.Xbf
 
                     case 0x24: // ThemeResource
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             object propertyValue = GetPropertyValue(reader);
                             propertyValue = string.Format("{{ThemeResource {0}}}", propertyValue);
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
@@ -392,7 +408,7 @@ namespace XbfAnalyzer.Xbf
 
                     case 0x13: // Object collection begin
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             var collection = new XbfObjectCollection();
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, collection));
                             _objectCollectionStack.Push(collection);
@@ -435,7 +451,7 @@ namespace XbfAnalyzer.Xbf
                     case 0x07: // Add the new object as a property of the current object
                     case 0x20: // Same as 0x07, but this occurs when the object is a Binding, TemplateBinding, CustomResource, RelativeSource or NullExtension value
                         {
-                            string propertyName = GetPropertyName(reader.ReadUInt16());
+                            string propertyName = GetPropertyName(reader.ReadUInt16(), xamlPredicate, xamlPredicatePrefix);
                             var subObj = _objectStack.Pop();
                             _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, subObj));
                         }
@@ -512,7 +528,12 @@ namespace XbfAnalyzer.Xbf
                         break;
 
                     case 0x26:
-                        ReadConditionalProperty(reader, endPosition);
+                        xamlPredicate = ReadXamlPredicate(reader);
+                        xamlPredicatePrefix = GeneratePredicatePrefix(xamlPredicate);
+                        break;
+
+                    case 0x27:
+                        xamlPredicate = null;
                         break;
 
                     default:
@@ -524,542 +545,34 @@ namespace XbfAnalyzer.Xbf
             }
         }
 
-        /*private void ReadConditionalProperty(BinaryReaderEx reader)
-        {
-            string markup = GetMarkupTypeName(reader.ReadUInt16());
-                string argument = StringTable[reader.ReadUInt16() & ~0x8000];
-                var valueType = reader.ReadByte();
-                if (valueType == 0x1B || valueType == 0x1A)
-                {
-                    int propertyId = reader.ReadUInt16();
-                    string propertyNamespace;
-                    string property;
-                    if ((propertyId & 0x8000) != 0)
-                    {
-                        property = XbfFrameworkTypes.GetNameForPropertyID(propertyId & ~0x8000) ??
-                                   string.Format("UnknownProperty0x{0:X4}", propertyId);
-                        propertyNamespace = @"http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-                    }
-                    else
-                    {
-                        property = PropertyTable[propertyId].Name;
-                        propertyNamespace = PropertyTable[propertyId].Type.Namespace.Name;
-                    }
-
-                    var value = GetPropertyValue(reader);
-                    reader.ReadByte();
-                    string xmlnsNamespace;
-                    string xmlnsPrefix;
-                    if (propertyNamespace == @"http://schemas.microsoft.com/client/2007")
-                    {
-                        xmlnsNamespace =
-                            $@"http://schemas.microsoft.com/winfx/2006/xaml/presentation?{markup}({argument})";
-                        string markupId = argument.Replace(" ", String.Empty)
-                            .Replace('"'.ToString(), String.Empty)
-                            .Replace(",", String.Empty).Replace("(", String.Empty).Replace(")", String.Empty)
-                            .Replace(";", String.Empty).Replace("?", String.Empty).Replace(":", String.Empty)
-                            .Replace(".", String.Empty).Replace("'", String.Empty).Replace(@"/", String.Empty)
-                            .Replace(@"\", String.Empty).Replace("=", String.Empty).Replace("+", String.Empty)
-                            .Replace("-", String.Empty).Replace("@", String.Empty).Replace("#", String.Empty)
-                            .Replace("$", String.Empty).Replace("%", String.Empty).Replace("^", String.Empty)
-                            .Replace("&", String.Empty).Replace("*", String.Empty).Replace("`", String.Empty)
-                            .Replace("~", String.Empty).Replace("!", String.Empty).Replace("{", String.Empty)
-                            .Replace("}", String.Empty).Replace("[", String.Empty).Replace("]", String.Empty)
-                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                        xmlnsPrefix = markup + markupId;
-                    }
-                    else
-                    {
-                        xmlnsNamespace = $"{propertyNamespace}?{markup}({argument})";
-                        string markupId = argument.Replace(" ", String.Empty)
-                            .Replace('"'.ToString(), String.Empty)
-                            .Replace(",", String.Empty).Replace("(", String.Empty).Replace(")", String.Empty)
-                            .Replace(";", String.Empty).Replace("?", String.Empty).Replace(":", String.Empty)
-                            .Replace(".", String.Empty).Replace("'", String.Empty).Replace(@"/", String.Empty)
-                            .Replace(@"\", String.Empty).Replace("=", String.Empty).Replace("+", String.Empty)
-                            .Replace("-", String.Empty).Replace("@", String.Empty).Replace("#", String.Empty)
-                            .Replace("$", String.Empty).Replace("%", String.Empty).Replace("^", String.Empty)
-                            .Replace("&", String.Empty).Replace("*", String.Empty).Replace("`", String.Empty)
-                            .Replace("~", String.Empty).Replace("!", String.Empty).Replace("{", String.Empty)
-                            .Replace("}", String.Empty).Replace("[", String.Empty).Replace("]", String.Empty)
-                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                        if (propertyNamespace != @"http://schemas.microsoft.com/winfx/2006/xaml/presentation" && !String.IsNullOrWhiteSpace(_namespacePrefixes[propertyNamespace]))
-                        {
-                            markupId += _namespacePrefixes[propertyNamespace];
-                        }
-                        xmlnsPrefix = markup + markupId;
-                    }
-
-                    _objectStack.Peek().Properties.Add(new XbfObjectProperty($"{xmlnsPrefix}:{property}", value));
-
-                    if (!_rootObjectStack.ElementAt(0).Properties.Any(i => i.Name == $"xmlns:{xmlnsPrefix}"))
-                    {
-                        _rootObjectStack.ElementAt(0).Properties.Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                        //_objectStack.ElementAt(_objectStack.Count - 1).Properties.Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                    }
-                }
-                else
-                {
-                    reader.BaseStream.Seek(-1, SeekOrigin.Current);
-                    bool stop = false;
-                    string propertyNamespace = String.Empty;
-                    string property = String.Empty;
-                    string xmlnsNamespace = String.Empty;
-                    string xmlnsPrefix = String.Empty;
-                    while (!stop)
-                    {
-                        var theByte = reader.ReadByte();
-                        switch (theByte)
-                        {
-                            case 0x14: // Object begin
-                            {
-                                // We are starting a new object inside of the current object. It will be applied as a property of the current object.
-                                var subObj = new XbfObject();
-                                subObj.TypeName = GetTypeName(reader.ReadUInt16());
-                                _objectStack.Push(subObj);
-
-                                _objectCollectionStack.Push(subObj.Children);
-
-                                //if (readSingleObject && singleObject == null)
-                                //    singleObject = subObj;
-                            }
-                                break;
-
-                            case 0x21: // Object end
-                                // Pop Children collection of ending object off the object collection stack if it had been pushed there earlier
-                                if (_objectCollectionStack.Count > 0 &&
-                                    _objectCollectionStack.Peek() == _objectStack.Peek().Children)
-                                    _objectCollectionStack.Pop();
-
-                                // Return if we are supposed to read only a single object and we just reached the end of it
-                                //if (readSingleObject && _objectStack.Peek() == singleObject)
-                                //    return;
-
-                                // Return if we reached the end of a nested root object
-                                if (_objectStack.Peek() == _rootObjectStack.Peek())
-                                    return;
-                                break;
-
-                            case 0x07: // Add the new object as a property of the current object
-                            case 0x20
-                                : // Same as 0x07, but this occurs when the object is a Binding, TemplateBinding, CustomResource, RelativeSource or NullExtension value
-                            {
-                                int propertyId = reader.ReadUInt16();
-                                var confirmTag = reader.ReadByte();
-                                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-                                if (confirmTag == 0x27)
-                                {
-                                    if ((propertyId & 0x8000) != 0)
-                                    {
-                                        property = XbfFrameworkTypes.GetNameForPropertyID(propertyId & ~0x8000) ??
-                                                   string.Format("UnknownProperty0x{0:X4}", propertyId);
-                                        propertyNamespace =
-                                            @"http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-                                    }
-                                    else
-                                    {
-                                        property = PropertyTable[propertyId].Name;
-                                        propertyNamespace = PropertyTable[propertyId].Type.Namespace.Name;
-                                    }
-
-                                    if (propertyNamespace == @"http://schemas.microsoft.com/client/2007")
-                                    {
-                                        xmlnsNamespace =
-                                            $@"http://schemas.microsoft.com/winfx/2006/xaml/presentation?{markup}({argument})";
-                                        string markupId = argument.Replace(" ", String.Empty)
-                                            .Replace('"'.ToString(), String.Empty)
-                                            .Replace(",", String.Empty).Replace("(", String.Empty)
-                                            .Replace(")", String.Empty)
-                                            .Replace(";", String.Empty).Replace("?", String.Empty)
-                                            .Replace(":", String.Empty)
-                                            .Replace(".", String.Empty).Replace("'", String.Empty)
-                                            .Replace(@"/", String.Empty)
-                                            .Replace(@"\", String.Empty).Replace("=", String.Empty)
-                                            .Replace("+", String.Empty)
-                                            .Replace("-", String.Empty).Replace("@", String.Empty)
-                                            .Replace("#", String.Empty)
-                                            .Replace("$", String.Empty).Replace("%", String.Empty)
-                                            .Replace("^", String.Empty)
-                                            .Replace("&", String.Empty).Replace("*", String.Empty)
-                                            .Replace("`", String.Empty)
-                                            .Replace("~", String.Empty).Replace("!", String.Empty)
-                                            .Replace("{", String.Empty)
-                                            .Replace("}", String.Empty).Replace("[", String.Empty)
-                                            .Replace("]", String.Empty)
-                                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                                        xmlnsPrefix = markup + markupId;
-                                    }
-                                    else
-                                    {
-                                        xmlnsNamespace = $"{propertyNamespace}?{markup}({argument})";
-                                        string markupId = argument.Replace(" ", String.Empty)
-                                            .Replace('"'.ToString(), String.Empty)
-                                            .Replace(",", String.Empty).Replace("(", String.Empty)
-                                            .Replace(")", String.Empty)
-                                            .Replace(";", String.Empty).Replace("?", String.Empty)
-                                            .Replace(":", String.Empty)
-                                            .Replace(".", String.Empty).Replace("'", String.Empty)
-                                            .Replace(@"/", String.Empty)
-                                            .Replace(@"\", String.Empty).Replace("=", String.Empty)
-                                            .Replace("+", String.Empty)
-                                            .Replace("-", String.Empty).Replace("@", String.Empty)
-                                            .Replace("#", String.Empty)
-                                            .Replace("$", String.Empty).Replace("%", String.Empty)
-                                            .Replace("^", String.Empty)
-                                            .Replace("&", String.Empty).Replace("*", String.Empty)
-                                            .Replace("`", String.Empty)
-                                            .Replace("~", String.Empty).Replace("!", String.Empty)
-                                            .Replace("{", String.Empty)
-                                            .Replace("}", String.Empty).Replace("[", String.Empty)
-                                            .Replace("]", String.Empty)
-                                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                                        if (propertyNamespace !=
-                                            @"http://schemas.microsoft.com/winfx/2006/xaml/presentation" &&
-                                            !String.IsNullOrWhiteSpace(_namespacePrefixes[propertyNamespace]))
-                                        {
-                                            markupId += _namespacePrefixes[propertyNamespace];
-                                        }
-
-                                        xmlnsPrefix = markup + markupId;
-                                    }
-
-                                    var subObj = _objectStack.Pop();
-                                    _objectStack.Peek().Properties
-                                        .Add(new XbfObjectProperty($"{xmlnsPrefix}:{property}", subObj));
-                                }
-                                else
-                                {
-                                    if ((propertyId & 0x8000) != 0)
-                                    {
-                                        property = XbfFrameworkTypes.GetNameForPropertyID(propertyId & ~0x8000) ??
-                                                   string.Format("UnknownProperty0x{0:X4}", propertyId);
-                                    }
-                                    else
-                                    {
-                                        property = PropertyTable[propertyId].Name;
-                                    }
-
-                                    var subObj = _objectStack.Pop();
-                                    _objectStack.Peek().Properties.Add(new XbfObjectProperty(property, subObj));
-                                }
-                            }
-                                break;
-
-                            case 0x1A: // Property
-                            case 0x1B: // Property (not sure what the difference from 0x1A is)
-                            {
-                                string propertyName = GetPropertyName(reader.ReadUInt16());
-                                object propertyValue = GetPropertyValue(reader);
-                                _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
-                            }
-                                break;
-
-                            case 0x1E: // StaticResource
-                            {
-                                string propertyName = GetPropertyName(reader.ReadUInt16());
-                                object propertyValue = GetPropertyValue(reader);
-                                propertyValue = string.Format("{{StaticResource {0}}}", propertyValue);
-                                _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
-                            }
-                                break;
-
-                            case 0x1F: // TemplateBinding
-                            {
-                                string propertyName = GetPropertyName(reader.ReadUInt16());
-                                string bindingPath = GetPropertyName(reader.ReadUInt16());
-                                bindingPath = string.Format("{{TemplateBinding {0}}}", bindingPath);
-                                _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, bindingPath));
-                            }
-                                break;
-
-                            case 0x24: // ThemeResource
-                            {
-                                string propertyName = GetPropertyName(reader.ReadUInt16());
-                                object propertyValue = GetPropertyValue(reader);
-                                propertyValue = string.Format("{{ThemeResource {0}}}", propertyValue);
-                                _objectStack.Peek().Properties.Add(new XbfObjectProperty(propertyName, propertyValue));
-                            }
-                                break;
-
-                            case 0x22: // StaticResource object
-                            {
-                                object propertyValue = GetPropertyValue(reader);
-                                var obj = new XbfObject() {TypeName = "StaticResource"};
-                                obj.Properties.Add(new XbfObjectProperty("ResourceKey", propertyValue));
-                                _objectStack.Push(obj);
-
-                                //if (readSingleObject)
-                                //    return;
-                            }
-                                break;
-
-                            case 0x23: // ThemeResource object
-                            {
-                                object propertyValue = GetPropertyValue(reader);
-                                var obj = new XbfObject() {TypeName = "ThemeResource"};
-                                obj.Properties.Add(new XbfObjectProperty("ResourceKey", propertyValue));
-                                _objectStack.Push(obj);
-
-                                //if (readSingleObject)
-                                //    return;
-                            }
-                                break;
-
-                            case 0x27:
-                            {
-                                stop = true;
-                                if (!_rootObjectStack.ElementAt(0).Properties
-                                    .Any(i => i.Name == $"xmlns:{xmlnsPrefix}"))
-                                {
-                                    _rootObjectStack.ElementAt(0).Properties
-                                        .Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                                    //_objectStack.ElementAt(_objectStack.Count - 1).Properties.Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                                }
-                            }
-                                break;
-
-                            case 0x26:
-                            {
-                                ReadConditionalProperty(reader);
-                            } break;
-
-                            case 0x0C: // Connection
-                                // This byte (0x0C) indicates the current object needs to be connected to something in the generated Connect method.
-                                // This can include event handlers, named objects (to be accessed via instance variables), etc.
-                                // Event handlers aren't explicitly included as part of the XBF node stream since they're wired up in (generated) code.
-                                // Each object that needs to be connected to something has a unique ID indicated in this section.
-
-                                // Connection ID
-                                _objectStack.Peek().ConnectionID = (int) GetPropertyValue(reader);
-                                break;
-
-                            case 0x0D: // x:Name
-                                _objectStack.Peek().Name = GetPropertyValue(reader).ToString();
-                                break;
-
-                            case 0x0E: // x:Uid
-                                _objectStack.Peek().Uid = GetPropertyValue(reader).ToString();
-                                break;
-
-                            default:
-                                throw new InvalidDataException(
-                                    string.Format("Unrecognized character 0x{0:X2} while parsing object", theByte));
-                                break;
-                        }
-                    }
-                }
-        }*/
-
-
-        private void ReadConditionalProperty(BinaryReaderEx reader, int endPos)
+        private string ReadXamlPredicate(BinaryReaderEx reader)
         {
             string markup = GetMarkupTypeName(reader.ReadUInt16());
             string argument = StringTable[reader.ReadUInt16() & ~0x8000];
-            var valueType = reader.ReadByte();
-            if (valueType == 0x1B || valueType == 0x1A)
-            {
-                int propertyId = reader.ReadUInt16();
-                string propertyNamespace;
-                string property;
-                if ((propertyId & 0x8000) != 0)
-                {
-                    property = XbfFrameworkTypes.GetNameForPropertyID(propertyId & ~0x8000) ??
-                               string.Format("UnknownProperty0x{0:X4}", propertyId);
-                    propertyNamespace = @"http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-                }
-                else
-                {
-                    property = PropertyTable[propertyId].Name;
-                    propertyNamespace = PropertyTable[propertyId].Type.Namespace.Name;
-                }
+            return $"{markup}({argument})";
+        }
 
-                var value = GetPropertyValue(reader);
-                reader.ReadByte();
-                string xmlnsNamespace;
-                string xmlnsPrefix;
-                if (propertyNamespace == @"http://schemas.microsoft.com/client/2007")
-                {
-                    xmlnsNamespace =
-                        $@"http://schemas.microsoft.com/winfx/2006/xaml/presentation?{markup}({argument})";
-                    string markupId = argument.Replace(" ", String.Empty)
-                        .Replace('"'.ToString(), String.Empty)
-                        .Replace(",", String.Empty).Replace("(", String.Empty).Replace(")", String.Empty)
-                        .Replace(";", String.Empty).Replace("?", String.Empty).Replace(":", String.Empty)
-                        .Replace(".", String.Empty).Replace("'", String.Empty).Replace(@"/", String.Empty)
-                        .Replace(@"\", String.Empty).Replace("=", String.Empty).Replace("+", String.Empty)
-                        .Replace("-", String.Empty).Replace("@", String.Empty).Replace("#", String.Empty)
-                        .Replace("$", String.Empty).Replace("%", String.Empty).Replace("^", String.Empty)
-                        .Replace("&", String.Empty).Replace("*", String.Empty).Replace("`", String.Empty)
-                        .Replace("~", String.Empty).Replace("!", String.Empty).Replace("{", String.Empty)
-                        .Replace("}", String.Empty).Replace("[", String.Empty).Replace("]", String.Empty)
-                        .Replace("<", String.Empty).Replace(">", String.Empty);
-                    xmlnsPrefix = markup + markupId;
-                }
-                else
-                {
-                    xmlnsNamespace = $"{propertyNamespace}?{markup}({argument})";
-                    string markupId = argument.Replace(" ", String.Empty)
-                        .Replace('"'.ToString(), String.Empty)
-                        .Replace(",", String.Empty).Replace("(", String.Empty).Replace(")", String.Empty)
-                        .Replace(";", String.Empty).Replace("?", String.Empty).Replace(":", String.Empty)
-                        .Replace(".", String.Empty).Replace("'", String.Empty).Replace(@"/", String.Empty)
-                        .Replace(@"\", String.Empty).Replace("=", String.Empty).Replace("+", String.Empty)
-                        .Replace("-", String.Empty).Replace("@", String.Empty).Replace("#", String.Empty)
-                        .Replace("$", String.Empty).Replace("%", String.Empty).Replace("^", String.Empty)
-                        .Replace("&", String.Empty).Replace("*", String.Empty).Replace("`", String.Empty)
-                        .Replace("~", String.Empty).Replace("!", String.Empty).Replace("{", String.Empty)
-                        .Replace("}", String.Empty).Replace("[", String.Empty).Replace("]", String.Empty)
-                        .Replace("<", String.Empty).Replace(">", String.Empty);
-                    if (propertyNamespace != @"http://schemas.microsoft.com/winfx/2006/xaml/presentation" && !String.IsNullOrWhiteSpace(_namespacePrefixes[propertyNamespace]))
-                    {
-                        markupId += _namespacePrefixes[propertyNamespace];
-                    }
-                    xmlnsPrefix = markup + markupId;
-                }
+        private void EnsurePredicatePrefix(string @namespace, string predicate, string predicatePrefix)
+        {
+            var rootElementProps = _rootObjectStack.ElementAt(0).Properties;
+            if (!rootElementProps.Any(i => i.Name == $"xmlns:{predicatePrefix}"))
+                rootElementProps.Add(new XbfObjectProperty($"xmlns:{predicatePrefix}", $"{@namespace}?{predicate}"));
+        }
 
-                _objectStack.Peek().Properties.Add(new XbfObjectProperty($"{xmlnsPrefix}:{property}", value));
-
-                if (!_rootObjectStack.ElementAt(0).Properties.Any(i => i.Name == $"xmlns:{xmlnsPrefix}"))
-                {
-                    _rootObjectStack.ElementAt(0).Properties.Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                    //_objectStack.ElementAt(_objectStack.Count - 1).Properties.Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                }
-            }
-            else
-            {
-                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-                bool stop = false;
-                string propertyNamespace = String.Empty;
-                string property = String.Empty;
-                string xmlnsNamespace = String.Empty;
-                string xmlnsPrefix = String.Empty;
-                while (!stop)
-                {
-                    var theByte = reader.ReadByte();
-                    switch (theByte)
-                    {
-                        case 0x07: // Add the new object as a property of the current object
-                        case 0x20
-                            : // Same as 0x07, but this occurs when the object is a Binding, TemplateBinding, CustomResource, RelativeSource or NullExtension value
-                            {
-                                int propertyId = reader.ReadUInt16();
-                                var confirmTag = reader.ReadByte();
-                                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-                                if (confirmTag == 0x27)
-                                {
-                                    if ((propertyId & 0x8000) != 0)
-                                    {
-                                        property = XbfFrameworkTypes.GetNameForPropertyID(propertyId & ~0x8000) ??
-                                                   string.Format("UnknownProperty0x{0:X4}", propertyId);
-                                        propertyNamespace =
-                                            @"http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-                                    }
-                                    else
-                                    {
-                                        property = PropertyTable[propertyId].Name;
-                                        propertyNamespace = PropertyTable[propertyId].Type.Namespace.Name;
-                                    }
-
-                                    if (propertyNamespace == @"http://schemas.microsoft.com/client/2007")
-                                    {
-                                        xmlnsNamespace =
-                                            $@"http://schemas.microsoft.com/winfx/2006/xaml/presentation?{markup}({argument})";
-                                        string markupId = argument.Replace(" ", String.Empty)
-                                            .Replace('"'.ToString(), String.Empty)
-                                            .Replace(",", String.Empty).Replace("(", String.Empty)
-                                            .Replace(")", String.Empty)
-                                            .Replace(";", String.Empty).Replace("?", String.Empty)
-                                            .Replace(":", String.Empty)
-                                            .Replace(".", String.Empty).Replace("'", String.Empty)
-                                            .Replace(@"/", String.Empty)
-                                            .Replace(@"\", String.Empty).Replace("=", String.Empty)
-                                            .Replace("+", String.Empty)
-                                            .Replace("-", String.Empty).Replace("@", String.Empty)
-                                            .Replace("#", String.Empty)
-                                            .Replace("$", String.Empty).Replace("%", String.Empty)
-                                            .Replace("^", String.Empty)
-                                            .Replace("&", String.Empty).Replace("*", String.Empty)
-                                            .Replace("`", String.Empty)
-                                            .Replace("~", String.Empty).Replace("!", String.Empty)
-                                            .Replace("{", String.Empty)
-                                            .Replace("}", String.Empty).Replace("[", String.Empty)
-                                            .Replace("]", String.Empty)
-                                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                                        xmlnsPrefix = markup + markupId;
-                                    }
-                                    else
-                                    {
-                                        xmlnsNamespace = $"{propertyNamespace}?{markup}({argument})";
-                                        string markupId = argument.Replace(" ", String.Empty)
-                                            .Replace('"'.ToString(), String.Empty)
-                                            .Replace(",", String.Empty).Replace("(", String.Empty)
-                                            .Replace(")", String.Empty)
-                                            .Replace(";", String.Empty).Replace("?", String.Empty)
-                                            .Replace(":", String.Empty)
-                                            .Replace(".", String.Empty).Replace("'", String.Empty)
-                                            .Replace(@"/", String.Empty)
-                                            .Replace(@"\", String.Empty).Replace("=", String.Empty)
-                                            .Replace("+", String.Empty)
-                                            .Replace("-", String.Empty).Replace("@", String.Empty)
-                                            .Replace("#", String.Empty)
-                                            .Replace("$", String.Empty).Replace("%", String.Empty)
-                                            .Replace("^", String.Empty)
-                                            .Replace("&", String.Empty).Replace("*", String.Empty)
-                                            .Replace("`", String.Empty)
-                                            .Replace("~", String.Empty).Replace("!", String.Empty)
-                                            .Replace("{", String.Empty)
-                                            .Replace("}", String.Empty).Replace("[", String.Empty)
-                                            .Replace("]", String.Empty)
-                                            .Replace("<", String.Empty).Replace(">", String.Empty);
-                                        if (propertyNamespace !=
-                                            @"http://schemas.microsoft.com/winfx/2006/xaml/presentation" &&
-                                            !String.IsNullOrWhiteSpace(_namespacePrefixes[propertyNamespace]))
-                                        {
-                                            markupId += _namespacePrefixes[propertyNamespace];
-                                        }
-
-                                        xmlnsPrefix = markup + markupId;
-                                    }
-
-                                    var subObj = _objectStack.Pop();
-                                    _objectStack.Peek().Properties
-                                        .Add(new XbfObjectProperty($"{xmlnsPrefix}:{property}", subObj));
-                                }
-                                else
-                                {
-                                    reader.BaseStream.Seek(-3, SeekOrigin.Current);
-                                    ReadNodes(reader, endPos, readSingleNode: true);
-                                }
-                            }
-                            break;
-
-                        case 0x27:
-                            {
-                                stop = true;
-                                if (!_rootObjectStack.ElementAt(0).Properties
-                                    .Any(i => i.Name == $"xmlns:{xmlnsPrefix}"))
-                                {
-                                    _rootObjectStack.ElementAt(0).Properties
-                                        .Add(new XbfObjectProperty($"xmlns:{xmlnsPrefix}", xmlnsNamespace));
-                                }
-                            }
-                            break;
-
-                        case 0x26:
-                            {
-                                ReadConditionalProperty(reader, endPos);
-                            }
-                            break;
-
-                        default:
-                            {
-                                reader.BaseStream.Seek(-1, SeekOrigin.Current);
-                                ReadNodes(reader, endPos, readSingleNode: true);
-                            }
-                            break;
-                    }
-                }
-            }
+        private static string GeneratePredicatePrefix(string predicate)
+        {
+            return predicate.Replace(" ", String.Empty)
+                            .Replace("\"", String.Empty)
+                            .Replace(",", String.Empty).Replace("(", String.Empty).Replace(")", String.Empty)
+                            .Replace(";", String.Empty).Replace("?", String.Empty).Replace(":", String.Empty)
+                            .Replace(".", String.Empty).Replace("'", String.Empty).Replace(@"/", String.Empty)
+                            .Replace(@"\", String.Empty).Replace("=", String.Empty).Replace("+", String.Empty)
+                            .Replace("-", String.Empty).Replace("@", String.Empty).Replace("#", String.Empty)
+                            .Replace("$", String.Empty).Replace("%", String.Empty).Replace("^", String.Empty)
+                            .Replace("&", String.Empty).Replace("*", String.Empty).Replace("`", String.Empty)
+                            .Replace("~", String.Empty).Replace("!", String.Empty).Replace("{", String.Empty)
+                            .Replace("}", String.Empty).Replace("[", String.Empty).Replace("]", String.Empty)
+                            .Replace("<", String.Empty).Replace(">", String.Empty);
         }
 
         private void ReadNodeSectionReference(BinaryReaderEx reader)
@@ -1334,36 +847,69 @@ namespace XbfAnalyzer.Xbf
             else
             {
                 int conditionalExplicitKeyResourcesCount = reader.Read7BitEncodedInt();
+                Dictionary<int, string> conditionalExplicitKeyResources = new(conditionalExplicitKeyResourcesCount);
+
                 for (int i = 0; i < conditionalExplicitKeyResourcesCount; i++)
                 {
-                    var keyId = reader.ReadUInt16();
+                    string resourceKey = StringTable[reader.ReadUInt16() & ~0x8000];
+
                     int tokensCount = reader.Read7BitEncodedInt();
                     for (int j = 0; j < tokensCount; j++)
                     {
-                        var token = reader.Read7BitEncodedInt();
+                        conditionalExplicitKeyResources[reader.Read7BitEncodedInt()] = resourceKey;
                     }
                 }
 
                 int conditionalImplicitKeyResourcesCount = reader.Read7BitEncodedInt();
+                Dictionary<int, string> conditionalImplicitKeyResources = new(conditionalImplicitKeyResourcesCount);
+
                 for (int i = 0; i < conditionalImplicitKeyResourcesCount; i++)
                 {
-                    var keyId = reader.ReadUInt16();
+                    string targetType = StringTable[reader.ReadUInt16() & ~0x8000];
+
                     int tokensCount = reader.Read7BitEncodedInt();
                     for (int j = 0; j < tokensCount; j++)
                     {
-                        var token = reader.Read7BitEncodedInt();
+                        conditionalImplicitKeyResources[reader.Read7BitEncodedInt()] = targetType;
                     }
                 }
 
                 int conditionallyDeclaredObjectsAsListCount = reader.Read7BitEncodedInt();
                 for (int i = 0; i < conditionallyDeclaredObjectsAsListCount; i++)
                 {
-                    var token = reader.Read7BitEncodedInt();
+                    var position = reader.Read7BitEncodedInt();
+
                     var xamlPredicatesAndArgsListCount = reader.Read7BitEncodedInt();
                     for (int j = 0; j < xamlPredicatesAndArgsListCount; j++)
                     {
-                        var typeId = reader.ReadUInt16();
-                        var argStringId = reader.ReadUInt16();
+                        var predicate = ReadXamlPredicate(reader);
+                        var predicatePrefix = GeneratePredicatePrefix(predicate);
+
+                        XbfObject obj = ReadObjectInNodeSection(reader, nodeSection, position);
+
+                        if (conditionalExplicitKeyResources.TryGetValue(i, out string resourceKey))
+                        {
+                            obj.Key = resourceKey;
+                        }
+
+                        var name = obj.TypeName;
+                        string @namespace = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+                        if (name.Contains(':'))
+                        {
+                            var idx = name.IndexOf(':');
+                            var originalPrefix = name[..name.IndexOf(':')];
+                            @namespace = Namespaces.First(x => x.Prefix == originalPrefix).Namespace;
+
+                            if (@namespace is @"http://schemas.microsoft.com/client/2007")
+                                @namespace = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+
+                            name = name[(idx + 1)..];
+                        }
+
+                        EnsurePredicatePrefix(@namespace, predicate, predicatePrefix);
+                        obj.TypeName = $"{predicatePrefix}:{name}";
+
+                        _objectCollectionStack.Peek().Add(obj);
                     }
                 }
             }
@@ -1503,9 +1049,11 @@ namespace XbfAnalyzer.Xbf
             if ((id & 0x8000) != 0)
                 return XbfFrameworkTypes.GetNameForTypeID(id & ~0x8000) ?? string.Format("UnknownType0x{0:X4}", id);
 
+            string prefix;
             var type = TypeTable[id];
-            if (type.Namespace.Name.StartsWith("using:") && _namespacePrefixes.ContainsKey(type.Namespace.Name))
-                return _namespacePrefixes[type.Namespace.Name] + ":" + type.Name;
+            if (type.Namespace.Name.StartsWith("using:") && (prefix = Namespaces.First(x => x.Namespace == type.Namespace.Name).Prefix) is not null)
+                return prefix + ":" + type.Name;
+
             return type.Name;
         }
 
@@ -1519,21 +1067,39 @@ namespace XbfAnalyzer.Xbf
             return type.Name;
         }
 
-        private string GetPropertyName(int id)
+        private string GetPropertyName(int id, string predicate = null, string predicatePrefix = null)
         {
-#if !DEBUG
+//#if !DEBUG
+#if false
             // If the highest bit is set, this is a standard framework property
             if ((id & 0x8000) != 0)
                 return XbfFrameworkTypes.GetNameForPropertyID(id & ~0x8000) ?? string.Format("UnknownProperty0x{0:X4}", id);
 
             return PropertyTable[id].Name;
 #else
+
             string name = String.Empty;
+            string @namespace = @"http://schemas.microsoft.com/winfx/2006/xaml/presentation";
             // If the highest bit is set, this is a standard framework property
             if ((id & 0x8000) != 0)
                 name = XbfFrameworkTypes.GetNameForPropertyID(id & ~0x8000) ?? string.Format("UnknownProperty0x{0:X4}", id);
             else
-                name = PropertyTable[id].Name;
+            {
+                var prop = PropertyTable[id];
+                name = prop.Name;
+                @namespace = prop.Type.Namespace.Name;
+            }
+
+            if (predicate is not null)
+            {
+                EnsurePredicatePrefix(@namespace is @"http://schemas.microsoft.com/client/2007" ?
+                    @"http://schemas.microsoft.com/winfx/2006/xaml/presentation" :
+                    @namespace,
+                    predicate,
+                    predicatePrefix);
+
+                name = $"{predicatePrefix}:{name}";
+            }
 
             //Used for debugging, ugly, I know
             /*if (name == "KeyTime")
