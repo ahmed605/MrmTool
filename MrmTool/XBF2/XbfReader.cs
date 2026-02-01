@@ -1,5 +1,6 @@
 ﻿#nullable disable
 
+using MrmTool.XBF2;
 using System.Text;
 
 namespace XbfAnalyzer.Xbf
@@ -33,7 +34,7 @@ namespace XbfAnalyzer.Xbf
                 TypeNamespaceTable = ReadTable(reader, r => new XbfTypeNamespace(this, r));
                 TypeTable = ReadTable(reader, r => new XbfType(this, r));
                 PropertyTable = ReadTable(reader, r => new XbfProperty(this, r));
-                XmlNamespaceTable = ReadTable(reader, r => StringTable[r.ReadInt32()]);
+                XmlNamespaceTable = ReadTable(reader, r => StringTable[r.ReadInt32() & ~0x8000]);
 
                 if (Header.MajorFileVersion >= 2)
                 {
@@ -82,7 +83,7 @@ namespace XbfAnalyzer.Xbf
                 TypeNamespaceTable = names.ToArray();
                 TypeTable = ReadTable(reader, r => new XbfType(this, r));
                 PropertyTable = ReadTable(reader, r => new XbfProperty(this, r));
-                XmlNamespaceTable = ReadTable(reader, r => StringTable[r.ReadInt32()]);
+                XmlNamespaceTable = ReadTable(reader, r => StringTable[r.ReadInt32() & ~0x8000]);
 
                 if (Header.MajorFileVersion >= 2)
                 {
@@ -124,7 +125,7 @@ namespace XbfAnalyzer.Xbf
 
             for (int i = 0; i < stringCount; i++)
             {
-                stringTable[i] = ReadString(reader);
+                stringTable[i & ~0x8000] = ReadString(reader);
 
                 // XBF v2 files have two extra null bytes after each string.
                 if (isXbfV2)
@@ -526,7 +527,7 @@ namespace XbfAnalyzer.Xbf
         /*private void ReadConditionalProperty(BinaryReaderEx reader)
         {
             string markup = GetMarkupTypeName(reader.ReadUInt16());
-                string argument = StringTable[reader.ReadUInt16()];
+                string argument = StringTable[reader.ReadUInt16() & ~0x8000];
                 var valueType = reader.ReadByte();
                 if (valueType == 0x1B || valueType == 0x1A)
                 {
@@ -853,7 +854,7 @@ namespace XbfAnalyzer.Xbf
         private void ReadConditionalProperty(BinaryReaderEx reader, int endPos)
         {
             string markup = GetMarkupTypeName(reader.ReadUInt16());
-            string argument = StringTable[reader.ReadUInt16()];
+            string argument = StringTable[reader.ReadUInt16() & ~0x8000];
             var valueType = reader.ReadByte();
             if (valueType == 0x1B || valueType == 0x1A)
             {
@@ -1070,35 +1071,29 @@ namespace XbfAnalyzer.Xbf
                 throw new InvalidDataException($"Unexpected value");
 
             // Get the type of nodes contained in this section
-            int type = reader.Read7BitEncodedInt();
+            var type = (CustomWriterRuntimeDataTypeIndex)reader.Read7BitEncodedInt();
             switch (type)
             {
-                case 2: // Style
-                case 8: // 8 seems to be equivalent
+                case CustomWriterRuntimeDataTypeIndex.Style_v1: // Style
+                case CustomWriterRuntimeDataTypeIndex.Style_v2: // 8 seems to be equivalent
                     ReadStyle(reader, nodeSection);
                     break;
 
-                case 10:
-                case 7: // ResourceDictionary
-                    ReadResourceDictionary(reader, nodeSection, false);
+                case CustomWriterRuntimeDataTypeIndex.ResourceDictionary_v1:
+                case CustomWriterRuntimeDataTypeIndex.ResourceDictionary_v2:
+                case CustomWriterRuntimeDataTypeIndex.ResourceDictionary_v3:
+                    ReadResourceDictionary(reader, nodeSection, type);
                     break;
 
-                case 371: // ResourceDictionary
-                    ReadResourceDictionary(reader, nodeSection, true);
-                    break;
-
-                case 5: // Visual states
+                case CustomWriterRuntimeDataTypeIndex.VisualStateGroupCollection_v5: // Visual states
                     SkipVisualStateBytes(reader);
                     ReadNodeSection(reader, nodeSection);
                     break;
 
-                case 9:
-                case 6: // DeferredElement
-                    ReadDeferredElement(reader, nodeSection, true);
-                    break;
-
-                case 746: // DeferredElement
-                    ReadDeferredElement(reader, nodeSection, false);
+                case CustomWriterRuntimeDataTypeIndex.DeferredElement_v1:
+                case CustomWriterRuntimeDataTypeIndex.DeferredElement_v2:
+                case CustomWriterRuntimeDataTypeIndex.DeferredElement_v3:
+                    ReadDeferredElement(reader, nodeSection, type);
                     break;
 
                 default:
@@ -1117,11 +1112,11 @@ namespace XbfAnalyzer.Xbf
             int themeResourceCount = reader.Read7BitEncodedInt();
             for (int i = 0; i < staticResourceCount; i++)
             {
-                string staticResource = StringTable[reader.ReadUInt16()];
+                string staticResource = StringTable[reader.ReadUInt16() & ~0x8000];
             }
             for (int i = 0; i < themeResourceCount; i++)
             {
-                string themeResource = StringTable[reader.ReadUInt16()];
+                string themeResource = StringTable[reader.ReadUInt16() & ~0x8000];
             }
 
             ReadNodeSection(reader, nodeSection);
@@ -1148,7 +1143,7 @@ namespace XbfAnalyzer.Xbf
                     case 0x01: // ThemeResource
                     case 0x02: // StaticResource
                     case 0x08: // General objects
-                        propertyName = StringTable[reader.ReadUInt16()];
+                        propertyName = StringTable[reader.ReadUInt16() & ~0x8000];
                         typeName = GetTypeName(reader.ReadUInt16());
                         valueOffset = reader.Read7BitEncodedInt();
                         break;
@@ -1159,7 +1154,7 @@ namespace XbfAnalyzer.Xbf
                         valueOffset = reader.Read7BitEncodedInt();
                         break;
                     case 0x20:
-                        propertyName = StringTable[reader.ReadUInt16()];
+                        propertyName = StringTable[reader.ReadUInt16() & ~0x8000];
                         typeName = GetTypeName(reader.ReadUInt16());
                         propertyValue = GetPropertyValue(reader);
                         break;
@@ -1197,11 +1192,11 @@ namespace XbfAnalyzer.Xbf
             }
         }
 
-        private void ReadDeferredElement(BinaryReaderEx reader, XbfNodeSection nodeSection, bool extended)
+        private void ReadDeferredElement(BinaryReaderEx reader, XbfNodeSection nodeSection, CustomWriterRuntimeDataTypeIndex type)
         {
-            string deferredElementName = StringTable[reader.ReadUInt16()];
+            string deferredElementName = StringTable[reader.ReadUInt16() & ~0x8000];
 
-            if (extended)
+            if (type is CustomWriterRuntimeDataTypeIndex.DeferredElement_v1)
             {
                 // The following properties can be ignored as they will appear in the secondary node section again
                 int count = reader.Read7BitEncodedInt();
@@ -1286,13 +1281,13 @@ namespace XbfAnalyzer.Xbf
             reader.BaseStream.Position = originalPosition;
         }
 
-        private void ReadResourceDictionary(BinaryReaderEx reader, XbfNodeSection nodeSection, bool extended)
+        private void ReadResourceDictionary(BinaryReaderEx reader, XbfNodeSection nodeSection, CustomWriterRuntimeDataTypeIndex type)
         {
             // Resources with keys
             int resourcesCount = reader.Read7BitEncodedInt();
             for (int i = 0; i < resourcesCount; i++)
             {
-                string resourceKey = StringTable[reader.ReadUInt16()];
+                string resourceKey = StringTable[reader.ReadUInt16() & ~0x8000];
                 int position = reader.Read7BitEncodedInt(); // Secondary node stream offset
 
                 XbfObject obj = ReadObjectInNodeSection(reader, nodeSection, position);
@@ -1304,29 +1299,73 @@ namespace XbfAnalyzer.Xbf
             int count = reader.Read7BitEncodedInt();
             for (int i = 0; i < count; i++)
             {
-                string resourceKey = StringTable[reader.ReadUInt16()];
+                string resourceKey = StringTable[reader.ReadUInt16() & ~0x8000];
             }
 
             // Styles with TargetType and no key
             int styleCount = reader.Read7BitEncodedInt();
             for (int i = 0; i < styleCount; i++)
             {
-                string targetType = StringTable[reader.ReadUInt16()];
+                string targetType = StringTable[reader.ReadUInt16() & ~0x8000];
                 int position = reader.Read7BitEncodedInt();  // Secondary node stream offset
 
                 XbfObject obj = ReadObjectInNodeSection(reader, nodeSection, position);
                 _objectCollectionStack.Peek().Add(obj);
             }
 
-            if (extended)
-                if (reader.Read7BitEncodedInt() != 0) // TODO: purpose unknown
-                    throw new InvalidDataException("Unexpected value");
+            if (type is CustomWriterRuntimeDataTypeIndex.ResourceDictionary_v1)
+            {
+                int count2 = reader.Read7BitEncodedInt();
+                for (int i = 0; i < count2; i++)
+                {
+                    string targetType = StringTable[reader.ReadUInt16() & ~0x8000];
+                }
+            }
 
             // A subset of the target types from above seem to get repeated here, purpose unknown
-            int count2 = reader.Read7BitEncodedInt();
-            for (int i = 0; i < count2; i++)
+            if (type is not CustomWriterRuntimeDataTypeIndex.ResourceDictionary_v3)
             {
-                string targetType = StringTable[reader.ReadUInt16()];
+                int count2 = reader.Read7BitEncodedInt();
+                for (int i = 0; i < count2; i++)
+                {
+                    string targetType = StringTable[reader.ReadUInt16() & ~0x8000];
+                }
+            }
+            else
+            {
+                int conditionalExplicitKeyResourcesCount = reader.Read7BitEncodedInt();
+                for (int i = 0; i < conditionalExplicitKeyResourcesCount; i++)
+                {
+                    var keyId = reader.ReadUInt16();
+                    int tokensCount = reader.Read7BitEncodedInt();
+                    for (int j = 0; j < tokensCount; j++)
+                    {
+                        var token = reader.Read7BitEncodedInt();
+                    }
+                }
+
+                int conditionalImplicitKeyResourcesCount = reader.Read7BitEncodedInt();
+                for (int i = 0; i < conditionalImplicitKeyResourcesCount; i++)
+                {
+                    var keyId = reader.ReadUInt16();
+                    int tokensCount = reader.Read7BitEncodedInt();
+                    for (int j = 0; j < tokensCount; j++)
+                    {
+                        var token = reader.Read7BitEncodedInt();
+                    }
+                }
+
+                int conditionallyDeclaredObjectsAsListCount = reader.Read7BitEncodedInt();
+                for (int i = 0; i < conditionallyDeclaredObjectsAsListCount; i++)
+                {
+                    var token = reader.Read7BitEncodedInt();
+                    var xamlPredicatesAndArgsListCount = reader.Read7BitEncodedInt();
+                    for (int j = 0; j < xamlPredicatesAndArgsListCount; j++)
+                    {
+                        var typeId = reader.ReadUInt16();
+                        var argStringId = reader.ReadUInt16();
+                    }
+                }
             }
         }
 
@@ -1387,7 +1426,7 @@ namespace XbfAnalyzer.Xbf
 
                 var vs = new XbfObject();
                 vs.TypeName = "VisualState";
-                vs.Name = StringTable[nameID];
+                vs.Name = StringTable[nameID & ~0x8000];
 
                 visualStates[i] = vs;
             }
@@ -1408,7 +1447,7 @@ namespace XbfAnalyzer.Xbf
 
                 var vsg = new XbfObject();
                 vsg.TypeName = "VisualStateGroup";
-                vsg.Name = StringTable[nameID];
+                vsg.Name = StringTable[nameID & ~0x8000];
 
                 // Get the visual states that belong to this group
                 var states = new List<XbfObject>();
@@ -1426,8 +1465,8 @@ namespace XbfAnalyzer.Xbf
             int visualTransitionCount = reader.Read7BitEncodedInt();
             for (int i = 0; i < visualTransitionCount; i++)
             {
-                string toState = StringTable[reader.ReadUInt16()];
-                string fromState = StringTable[reader.ReadUInt16()];
+                string toState = StringTable[reader.ReadUInt16() & ~0x8000];
+                string fromState = StringTable[reader.ReadUInt16() & ~0x8000];
                 int visualTransitionOffset = reader.Read7BitEncodedInt();
             }
 
@@ -1451,7 +1490,7 @@ namespace XbfAnalyzer.Xbf
             int stringCount = reader.Read7BitEncodedInt();
             for (int i = 0; i < stringCount; i++)
             {
-                string str = StringTable[reader.ReadUInt16()];
+                string str = StringTable[reader.ReadUInt16() & ~0x8000];
             }
 
             // At this point we have a list of VisualStateGroup objects in the visualStateGroups variable.
@@ -1527,7 +1566,7 @@ namespace XbfAnalyzer.Xbf
                     return reader.ReadInt32();
 
                 case 0x05: // string
-                    return StringTable[reader.ReadUInt16()];
+                    return StringTable[reader.ReadUInt16() & ~0x8000];
 
                 case 0x06: // Thickness
                     float left = reader.ReadSingle();
