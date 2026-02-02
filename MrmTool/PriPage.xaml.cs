@@ -321,6 +321,11 @@ namespace MrmTool
                 _selectedResource = item;
                 candidatesList.ItemsSource = item.Candidates;
                 RemoveResourcesItem.IsEnabled = true;
+
+                if (item.Candidates.Count == 1)
+                {
+                    candidatesList.SelectedIndex = 0;
+                }
             }
         }
 
