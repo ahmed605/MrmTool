@@ -8,18 +8,34 @@ namespace MrmTool.Polyfills
 {
     internal unsafe struct LegacyNonImmersiveView
     {
-        private static readonly void** Vtbl = InitVtbl();
+        [FixedAddressValueType]
+        private static readonly Vtable Vtbl;
 
-        private void** vtbl;
+        private Vtable* vtbl;
         private volatile uint referenceCount;
 
         private GCHandle _activatedHandlers;
+
+        static LegacyNonImmersiveView()
+        {
+            Vtbl.QueryInterface = &QueryInterface;
+            Vtbl.AddRef = &AddRef;
+            Vtbl.Release = &Release;
+            Vtbl.GetIids = &GetIids;
+            Vtbl.GetRuntimeClassName = &GetRuntimeClassName;
+            Vtbl.GetTrustLevel = &GetTrustLevel;
+            Vtbl.get_CoreWindow = &get_CoreWindow;
+            Vtbl.add_Activated = &add_Activated;
+            Vtbl.remove_Activated = &remove_Activated;
+            Vtbl.get_IsMain = &get_IsMain;
+            Vtbl.get_IsHosted = &get_IsHosted;
+        }
 
         public static LegacyNonImmersiveView* Create()
         {
             LegacyNonImmersiveView* @this = (LegacyNonImmersiveView*)NativeMemory.Alloc((nuint)sizeof(LegacyNonImmersiveView));
 
-            @this->vtbl = Vtbl;
+            @this->vtbl = (Vtable*)Unsafe.AsPointer(in Vtbl);
             @this->_activatedHandlers = GCHandle.Alloc(new Dictionary<TerraFX.Interop.WinRT.EventRegistrationToken, Pointer<ITypedEventHandler<Pointer<ICoreApplicationView>, Pointer<IActivatedEventArgs>>>>());
             @this->referenceCount = 1;
 
@@ -37,26 +53,23 @@ namespace MrmTool.Polyfills
             }
         }
 
-        private static void** InitVtbl()
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Vtable
         {
-            void** vtbl = (void**)RuntimeHelpers.AllocateTypeAssociatedMemory(typeof(LegacyNonImmersiveView), sizeof(void*) * 10);
-
-            vtbl[0] = (delegate* unmanaged<LegacyNonImmersiveView*, Guid*, void**, int>)&QueryInterface;
-            vtbl[1] = (delegate* unmanaged<LegacyNonImmersiveView*, uint>)&AddRef;
-            vtbl[2] = (delegate* unmanaged<LegacyNonImmersiveView*, uint>)&Release;
-            vtbl[3] = (delegate* unmanaged<LegacyNonImmersiveView*, uint*, Guid**, int>)&GetIids;
-            vtbl[4] = (delegate* unmanaged<LegacyNonImmersiveView*, nint*, int>)&GetRuntimeClassName;
-            vtbl[5] = (delegate* unmanaged<LegacyNonImmersiveView*, TerraFX.Interop.WinRT.TrustLevel*, int>)&GetTrustLevel;
-            vtbl[6] = (delegate* unmanaged<LegacyNonImmersiveView*, ICoreWindow**, int>)&get_CoreWindow;
-            vtbl[7] = (delegate* unmanaged<LegacyNonImmersiveView*, ITypedEventHandler<Pointer<ICoreApplicationView>, Pointer<IActivatedEventArgs>>*, TerraFX.Interop.WinRT.EventRegistrationToken*, int>)&add_Activated;
-            vtbl[8] = (delegate* unmanaged<LegacyNonImmersiveView*, TerraFX.Interop.WinRT.EventRegistrationToken, int>)&remove_Activated;
-            vtbl[9] = (delegate* unmanaged<LegacyNonImmersiveView*, byte*, int>)&get_IsMain;
-            vtbl[10] = (delegate* unmanaged<LegacyNonImmersiveView*, byte*, int>)&get_IsHosted;
-
-            return vtbl;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, Guid*, void**, int> QueryInterface;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, uint> AddRef;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, uint> Release;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, uint*, Guid**, int> GetIids;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, nint*, int> GetRuntimeClassName;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, TerraFX.Interop.WinRT.TrustLevel*, int> GetTrustLevel;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, ICoreWindow**, int> get_CoreWindow;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, ITypedEventHandler<Pointer<ICoreApplicationView>, Pointer<IActivatedEventArgs>>*, TerraFX.Interop.WinRT.EventRegistrationToken*, int> add_Activated;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, TerraFX.Interop.WinRT.EventRegistrationToken, int> remove_Activated;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, byte*, int> get_IsMain;
+            public delegate* unmanaged[MemberFunction]<LegacyNonImmersiveView*, byte*, int> get_IsHosted;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int QueryInterface(LegacyNonImmersiveView* @this, Guid* riid, void** ppvObject)
         {
             if (riid->Equals(IID.IID_IUnknown) ||
@@ -77,7 +90,7 @@ namespace MrmTool.Polyfills
         /// <summary>
         /// Implements <c>IUnknown.AddRef()</c>.
         /// </summary>
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static uint AddRef(LegacyNonImmersiveView* @this)
         {
             return Interlocked.Increment(ref @this->referenceCount);
@@ -86,7 +99,7 @@ namespace MrmTool.Polyfills
         /// <summary>
         /// Implements <c>IUnknown.Release()</c>.
         /// </summary>
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static uint Release(LegacyNonImmersiveView* @this)
         {
             uint referenceCount = Interlocked.Decrement(ref @this->referenceCount);
@@ -100,7 +113,7 @@ namespace MrmTool.Polyfills
             return referenceCount;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int GetIids(LegacyNonImmersiveView* @this, uint* iidCount, Guid** iids)
         {
             if (iidCount is not null)
@@ -111,7 +124,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int GetRuntimeClassName(LegacyNonImmersiveView* @this, nint* className)
         {
             if (className is not null)
@@ -122,7 +135,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int GetTrustLevel(LegacyNonImmersiveView* @this, TerraFX.Interop.WinRT.TrustLevel* trustLevel)
         {
             if (trustLevel is not null)
@@ -133,7 +146,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int get_CoreWindow(LegacyNonImmersiveView* @this, ICoreWindow** value)
         {
             if (value is not null)
@@ -144,7 +157,7 @@ namespace MrmTool.Polyfills
             return E.E_NOTIMPL;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int add_Activated(LegacyNonImmersiveView* @this, ITypedEventHandler<Pointer<ICoreApplicationView>, Pointer<IActivatedEventArgs>>* handler, TerraFX.Interop.WinRT.EventRegistrationToken* token)
         {
             if (handler is not null && token is not null)
@@ -162,7 +175,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int remove_Activated(LegacyNonImmersiveView* @this, TerraFX.Interop.WinRT.EventRegistrationToken token)
         {
             if (token.value is not 0)
@@ -178,7 +191,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int get_IsMain(LegacyNonImmersiveView* @this, byte* value)
         {
             if (value is not null)
@@ -189,7 +202,7 @@ namespace MrmTool.Polyfills
             return S.S_OK;
         }
 
-        [UnmanagedCallersOnly]
+        [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
         public static int get_IsHosted(LegacyNonImmersiveView* @this, byte* value)
         {
             if (value is not null)

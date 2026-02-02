@@ -19,35 +19,9 @@ namespace Microsoft.System
         private unsafe struct DispatcherQueueProxyHandler
         {
             /// <summary>
-            /// The shared vtable pointer for <see cref="DispatcherQueueProxyHandler"/> instances.
-            /// </summary>
-            private static readonly void** Vtbl = InitVtbl();
-
-            /// <summary>
-            /// Setups the vtable pointer for <see cref="DispatcherQueueProxyHandler"/>.
-            /// </summary>
-            /// <returns>The initialized vtable pointer for <see cref="DispatcherQueueProxyHandler"/>.</returns>
-            /// <remarks>
-            /// The vtable itself is allocated with <see cref="RuntimeHelpers.AllocateTypeAssociatedMemory(Type, int)"/>,
-            /// which allocates memory in the high frequency heap associated with the input runtime type. This will be
-            /// automatically cleaned up when the type is unloaded, so there is no need to ever manually free this memory.
-            /// </remarks>
-            private static void** InitVtbl()
-            {
-                void** vtbl = (void**)RuntimeHelpers.AllocateTypeAssociatedMemory(typeof(DispatcherQueueProxyHandler), sizeof(void*) * 4);
-
-                vtbl[0] = (delegate* unmanaged<DispatcherQueueProxyHandler*, Guid*, void**, int>)&Impl.QueryInterface;
-                vtbl[1] = (delegate* unmanaged<DispatcherQueueProxyHandler*, uint>)&Impl.AddRef;
-                vtbl[2] = (delegate* unmanaged<DispatcherQueueProxyHandler*, uint>)&Impl.Release;
-                vtbl[3] = (delegate* unmanaged<DispatcherQueueProxyHandler*, int>)&Impl.Invoke;
-
-                return vtbl;
-            }
-
-            /// <summary>
             /// The vtable pointer for the current instance.
             /// </summary>
-            private void** vtbl;
+            private Impl.Vtable* vtbl;
 
             /// <summary>
             /// The <see cref="GCHandle"/> to the captured <see cref="SendOrPostCallback"/>.
@@ -78,7 +52,7 @@ namespace Microsoft.System
                 DispatcherQueueProxyHandler* @this = (DispatcherQueueProxyHandler*)Marshal.AllocHGlobal(sizeof(DispatcherQueueProxyHandler));
 #endif
 
-                @this->vtbl = Vtbl;
+                @this->vtbl = (Impl.Vtable*)Unsafe.AsPointer(in Impl.Vtbl);
                 @this->callbackHandle = GCHandle.Alloc(handler);
                 @this->stateHandle = state is not null ? GCHandle.Alloc(state) : default;
                 @this->referenceCount = 1;
@@ -145,10 +119,21 @@ namespace Microsoft.System
                 /// </summary>
                 private static readonly Guid GuidOfIDispatcherQueueHandler = new(0x2E0872A9, 0x4E29, 0x5F14, 0xB6, 0x88, 0xFB, 0x96, 0xD5, 0xF9, 0xD5, 0xF8);
 
+                [FixedAddressValueType]
+                public static readonly Vtable Vtbl;
+
+                static Impl()
+                {
+                    Vtbl.QueryInterface = &QueryInterface;
+                    Vtbl.AddRef = &AddRef;
+                    Vtbl.Release = &Release;
+                    Vtbl.Invoke = &Invoke;
+                }
+
                 /// <summary>
                 /// Implements <c>IUnknown.QueryInterface(REFIID, void**)</c>.
                 /// </summary>
-                [UnmanagedCallersOnly]
+                [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
                 public static int QueryInterface(DispatcherQueueProxyHandler* @this, Guid* riid, void** ppvObject)
                 {
                     if (riid->Equals(GuidOfIUnknown) ||
@@ -168,7 +153,7 @@ namespace Microsoft.System
                 /// <summary>
                 /// Implements <c>IUnknown.AddRef()</c>.
                 /// </summary>
-                [UnmanagedCallersOnly]
+                [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
                 public static uint AddRef(DispatcherQueueProxyHandler* @this)
                 {
                     return Interlocked.Increment(ref @this->referenceCount);
@@ -177,7 +162,7 @@ namespace Microsoft.System
                 /// <summary>
                 /// Implements <c>IUnknown.Release()</c>.
                 /// </summary>
-                [UnmanagedCallersOnly]
+                [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
                 public static uint Release(DispatcherQueueProxyHandler* @this)
                 {
                     uint referenceCount = Interlocked.Decrement(ref @this->referenceCount);
@@ -204,7 +189,7 @@ namespace Microsoft.System
                 /// <summary>
                 /// Implements <c>IDispatcherQueueHandler.Invoke()</c>.
                 /// </summary>
-                [UnmanagedCallersOnly]
+                [UnmanagedCallersOnly(CallConvs = [typeof(CallConvMemberFunction)])]
                 public static int Invoke(DispatcherQueueProxyHandler* @this)
                 {
                     object callback = @this->callbackHandle.Target!;
@@ -222,6 +207,15 @@ namespace Microsoft.System
                     }
 
                     return S_OK;
+                }
+
+                [StructLayout(LayoutKind.Sequential)]
+                public struct Vtable
+                {
+                    public delegate* unmanaged[MemberFunction]<DispatcherQueueProxyHandler*, Guid*, void**, int> QueryInterface;
+                    public delegate* unmanaged[MemberFunction]<DispatcherQueueProxyHandler*, uint> AddRef;
+                    public delegate* unmanaged[MemberFunction]<DispatcherQueueProxyHandler*, uint> Release;
+                    public delegate* unmanaged[MemberFunction]<DispatcherQueueProxyHandler*, int> Invoke;
                 }
             }
         }
