@@ -422,7 +422,7 @@ namespace MrmTool
             => WinRT.MarshalString.DisposeAbi(unmanaged);
     }
 
-    [GeneratedComInterface]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("4a8eac58-b652-459d-8de1-239471e8b22b")]
     internal unsafe partial interface IResourceManagerStaticInternal
     {
@@ -435,7 +435,7 @@ namespace MrmTool
         int GetCurrentResourceManagerForSystemProfile(void** ppResult);
     }
 
-    [GeneratedComInterface]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("7d9da47a-8bc7-49d3-97aa-f7db06049172")]
     internal unsafe partial interface IResourceManagerStaticInternalOld
     {
@@ -448,7 +448,7 @@ namespace MrmTool
         int GetCurrentResourceManagerForSystemProfile(void** ppResult);
     }
 
-    [GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16)]
+    [GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16, Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("8c25e859-1042-4da0-9232-bf2aa8ff3726")]
     internal unsafe partial interface ISystemResourceManagerExtensions2
     {
@@ -459,7 +459,7 @@ namespace MrmTool
         void LoadPriFileForSystemUse(string path);
     }
 
-    [GeneratedComInterface, Guid("4dc10e42-52e7-46da-8ae8-92a4e8afe20c")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("4dc10e42-52e7-46da-8ae8-92a4e8afe20c")]
     internal unsafe partial interface IPickerPrivateInitialization
     {
         void _stub0();
@@ -477,7 +477,7 @@ namespace MrmTool
         void PrepopulateCallingAppData([MarshalUsing(typeof(HStringMarshaller))] string appId, [MarshalUsing(typeof(HStringMarshaller))] string packageFullName);
     }
 
-    [GeneratedComInterface, Guid("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")]
     internal partial interface ICoreApplicationPrivate2
     {
         void _stub3();
@@ -495,7 +495,7 @@ namespace MrmTool
         public byte TransparentBackground, IsCoreNavigationClient;
     }
 
-    [GeneratedComInterface, Guid("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")]
     internal unsafe partial interface IFrameworkApplicationStaticsPrivate
     {
         void _stub0();
