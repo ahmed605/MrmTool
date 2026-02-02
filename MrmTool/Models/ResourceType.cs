@@ -8,6 +8,7 @@ namespace MrmTool.Models
         Folder,
         Text,
         Image,
+        Svg,
         Xaml,
         Xbf,
         Audio,

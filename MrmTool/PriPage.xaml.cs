@@ -3,9 +3,9 @@ using MrmTool.Common;
 using MrmTool.Dialogs;
 using MrmTool.Models;
 using MrmTool.Scintilla;
-using System.Text;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -17,9 +17,6 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using WinRT;
 using WinUIEditor;
-
-using static MrmTool.Common.ErrorHelpers;
-using static TerraFX.Interop.Windows.Windows;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace MrmTool
