@@ -16,8 +16,6 @@ namespace MrmTool.SVG
         {
             // This automatically increases the reference count.
             this.geometry = geometry;
-            geometry->AddRef();
-            uint t = geometry->Release();
         }
 
         public unsafe int GetGeometry(ID2D1Geometry** geometry)
