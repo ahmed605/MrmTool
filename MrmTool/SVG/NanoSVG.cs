@@ -87,27 +87,24 @@ namespace NanoSVG
         public float offset;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct NSVGgradient
     {
         public fixed float xform[6];
-        public byte spread;
+        public NSVGspreadType spread;
         public float fx, fy;
         public int nstops;
         private NSVGgradientStop _stops;
 
-        [UnscopedRef]
-        public ref NSVGgradientStop stops
+        public NSVGgradientStop* stops
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _stops;
+            get => (NSVGgradientStop*)Unsafe.AsPointer(in _stops);
         }
 
-        [UnscopedRef]
         public ReadOnlySpan<NSVGgradientStop> Stops
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => MemoryMarshal.CreateReadOnlySpan(ref _stops, nstops);
+            get => new(stops, nstops);
         }
     }
 
@@ -212,7 +209,7 @@ namespace NanoSVG
             get => ref _union.radial;
         }
 
-        public byte spread;
+        public NSVGspreadType spread;
         public byte units;
         public fixed float xform[6];
         public int nstops;
@@ -761,8 +758,12 @@ namespace NanoSVG
             t[4] = t4;
         }
 
+#if NANOSVG_NO_XFORM_INVERSE
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         private static void nsvg__xformInverse(float* inv, float* t)
         {
+#if !NANOSVG_NO_XFORM_INVERSE
             double invdet, det = (double)t[0] * t[3] - (double)t[2] * t[1];
             if (det > -1e-6 && det < 1e-6)
             {
@@ -776,6 +777,9 @@ namespace NanoSVG
             inv[1] = (float)(-t[1] * invdet);
             inv[3] = (float)(t[0] * invdet);
             inv[5] = (float)(((double)t[1] * t[4] - (double)t[0] * t[5]) * invdet);
+#else
+            memcpy(inv, t, sizeof(float) * 6);
+#endif
         }
 
         private static void nsvg__xformPremultiply(float* t, float* s)
@@ -1185,7 +1189,7 @@ namespace NanoSVG
             nsvg__xformMultiply(grad->xform, xform);
 
             grad->spread = data->spread;
-            Unsafe.CopyBlock(ref Unsafe.As<NSVGgradientStop, byte>(ref grad->stops), ref Unsafe.AsRef<byte>(stops), (uint)(sizeof(NSVGgradientStop) * nstops));
+            memcpy(grad->stops, stops, nstops * sizeof(NSVGgradientStop));
             grad->nstops = nstops;
 
             *paintType = data->type;
@@ -1399,7 +1403,7 @@ namespace NanoSVG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float nsvg__atof(byte* s)
         {
-            double.TryParse(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(s), NumberFormatInfo.InvariantInfo, out double result);
+            float.TryParse(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(s), NumberFormatInfo.InvariantInfo, out var result);
             return (float)result;
 
             /*byte * cur = s;
@@ -3101,11 +3105,11 @@ namespace NanoSVG
                     else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("spreadMethod"u8))) == 0)
                     {
                         if (strcmp(attr[i + 1], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("pad"u8))) == 0)
-                            grad->spread = (byte)NSVGspreadType.NSVG_SPREAD_PAD;
+                            grad->spread = NSVGspreadType.NSVG_SPREAD_PAD;
                         else if (strcmp(attr[i + 1], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("reflect"u8))) == 0)
-                            grad->spread = (byte)NSVGspreadType.NSVG_SPREAD_REFLECT;
+                            grad->spread = NSVGspreadType.NSVG_SPREAD_REFLECT;
                         else if (strcmp(attr[i + 1], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("repeat"u8))) == 0)
-                            grad->spread = (byte)NSVGspreadType.NSVG_SPREAD_REPEAT;
+                            grad->spread = NSVGspreadType.NSVG_SPREAD_REPEAT;
                     }
                     else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("xlink:href"u8))) == 0)
                     {

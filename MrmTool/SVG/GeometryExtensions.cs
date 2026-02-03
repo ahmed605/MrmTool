@@ -1,4 +1,5 @@
-﻿using NanoSVG;
+﻿using MrmTool.Common;
+using NanoSVG;
 using System.Runtime.Versioning;
 using TerraFX.Interop.DirectX;
 using TerraFX.Interop.Windows;
@@ -44,29 +45,9 @@ internal static class GeometryExtensions
         byte r = (byte)(encoded & 0xFF);
         byte g = (byte)((encoded >> 8) & 0xFF);
         byte b = (byte)((encoded >> 16) & 0xFF);
-        byte a = (byte)((encoded >> 24) & 0xFF);
-        a = (byte)(a * opacity);
+        byte a = (byte)((byte)((encoded >> 24) & 0xFF) * opacity);
 
-        return Color.FromArgb(a, r, g, b);
-    }
-
-    private static unsafe void xformInverse(Span<float> inv, float* t)
-    {
-        double invdet, det = (double)t[0] * t[3] - (double)t[2] * t[1];
-        if (det > -1e-6 && det < 1e-6)
-        {
-            t[0] = 1.0f; t[1] = 0.0f;
-            t[2] = 0.0f; t[3] = 1.0f;
-            t[4] = 0.0f; t[5] = 0.0f;
-            return;
-        }
-        invdet = 1.0 / det;
-        inv[0] = (float)(t[3] * invdet);
-        inv[2] = (float)(-t[2] * invdet);
-        inv[4] = (float)(((double)t[2] * t[5] - (double)t[3] * t[4]) * invdet);
-        inv[1] = (float)(-t[1] * invdet);
-        inv[3] = (float)(t[0] * invdet);
-        inv[5] = (float)(((double)t[1] * t[4] - (double)t[0] * t[5]) * invdet);
+        return new() { A = a, R = r, G = g, B = b };
     }
 
     [SupportedOSPlatform("windows10.0.18362")]
@@ -86,17 +67,24 @@ internal static class GeometryExtensions
                         var color = DecodeRGBA(stop.color, opacity);
                         gradientBrush.ColorStops.Add(compositor.CreateColorGradientStop(stop.offset, color));
                     }
-                    Span<float> inv = stackalloc float[6];
-                    xformInverse(inv, paint.union.gradient->xform);
 
-                    float sx = inv[4];
-                    float sy = inv[5];
-                    // (0,1)
-                    float ex = inv[2] + inv[4];
-                    float ey = inv[3] + inv[5];
+                    var xform = paint.union.gradient->xform;
+                    gradientBrush.TransformMatrix = new(
+                        xform[0], xform[1],
+                        xform[2], xform[3],
+                        xform[4], xform[5]);
+
                     gradientBrush.MappingMode = CompositionMappingMode.Absolute;
-                    gradientBrush.StartPoint = new(sx, sy);
-                    gradientBrush.EndPoint = new(ex, ey);
+                    gradientBrush.StartPoint = new(0, 0);
+                    gradientBrush.EndPoint = new(1, 0);
+                    gradientBrush.ExtendMode = paint.union.gradient->spread switch
+                    {
+                        NSVGspreadType.NSVG_SPREAD_PAD => CompositionGradientExtendMode.Clamp,
+                        NSVGspreadType.NSVG_SPREAD_REFLECT => CompositionGradientExtendMode.Mirror,
+                        NSVGspreadType.NSVG_SPREAD_REPEAT => CompositionGradientExtendMode.Wrap,
+                        _ => CompositionGradientExtendMode.Clamp
+                    };
+
                     return gradientBrush;
                 }
 
@@ -109,17 +97,25 @@ internal static class GeometryExtensions
                         var color = DecodeRGBA(stop.color, opacity);
                         gradientBrush.ColorStops.Add(compositor.CreateColorGradientStop(stop.offset, color));
                     }
-                    Span<float> inv = stackalloc float[6];
-                    xformInverse(inv, paint.union.gradient->xform);
 
-                    float sx = inv[4];
-                    float sy = inv[5];
-                    // (0,1)
-                    float ex = inv[2] + inv[4];
-                    float ey = inv[3] + inv[5];
+                    var xform = paint.union.gradient->xform;
+                    gradientBrush.TransformMatrix = new(
+                        xform[0], xform[1],
+                        xform[2], xform[3],
+                        xform[4], xform[5]);
+
                     gradientBrush.MappingMode = CompositionMappingMode.Absolute;
-                    gradientBrush.EllipseCenter = new(sx, sy);
-                    gradientBrush.EllipseRadius = new(ex, ey);
+                    gradientBrush.EllipseCenter = new(0, 0);
+                    gradientBrush.EllipseRadius = new(1, 1);
+                    gradientBrush.GradientOriginOffset = new(paint.union.gradient->fx, paint.union.gradient->fy);
+                    gradientBrush.ExtendMode = paint.union.gradient->spread switch
+                    {
+                        NSVGspreadType.NSVG_SPREAD_PAD => CompositionGradientExtendMode.Clamp,
+                        NSVGspreadType.NSVG_SPREAD_REFLECT => CompositionGradientExtendMode.Mirror,
+                        NSVGspreadType.NSVG_SPREAD_REPEAT => CompositionGradientExtendMode.Wrap,
+                        _ => CompositionGradientExtendMode.Clamp
+                    };
+
                     return gradientBrush;
                 }
 
@@ -127,7 +123,8 @@ internal static class GeometryExtensions
                 return null;
 
             default:
-                throw new ArgumentException("Unknown SVG paint type.");
+                ThrowHelpers.ThrowArgumentException("Unknown SVG paint type.");
+                return null;
         }
     }
 
@@ -159,7 +156,7 @@ internal static class GeometryExtensions
                 NSVGlineCap.NSVG_CAP_BUTT => CompositionStrokeCap.Flat,
                 NSVGlineCap.NSVG_CAP_ROUND => CompositionStrokeCap.Round,
                 NSVGlineCap.NSVG_CAP_SQUARE => CompositionStrokeCap.Square,
-                _ => throw new ArgumentException("Invalid line cap value.")
+                _ => ThrowHelpers.ThrowArgumentException<CompositionStrokeCap>("Invalid line cap value.")
             };
             CompositionStrokeLineJoin join = shape->strokeLineJoin switch
             {
