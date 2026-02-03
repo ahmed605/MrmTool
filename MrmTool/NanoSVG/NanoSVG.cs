@@ -96,16 +96,18 @@ namespace NanoSVG
         public int nstops;
         private NSVGgradientStop _stops;
 
-        public readonly NSVGgradientStop* stops
+        [UnscopedRef]
+        public ref NSVGgradientStop stops
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (NSVGgradientStop*)Unsafe.AsPointer(in _stops);
+            get => ref _stops;
         }
 
+        [UnscopedRef]
         public ReadOnlySpan<NSVGgradientStop> Stops
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new((NSVGgradientStop*)Unsafe.AsPointer(in _stops), nstops);
+            get => MemoryMarshal.CreateReadOnlySpan(ref _stops, nstops);
         }
     }
 
@@ -113,36 +115,10 @@ namespace NanoSVG
     public unsafe struct NSVGpaint
     {
         public sbyte type;
-        private _UNSVGpaint _union;
-
-        public readonly uint color
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _union.color;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                ref var union = ref Unsafe.AsRef(in _union);
-                union.color = value;
-            }
-        }
-
-        public NSVGgradient* gradient
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _union.gradient;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                ref var union = ref Unsafe.AsRef(in _union);
-                union.gradient = value;
-            }
-        }
+        public _UNSVGpaint union;
 
         [StructLayout(LayoutKind.Explicit)]
-        private struct _UNSVGpaint
+        public struct _UNSVGpaint
         {
             [FieldOffset(0)]
             public uint color;
@@ -953,7 +929,7 @@ namespace NanoSVG
         private static void nsvg__deletePaint(NSVGpaint* paint)
         {
             if (paint->type == (byte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || paint->type == (byte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
-                free(paint->gradient);
+                free(paint->union.gradient);
         }
 
         private static void nsvg__deleteGradientData(NSVGgradientData* grad)
@@ -1209,7 +1185,7 @@ namespace NanoSVG
             nsvg__xformMultiply(grad->xform, xform);
 
             grad->spread = data->spread;
-            memcpy(grad->stops, stops, nstops * sizeof(NSVGgradientStop));
+            grad->Stops[..nstops].CopyTo(new Span<NSVGgradientStop>(stops, nstops));
             grad->nstops = nstops;
 
             *paintType = data->type;
@@ -1315,8 +1291,8 @@ namespace NanoSVG
             else if (attr->hasFill == 1)
             {
                 shape->fill.type = (sbyte)NSVGpaintType.NSVG_PAINT_COLOR;
-                shape->fill.color = attr->fillColor;
-                shape->fill.color |= (uint)(attr->fillOpacity * 255) << 24;
+                shape->fill.union.color = attr->fillColor;
+                shape->fill.union.color |= (uint)(attr->fillOpacity * 255) << 24;
             }
             else if (attr->hasFill == 2)
             {
@@ -1331,8 +1307,8 @@ namespace NanoSVG
             else if (attr->hasStroke == 1)
             {
                 shape->stroke.type = (sbyte)NSVGpaintType.NSVG_PAINT_COLOR;
-                shape->stroke.color = attr->strokeColor;
-                shape->stroke.color |= (uint)(attr->strokeOpacity * 255) << 24;
+                shape->stroke.union.color = attr->strokeColor;
+                shape->stroke.union.color |= (uint)(attr->strokeOpacity * 255) << 24;
             }
             else if (attr->hasStroke == 2)
             {
@@ -3440,15 +3416,15 @@ namespace NanoSVG
 
                 if (shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
                 {
-                    nsvg__scaleGradient(shape->fill.gradient, tx, ty, sx, sy);
-                    memcpy(t, shape->fill.gradient->xform, sizeof(float) * 6);
-                    nsvg__xformInverse(shape->fill.gradient->xform, t);
+                    nsvg__scaleGradient(shape->fill.union.gradient, tx, ty, sx, sy);
+                    memcpy(t, shape->fill.union.gradient->xform, sizeof(float) * 6);
+                    nsvg__xformInverse(shape->fill.union.gradient->xform, t);
                 }
                 if (shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
                 {
-                    nsvg__scaleGradient(shape->stroke.gradient, tx, ty, sx, sy);
-                    memcpy(t, shape->stroke.gradient->xform, sizeof(float) * 6);
-                    nsvg__xformInverse(shape->stroke.gradient->xform, t);
+                    nsvg__scaleGradient(shape->stroke.union.gradient, tx, ty, sx, sy);
+                    memcpy(t, shape->stroke.union.gradient->xform, sizeof(float) * 6);
+                    nsvg__xformInverse(shape->stroke.union.gradient->xform, t);
                 }
 
                 shape->strokeWidth *= avgs;
@@ -3458,10 +3434,11 @@ namespace NanoSVG
             }
         }
 
-        [SuppressMessage("Reliability", "CA2014:Do not use stackalloc in loops")] // TODO
         private static void nsvg__createGradients(NSVGparser* p)
         {
             NSVGshape* shape;
+            float* inv = stackalloc float[6];
+            float* localBounds = stackalloc float[4];
 
             for (shape = p->image->shapes; shape != null; shape = shape->next)
             {
@@ -3469,10 +3446,9 @@ namespace NanoSVG
                 {
                     if (shape->fillGradient[0] != '\0')
                     {
-                        float* inv = stackalloc float[6], localBounds = stackalloc float[4];
                         nsvg__xformInverse(inv, shape->xform);
                         nsvg__getLocalBounds(localBounds, shape, inv);
-                        shape->fill.gradient = nsvg__createGradient(p, shape->fillGradient, localBounds, shape->xform, &shape->fill.type);
+                        shape->fill.union.gradient = nsvg__createGradient(p, shape->fillGradient, localBounds, shape->xform, &shape->fill.type);
                     }
                     if (shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
                     {
@@ -3483,10 +3459,9 @@ namespace NanoSVG
                 {
                     if (shape->strokeGradient[0] != '\0')
                     {
-                        float* inv = stackalloc float[6], localBounds = stackalloc float[4];
                         nsvg__xformInverse(inv, shape->xform);
                         nsvg__getLocalBounds(localBounds, shape, inv);
-                        shape->stroke.gradient = nsvg__createGradient(p, shape->strokeGradient, localBounds, shape->xform, &shape->stroke.type);
+                        shape->stroke.union.gradient = nsvg__createGradient(p, shape->strokeGradient, localBounds, shape->xform, &shape->stroke.type);
                     }
                     if (shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
                     {
