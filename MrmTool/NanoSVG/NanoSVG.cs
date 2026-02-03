@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace NanoSVG
 {
@@ -3523,39 +3524,38 @@ namespace NanoSVG
             return ret;
         }
 
-        [Obsolete("Not ported yet")]
-        public static NSVGimage* nsvgParseFromFile(byte* filename, byte* units, float dpi)
+        public static NSVGimage* nsvgParseFromFile(ReadOnlySpan<byte> filename, byte* units, float dpi)
         {
-#if false
-            FILE* fp = NULL;
-            size_t size;
-            byte* data = NULL;
-            NSVGimage* image = NULL;
+            int size;
+            byte* data = null;
+            NSVGimage* image = null;
 
-            fp = fopen(filename, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("rb"u8)));
-            if (!fp) goto error;
-            fseek(fp, 0, SEEK_END);
-            size = ftell(fp);
-            fseek(fp, 0, SEEK_SET);
+            var name = Encoding.UTF8.GetString(filename);
+
+            FileStream fs;
+            try { fs = File.OpenRead(name); } catch { return null; }
+            using var stream = fs;
+
+            size = (int)stream.Length;
             data = (byte*)malloc(size + 1);
-            if (data == NULL) goto error;
-            if (fread(data, 1, size, fp) != size) goto error;
-            data[size] = '\0';  // Must be null terminated.
-            fclose(fp);
+            if (data == null) goto error;
+            if (stream.Read(new(data, size)) != size) goto error;
+            data[size] = (byte)'\0';  // Must be null terminated.
             image = nsvgParse(data, units, dpi);
             free(data);
 
             return image;
 
         error:
-            if (fp) fclose(fp);
-            if (data) free(data);
-            if (image) nsvgDelete(image);
-            return NULL;
-#else
-            // C# Port: TODO
-            throw new NotImplementedException();
-#endif
+            if (data is not null) free(data);
+            if (image is not null) nsvgDelete(image);
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static NSVGimage* nsvgParseFromFile(byte* filename, byte* units, float dpi)
+        {
+            return nsvgParseFromFile(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(filename), units, dpi);
         }
 
         public static NSVGpath* nsvgDuplicatePath(NSVGpath* p)
