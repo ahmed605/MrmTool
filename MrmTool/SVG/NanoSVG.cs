@@ -2968,7 +2968,6 @@ namespace NanoSVG
                     else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("viewBox"u8))) == 0)
                     {
                         byte* s = attr[i + 1];
-                        NativeMemory.Fill(buf, 64, 0); // C# Port: Is this really needed? (allocation was moved out of the loop)
 
                         s = nsvg__parseNumber(s, buf, 64);
                         p->viewMinx = nsvg__atof(buf);
