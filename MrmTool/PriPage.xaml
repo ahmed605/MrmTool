@@ -336,6 +336,11 @@
                         <ScrollViewer x:Name="imagePreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
                             <Image x:Name="imagePreviewer" Stretch="None" />
                         </ScrollViewer>
+                        
+                        <!-- SVG Previewer -->
+                        <ScrollViewer x:Name="svgPreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
+                            <Border x:Name="svgPreviewer" />
+                        </ScrollViewer>
                     </Grid>
                 </Border>
 

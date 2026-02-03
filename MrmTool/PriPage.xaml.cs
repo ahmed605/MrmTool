@@ -3,6 +3,7 @@ using MrmTool.Common;
 using MrmTool.Dialogs;
 using MrmTool.Models;
 using MrmTool.Scintilla;
+using MrmTool.SVG;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -10,8 +11,10 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
+using Windows.UI.Composition;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Hosting;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
@@ -338,6 +341,9 @@ namespace MrmTool
             if (_selectedResource?.Type is not ResourceType.Image)
                 UnloadObject(imagePreviewerContainer);
 
+            if (_selectedResource?.Type is not ResourceType.Svg)
+                UnloadObject(svgPreviewerContainer);
+
             if (!(item.ValueType is ResourceValueType.EmbeddedData && _selectedResource?.Type.IsPreviewable is not true))
                 UnloadObject(exportContainer);
 
@@ -352,6 +358,7 @@ namespace MrmTool
             UnloadObject(xbfFallbackContainer);
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
+            UnloadObject(svgPreviewerContainer);
             UnloadObject(exportContainer);
             UnloadObject(openFolderContainer);
         }
@@ -360,6 +367,7 @@ namespace MrmTool
         {
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
+            UnloadObject(svgPreviewerContainer);
             UnloadObject(exportContainer);
             UnloadObject(openFolderContainer);
         }
@@ -523,6 +531,40 @@ namespace MrmTool
                             DisplayStringCandidate(Encoding.UTF8.GetString(buffer.Buffer, (int)size));
                             return true;
                         }
+                    }
+                }
+                else if (type is ResourceType.Svg)
+                {
+                    unsafe
+                    {
+                        bool succeeded = false;
+
+                        byte* bytes = (byte*)System.Runtime.InteropServices.NativeMemory.Alloc((nuint)stream.Size);
+                        stream.AsStream().ReadExactly(new Span<byte>(bytes, (int)stream.Size));
+
+                        var parse = NanoSVG.NanoSVG.nsvgParse(bytes, (byte*)Unsafe.AsPointer(in System.Runtime.InteropServices.MemoryMarshal.GetReference("px"u8)), 96);
+
+                        if (parse != null)
+                        {
+                            Compositor compositor = Window.Current.Compositor;
+                            ShapeVisual visual = compositor.CreateShapeVisual();
+
+                            visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
+                            visual.RelativeSizeAdjustment = new(1, 1);
+
+                            FindName(nameof(svgPreviewerContainer));
+
+                            svgPreviewer.Width = parse->width;
+                            svgPreviewer.Height = parse->height;
+                            ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
+
+                            succeeded = true;
+                        }
+
+                        System.Runtime.InteropServices.NativeMemory.Free(parse);
+                        System.Runtime.InteropServices.NativeMemory.Free(bytes);
+
+                        return true;
                     }
                 }
             } catch { }

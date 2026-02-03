@@ -114,7 +114,7 @@ namespace NanoSVG
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct NSVGpaint
     {
-        public sbyte type;
+        public NSVGpaintType type;
         public _UNSVGpaint union;
 
         [StructLayout(LayoutKind.Explicit)]
@@ -141,26 +141,26 @@ namespace NanoSVG
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct NSVGshape
     {
-        public fixed byte id[64];               // Optional 'id' attr of the shape or its group
-        public NSVGpaint fill;                  // Fill paint
-        public NSVGpaint stroke;                // Stroke paint
-        public float opacity;                   // Opacity of the shape.
-        public float strokeWidth;               // Stroke width (scaled).
-        public float strokeDashOffset;          // Stroke dash offset (scaled).
-        public fixed float strokeDashArray[8];  // Stroke dash array (scaled).
-        public byte strokeDashCount;            // Number of dash values in dash array.
-        public byte strokeLineJoin;             // Stroke join type.
-        public byte strokeLineCap;              // Stroke cap type.
-        public float miterLimit;                // Miter limit
-        public byte fillRule;                   // Fill rule, see NSVGfillRule.
-        public byte paintOrder;                 // Encoded paint order (3×2-bit fields) see NSVGpaintOrder
-        public byte flags;                      // Logical or of NSVG_FLAGS_* flags
-        public fixed float bounds[4];           // Tight bounding box of the shape [minx,miny,maxx,maxy].
-        public fixed byte fillGradient[64];     // Optional 'id' of fill gradient
-        public fixed byte strokeGradient[64];   // Optional 'id' of stroke gradient
-        public fixed float xform[6];            // Root transformation for fill/stroke gradient
-        public NSVGpath* paths;                 // Linked list of paths in the image.
-        public NSVGshape* next;		            // Pointer to next shape, or NULL if last element.
+        public fixed byte id[64];                       // Optional 'id' attr of the shape or its group
+        public NSVGpaint fill;                          // Fill paint
+        public NSVGpaint stroke;                        // Stroke paint
+        public float opacity;                           // Opacity of the shape.
+        public float strokeWidth;                       // Stroke width (scaled).
+        public float strokeDashOffset;                  // Stroke dash offset (scaled).
+        public fixed float strokeDashArray[8];          // Stroke dash array (scaled).
+        public byte strokeDashCount;                    // Number of dash values in dash array.
+        public NSVGlineJoin strokeLineJoin;             // Stroke join type.
+        public NSVGlineCap strokeLineCap;               // Stroke cap type.
+        public float miterLimit;                        // Miter limit
+        public NSVGfillRule fillRule;                   // Fill rule, see NSVGfillRule.
+        public byte paintOrder;                         // Encoded paint order (3×2-bit fields) see NSVGpaintOrder
+        public byte flags;                              // Logical or of NSVG_FLAGS_* flags
+        public fixed float bounds[4];                   // Tight bounding box of the shape [minx,miny,maxx,maxy].
+        public fixed byte fillGradient[64];             // Optional 'id' of fill gradient
+        public fixed byte strokeGradient[64];           // Optional 'id' of stroke gradient
+        public fixed float xform[6];                    // Root transformation for fill/stroke gradient
+        public NSVGpath* paths;                         // Linked list of paths in the image.
+        public NSVGshape* next;		                    // Pointer to next shape, or NULL if last element.
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -195,7 +195,7 @@ namespace NanoSVG
     {
         public fixed byte id[64];
         public fixed byte @ref[64];
-        public sbyte type;
+        public NSVGpaintType type;
         private _UNSVGgradientData _union;
 
         [UnscopedRef]
@@ -246,10 +246,10 @@ namespace NanoSVG
         public float strokeDashOffset;
         public fixed float strokeDashArray[NSVG_MAX_DASHES];
         public int strokeDashCount;
-        public byte strokeLineJoin;
-        public byte strokeLineCap;
+        public NSVGlineJoin strokeLineJoin;
+        public NSVGlineCap strokeLineCap;
         public float miterLimit;
-        public byte fillRule;
+        public NSVGfillRule fillRule;
         public float fontSize;
         public uint stopColor;
         public float stopOpacity;
@@ -928,7 +928,7 @@ namespace NanoSVG
 
         private static void nsvg__deletePaint(NSVGpaint* paint)
         {
-            if (paint->type == (byte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || paint->type == (byte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
+            if (paint->type == NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || paint->type == NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
                 free(paint->union.gradient);
         }
 
@@ -1098,7 +1098,7 @@ namespace NanoSVG
             return null;
         }
 
-        private static NSVGgradient* nsvg__createGradient(NSVGparser* p, byte* id, float* localBounds, float* xform, sbyte* paintType)
+        private static NSVGgradient* nsvg__createGradient(NSVGparser* p, byte* id, float* localBounds, float* xform, NSVGpaintType* paintType)
         {
             NSVGgradientData* data = null;
             NSVGgradientData* @ref = null;
@@ -1151,7 +1151,7 @@ namespace NanoSVG
             }
             sl = MathF.Sqrt(sw * sw + sh * sh) / MathF.Sqrt(2.0f);
 
-            if (data->type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT)
+            if (data->type == NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT)
             {
                 float x1, y1, x2, y2, dx, dy;
                 x1 = nsvg__convertToPixels(p, data->linear.x1, ox, sw);
@@ -1185,7 +1185,7 @@ namespace NanoSVG
             nsvg__xformMultiply(grad->xform, xform);
 
             grad->spread = data->spread;
-            grad->Stops[..nstops].CopyTo(new Span<NSVGgradientStop>(stops, nstops));
+            Unsafe.CopyBlock(ref Unsafe.As<NSVGgradientStop, byte>(ref grad->stops), ref Unsafe.AsRef<byte>(stops), (uint)sizeof(NSVGgradientStop) * 3);
             grad->nstops = nstops;
 
             *paintType = data->type;
@@ -1286,33 +1286,33 @@ namespace NanoSVG
             // Set fill
             if (attr->hasFill == 0)
             {
-                shape->fill.type = (sbyte)NSVGpaintType.NSVG_PAINT_NONE;
+                shape->fill.type = NSVGpaintType.NSVG_PAINT_NONE;
             }
             else if (attr->hasFill == 1)
             {
-                shape->fill.type = (sbyte)NSVGpaintType.NSVG_PAINT_COLOR;
+                shape->fill.type = NSVGpaintType.NSVG_PAINT_COLOR;
                 shape->fill.union.color = attr->fillColor;
                 shape->fill.union.color |= (uint)(attr->fillOpacity * 255) << 24;
             }
             else if (attr->hasFill == 2)
             {
-                shape->fill.type = (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF;
+                shape->fill.type = NSVGpaintType.NSVG_PAINT_UNDEF;
             }
 
             // Set stroke
             if (attr->hasStroke == 0)
             {
-                shape->stroke.type = (sbyte)NSVGpaintType.NSVG_PAINT_NONE;
+                shape->stroke.type = NSVGpaintType.NSVG_PAINT_NONE;
             }
             else if (attr->hasStroke == 1)
             {
-                shape->stroke.type = (sbyte)NSVGpaintType.NSVG_PAINT_COLOR;
+                shape->stroke.type = NSVGpaintType.NSVG_PAINT_COLOR;
                 shape->stroke.union.color = attr->strokeColor;
                 shape->stroke.union.color |= (uint)(attr->strokeOpacity * 255) << 24;
             }
             else if (attr->hasStroke == 2)
             {
-                shape->stroke.type = (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF;
+                shape->stroke.type = NSVGpaintType.NSVG_PAINT_UNDEF;
             }
 
             // Set flags
@@ -1927,38 +1927,38 @@ namespace NanoSVG
             id[i] = (byte)'\0';
         }
 
-        private static byte nsvg__parseLineCap(byte* str)
+        private static NSVGlineCap nsvg__parseLineCap(byte* str)
         {
             if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("butt"u8))) == 0)
-                return (byte)NSVGlineCap.NSVG_CAP_BUTT;
+                return NSVGlineCap.NSVG_CAP_BUTT;
             else if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("round"u8))) == 0)
-                return (byte)NSVGlineCap.NSVG_CAP_ROUND;
+                return NSVGlineCap.NSVG_CAP_ROUND;
             else if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("square"u8))) == 0)
-                return (byte)NSVGlineCap.NSVG_CAP_SQUARE;
+                return NSVGlineCap.NSVG_CAP_SQUARE;
             // TODO: handle inherit.
-            return (byte)NSVGlineCap.NSVG_CAP_BUTT;
+            return NSVGlineCap.NSVG_CAP_BUTT;
         }
 
-        private static byte nsvg__parseLineJoin(byte* str)
+        private static NSVGlineJoin nsvg__parseLineJoin(byte* str)
         {
             if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("miter"u8))) == 0)
-                return (byte)NSVGlineJoin.NSVG_JOIN_MITER;
+                return NSVGlineJoin.NSVG_JOIN_MITER;
             else if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("round"u8))) == 0)
-                return (byte)NSVGlineJoin.NSVG_JOIN_ROUND;
+                return NSVGlineJoin.NSVG_JOIN_ROUND;
             else if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("bevel"u8))) == 0)
-                return (byte)NSVGlineJoin.NSVG_JOIN_BEVEL;
+                return NSVGlineJoin.NSVG_JOIN_BEVEL;
             // TODO: handle inherit.
-            return (byte)NSVGlineJoin.NSVG_JOIN_MITER;
+            return NSVGlineJoin.NSVG_JOIN_MITER;
         }
 
-        private static byte nsvg__parseFillRule(byte* str)
+        private static NSVGfillRule nsvg__parseFillRule(byte* str)
         {
             if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("nonzero"u8))) == 0)
-                return (byte)NSVGfillRule.NSVG_FILLRULE_NONZERO;
+                return NSVGfillRule.NSVG_FILLRULE_NONZERO;
             else if (strcmp(str, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("evenodd"u8))) == 0)
-                return (byte)NSVGfillRule.NSVG_FILLRULE_EVENODD;
+                return NSVGfillRule.NSVG_FILLRULE_EVENODD;
             // TODO: handle inherit.
-            return (byte)NSVGfillRule.NSVG_FILLRULE_NONZERO;
+            return NSVGfillRule.NSVG_FILLRULE_NONZERO;
         }
 
         private static byte nsvg__parsePaintOrder(byte* str)
@@ -3017,7 +3017,7 @@ namespace NanoSVG
             }
         }
 
-        private static void nsvg__parseGradient(NSVGparser* p, byte** attr, sbyte type)
+        private static void nsvg__parseGradient(NSVGparser* p, byte** attr, NSVGpaintType type)
         {
             int i;
             NSVGgradientData* grad = (NSVGgradientData*)malloc(sizeof(NSVGgradientData));
@@ -3025,14 +3025,14 @@ namespace NanoSVG
             memset(grad, 0, sizeof(NSVGgradientData));
             grad->units = (byte)NSVGgradientUnits.NSVG_OBJECT_SPACE;
             grad->type = type;
-            if (grad->type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT)
+            if (grad->type == NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT)
             {
                 grad->linear.x1 = nsvg__coord(0.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
                 grad->linear.y1 = nsvg__coord(0.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
                 grad->linear.x2 = nsvg__coord(100.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
                 grad->linear.y2 = nsvg__coord(0.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
             }
-            else if (grad->type == (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
+            else if (grad->type == NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
             {
                 grad->radial.cx = nsvg__coord(50.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
                 grad->radial.cy = nsvg__coord(50.0f, (byte)NSVGunits.NSVG_UNITS_PERCENT);
@@ -3174,11 +3174,11 @@ namespace NanoSVG
                 // Skip everything but gradients in defs
                 if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("linearGradient"u8))) == 0)
                 {
-                    nsvg__parseGradient(p, attr, (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT);
+                    nsvg__parseGradient(p, attr, NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT);
                 }
                 else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("radialGradient"u8))) == 0)
                 {
-                    nsvg__parseGradient(p, attr, (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT);
+                    nsvg__parseGradient(p, attr, NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT);
                 }
                 else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stop"u8))) == 0)
                 {
@@ -3238,11 +3238,11 @@ namespace NanoSVG
             }
             else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("linearGradient"u8))) == 0)
             {
-                nsvg__parseGradient(p, attr, (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT);
+                nsvg__parseGradient(p, attr, NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT);
             }
             else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("radialGradient"u8))) == 0)
             {
-                nsvg__parseGradient(p, attr, (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT);
+                nsvg__parseGradient(p, attr, NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT);
             }
             else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stop"u8))) == 0)
             {
@@ -3413,13 +3413,13 @@ namespace NanoSVG
                     }
                 }
 
-                if (shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
+                if (shape->fill.type == NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->fill.type == NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
                 {
                     nsvg__scaleGradient(shape->fill.union.gradient, tx, ty, sx, sy);
                     memcpy(t, shape->fill.union.gradient->xform, sizeof(float) * 6);
                     nsvg__xformInverse(shape->fill.union.gradient->xform, t);
                 }
-                if (shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
+                if (shape->stroke.type == NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT || shape->stroke.type == NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT)
                 {
                     nsvg__scaleGradient(shape->stroke.union.gradient, tx, ty, sx, sy);
                     memcpy(t, shape->stroke.union.gradient->xform, sizeof(float) * 6);
@@ -3441,7 +3441,7 @@ namespace NanoSVG
 
             for (shape = p->image->shapes; shape != null; shape = shape->next)
             {
-                if (shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
+                if (shape->fill.type == NSVGpaintType.NSVG_PAINT_UNDEF)
                 {
                     if (shape->fillGradient[0] != '\0')
                     {
@@ -3449,12 +3449,12 @@ namespace NanoSVG
                         nsvg__getLocalBounds(localBounds, shape, inv);
                         shape->fill.union.gradient = nsvg__createGradient(p, shape->fillGradient, localBounds, shape->xform, &shape->fill.type);
                     }
-                    if (shape->fill.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
+                    if (shape->fill.type == NSVGpaintType.NSVG_PAINT_UNDEF)
                     {
-                        shape->fill.type = (sbyte)NSVGpaintType.NSVG_PAINT_NONE;
+                        shape->fill.type = NSVGpaintType.NSVG_PAINT_NONE;
                     }
                 }
-                if (shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
+                if (shape->stroke.type == NSVGpaintType.NSVG_PAINT_UNDEF)
                 {
                     if (shape->strokeGradient[0] != '\0')
                     {
@@ -3462,9 +3462,9 @@ namespace NanoSVG
                         nsvg__getLocalBounds(localBounds, shape, inv);
                         shape->stroke.union.gradient = nsvg__createGradient(p, shape->strokeGradient, localBounds, shape->xform, &shape->stroke.type);
                     }
-                    if (shape->stroke.type == (sbyte)NSVGpaintType.NSVG_PAINT_UNDEF)
+                    if (shape->stroke.type == NSVGpaintType.NSVG_PAINT_UNDEF)
                     {
-                        shape->stroke.type = (sbyte)NSVGpaintType.NSVG_PAINT_NONE;
+                        shape->stroke.type = NSVGpaintType.NSVG_PAINT_NONE;
                     }
                 }
             }
