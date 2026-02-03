@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation.Metadata;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
@@ -546,25 +547,30 @@ namespace MrmTool
 
                         if (parse != null)
                         {
-                            Compositor compositor = Window.Current.Compositor;
-                            ShapeVisual visual = compositor.CreateShapeVisual();
+                            if (ApiInformation.IsTypePresent("Windows.UI.Composition.CompositionPath"))
+                            {
+                                Compositor compositor = Window.Current.Compositor;
 
-                            visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
-                            visual.RelativeSizeAdjustment = new(1, 1);
+#pragma warning disable CA1416 // We know this is compatible already
+                                ShapeVisual visual = compositor.CreateShapeVisual();
+                                visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
+#pragma warning restore CA1416 
+                                visual.RelativeSizeAdjustment = new(1, 1);
 
-                            FindName(nameof(svgPreviewerContainer));
+                                FindName(nameof(svgPreviewerContainer));
 
-                            svgPreviewer.Width = parse->width;
-                            svgPreviewer.Height = parse->height;
-                            ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
+                                svgPreviewer.Width = parse->width;
+                                svgPreviewer.Height = parse->height;
+                                ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
 
-                            succeeded = true;
+                                succeeded = true;
+                            }
                         }
 
                         System.Runtime.InteropServices.NativeMemory.Free(parse);
                         System.Runtime.InteropServices.NativeMemory.Free(bytes);
 
-                        return true;
+                        return succeeded;
                     }
                 }
             } catch { }
