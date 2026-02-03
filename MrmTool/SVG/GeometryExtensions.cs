@@ -146,9 +146,6 @@ internal static class GeometryExtensions
                 sink.Get()->Close();
             }
 
-            geometry.Get()->AddRef();
-            uint t = geometry.Get()->Release();
-
             StaticGeometrySource2D gs = new((ID2D1Geometry*)geometry.Get());
             CompositionPath path = new(gs);
             CompositionPathGeometry pathGeo = compositor.CreatePathGeometry(path);
