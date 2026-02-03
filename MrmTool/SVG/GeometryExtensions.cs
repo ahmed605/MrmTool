@@ -39,12 +39,14 @@ internal static class GeometryExtensions
         }
     }
 
-    private static Color DecodeRGBA(uint encoded)
+    private static Color DecodeRGBA(uint encoded, float opacity = 1)
     {
         byte r = (byte)(encoded & 0xFF);
         byte g = (byte)((encoded >> 8) & 0xFF);
         byte b = (byte)((encoded >> 16) & 0xFF);
         byte a = (byte)((encoded >> 24) & 0xFF);
+        a = (byte)(a * opacity);
+
         return Color.FromArgb(a, r, g, b);
     }
 
@@ -68,12 +70,12 @@ internal static class GeometryExtensions
     }
 
     [SupportedOSPlatform("windows10.0.18362")]
-    public static unsafe CompositionBrush? CreateBrushFromNSVGPaint(this Compositor compositor, ref NSVGpaint paint)
+    public static unsafe CompositionBrush? CreateBrushFromNSVGPaint(this Compositor compositor, ref NSVGpaint paint, float opacity)
     {
         switch (paint.type)
         {
             case NSVGpaintType.NSVG_PAINT_COLOR:
-                return compositor.CreateColorBrush(DecodeRGBA(paint.union.color));
+                return compositor.CreateColorBrush(DecodeRGBA(paint.union.color, opacity));
 
             case NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT:
                 {
@@ -81,7 +83,7 @@ internal static class GeometryExtensions
                     for (int i = 0; i < paint.union.gradient->nstops; i++)
                     {
                         NSVGgradientStop stop = paint.union.gradient->Stops[i];
-                        var color = DecodeRGBA(stop.color);
+                        var color = DecodeRGBA(stop.color, opacity);
                         gradientBrush.ColorStops.Add(compositor.CreateColorGradientStop(stop.offset, color));
                     }
                     Span<float> inv = stackalloc float[6];
@@ -104,7 +106,7 @@ internal static class GeometryExtensions
                     for (int i = 0; i < paint.union.gradient->nstops; i++)
                     {
                         NSVGgradientStop stop = paint.union.gradient->Stops[i];
-                        var color = DecodeRGBA(stop.color);
+                        var color = DecodeRGBA(stop.color, opacity);
                         gradientBrush.ColorStops.Add(compositor.CreateColorGradientStop(stop.offset, color));
                     }
                     Span<float> inv = stackalloc float[6];
@@ -151,7 +153,7 @@ internal static class GeometryExtensions
             CompositionPathGeometry pathGeo = compositor.CreatePathGeometry(path);
             CompositionSpriteShape spriteShape = compositor.CreateSpriteShape(pathGeo);
 
-            spriteShape.FillBrush = compositor.CreateBrushFromNSVGPaint(ref shape->fill);
+            spriteShape.FillBrush = compositor.CreateBrushFromNSVGPaint(ref shape->fill, shape->opacity);
             CompositionStrokeCap cap = shape->strokeLineCap switch
             {
                 NSVGlineCap.NSVG_CAP_BUTT => CompositionStrokeCap.Flat,
@@ -166,7 +168,7 @@ internal static class GeometryExtensions
                 NSVGlineJoin.NSVG_JOIN_BEVEL => CompositionStrokeLineJoin.Bevel,
                 _ => CompositionStrokeLineJoin.Miter
             };
-            spriteShape.StrokeBrush = compositor.CreateBrushFromNSVGPaint(ref shape->stroke);
+            spriteShape.StrokeBrush = compositor.CreateBrushFromNSVGPaint(ref shape->stroke, shape->opacity);
             spriteShape.StrokeThickness = shape->strokeWidth;
             spriteShape.StrokeStartCap = cap;
             spriteShape.StrokeEndCap = cap;
