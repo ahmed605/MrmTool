@@ -3523,6 +3523,7 @@ namespace NanoSVG
             return ret;
         }
 
+        [Obsolete("Not ported yet")]
         public static NSVGimage* nsvgParseFromFile(byte* filename, byte* units, float dpi)
         {
 #if false
@@ -3553,7 +3554,7 @@ namespace NanoSVG
             return NULL;
 #else
             // C# Port: TODO
-            return null;
+            throw new NotImplementedException();
 #endif
         }
 
