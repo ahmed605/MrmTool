@@ -12,6 +12,9 @@ namespace Common
 
         [SupportedOSPlatformGuard("windows10.0.17763.0")]
         public static readonly bool IsFlyoutShowOptionsAvailable = ApiInformation.IsTypePresent("Windows.UI.Xaml.Controls.Primitives.FlyoutShowOptions");
+
+        [SupportedOSPlatformGuard("windows10.0.18362.0")]
+        public static readonly bool IsCompositionRadialGradientBrushAvailable = ApiInformation.IsTypePresent("Windows.UI.Composition.CompositionRadialGradientBrush");
         
         [SupportedOSPlatformGuard("windows10.0.16299.0")]
         public static readonly bool IsColumnSpacingAvailable = ApiInformation.IsPropertyPresent("Windows.UI.Xaml.Controls.Grid", "ColumnSpacing");

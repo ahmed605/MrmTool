@@ -68,7 +68,7 @@ internal static class GeometryExtensions
     }
 
     [SupportedOSPlatform("windows10.0.18362")]
-    public static unsafe CompositionBrush? CreateBrushFromNSVGPaint(this Compositor compositor, NSVGpaint paint)
+    public static unsafe CompositionBrush? CreateBrushFromNSVGPaint(this Compositor compositor, ref NSVGpaint paint)
     {
         switch (paint.type)
         {
@@ -151,7 +151,7 @@ internal static class GeometryExtensions
             CompositionPathGeometry pathGeo = compositor.CreatePathGeometry(path);
             CompositionSpriteShape spriteShape = compositor.CreateSpriteShape(pathGeo);
 
-            spriteShape.FillBrush = compositor.CreateBrushFromNSVGPaint(shape->fill);
+            spriteShape.FillBrush = compositor.CreateBrushFromNSVGPaint(ref shape->fill);
             CompositionStrokeCap cap = shape->strokeLineCap switch
             {
                 NSVGlineCap.NSVG_CAP_BUTT => CompositionStrokeCap.Flat,
@@ -166,7 +166,7 @@ internal static class GeometryExtensions
                 NSVGlineJoin.NSVG_JOIN_BEVEL => CompositionStrokeLineJoin.Bevel,
                 _ => CompositionStrokeLineJoin.Miter
             };
-            spriteShape.StrokeBrush = compositor.CreateBrushFromNSVGPaint(shape->stroke);
+            spriteShape.StrokeBrush = compositor.CreateBrushFromNSVGPaint(ref shape->stroke);
             spriteShape.StrokeThickness = shape->strokeWidth;
             spriteShape.StrokeStartCap = cap;
             spriteShape.StrokeEndCap = cap;

@@ -15,7 +15,7 @@ internal static unsafe class D2D1Factory
         if (factory == null)
         {
             ID2D1Factory* tempFactory;
-            Marshal.ThrowExceptionForHR(D2D1CreateFactory(D2D1_FACTORY_TYPE.D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof<ID2D1Factory>(), null, (void**)&tempFactory));
+            ThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE.D2D1_FACTORY_TYPE_MULTI_THREADED, __uuidof<ID2D1Factory>(), null, (void**)&tempFactory));
             factory = tempFactory;
         }
         return factory;

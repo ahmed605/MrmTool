@@ -1,3 +1,4 @@
+using Common;
 using MrmLib;
 using MrmTool.Common;
 using MrmTool.Dialogs;
@@ -6,9 +7,9 @@ using MrmTool.Scintilla;
 using MrmTool.SVG;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation.Metadata;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
@@ -537,25 +538,26 @@ namespace MrmTool
                 else if (type is ResourceType.Svg)
                 {
                     var size = (uint)stream.Size;
-                    using var buffer = new NativeBuffer(size);
+                    using var buffer = new NativeBuffer(size + 1);
                     await stream.ReadAsync(buffer, size, InputStreamOptions.None);
 
                     unsafe
                     {
                         bool succeeded = false;
 
-                        var parse = NanoSVG.NanoSVG.nsvgParse(buffer.Buffer, (byte*)Unsafe.AsPointer(in System.Runtime.InteropServices.MemoryMarshal.GetReference("px"u8)), 96);
+                        var nativeBuffer = buffer.Buffer;
+                        nativeBuffer[size] = 0;
+
+                        var parse = NanoSVG.NanoSVG.nsvgParse(nativeBuffer, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("px"u8)), 96);
 
                         if (parse != null)
                         {
-                            if (ApiInformation.IsTypePresent("Windows.UI.Composition.CompositionPath"))
+                            if (Features.IsCompositionRadialGradientBrushAvailable)
                             {
                                 Compositor compositor = Window.Current.Compositor;
 
-#pragma warning disable CA1416 // We know this is compatible already
                                 ShapeVisual visual = compositor.CreateShapeVisual();
                                 visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
-#pragma warning restore CA1416 
                                 visual.RelativeSizeAdjustment = new(1, 1);
 
                                 FindName(nameof(svgPreviewerContainer));
@@ -568,8 +570,7 @@ namespace MrmTool
                             }
                         }
 
-                        System.Runtime.InteropServices.NativeMemory.Free(parse);
-
+                        NanoSVG.NanoSVG.nsvgDelete(parse);
                         return succeeded;
                     }
                 }

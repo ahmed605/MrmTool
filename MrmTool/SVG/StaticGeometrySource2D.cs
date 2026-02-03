@@ -22,6 +22,7 @@ namespace MrmTool.SVG
         {
             this.geometry.Get()->AddRef();
             *geometry = this.geometry.Get();
+
             GC.KeepAlive(this);
             return S.S_OK;
         }

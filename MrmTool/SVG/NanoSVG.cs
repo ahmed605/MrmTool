@@ -1185,7 +1185,7 @@ namespace NanoSVG
             nsvg__xformMultiply(grad->xform, xform);
 
             grad->spread = data->spread;
-            Unsafe.CopyBlock(ref Unsafe.As<NSVGgradientStop, byte>(ref grad->stops), ref Unsafe.AsRef<byte>(stops), (uint)sizeof(NSVGgradientStop) * 3);
+            Unsafe.CopyBlock(ref Unsafe.As<NSVGgradientStop, byte>(ref grad->stops), ref Unsafe.AsRef<byte>(stops), (uint)(sizeof(NSVGgradientStop) * nstops));
             grad->nstops = nstops;
 
             *paintType = data->type;
@@ -1399,7 +1399,8 @@ namespace NanoSVG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float nsvg__atof(byte* s)
         {
-            return float.Parse(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(s), NumberFormatInfo.InvariantInfo);
+            double.TryParse(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(s), NumberFormatInfo.InvariantInfo, out double result);
+            return (float)result;
 
             /*byte * cur = s;
             byte* end = null;
