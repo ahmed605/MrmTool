@@ -536,14 +536,15 @@ namespace MrmTool
                 }
                 else if (type is ResourceType.Svg)
                 {
+                    var size = (uint)stream.Size;
+                    using var buffer = new NativeBuffer(size);
+                    await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+
                     unsafe
                     {
                         bool succeeded = false;
 
-                        byte* bytes = (byte*)System.Runtime.InteropServices.NativeMemory.Alloc((nuint)stream.Size);
-                        stream.AsStream().ReadExactly(new Span<byte>(bytes, (int)stream.Size));
-
-                        var parse = NanoSVG.NanoSVG.nsvgParse(bytes, (byte*)Unsafe.AsPointer(in System.Runtime.InteropServices.MemoryMarshal.GetReference("px"u8)), 96);
+                        var parse = NanoSVG.NanoSVG.nsvgParse(buffer.Buffer, (byte*)Unsafe.AsPointer(in System.Runtime.InteropServices.MemoryMarshal.GetReference("px"u8)), 96);
 
                         if (parse != null)
                         {
@@ -568,7 +569,6 @@ namespace MrmTool
                         }
 
                         System.Runtime.InteropServices.NativeMemory.Free(parse);
-                        System.Runtime.InteropServices.NativeMemory.Free(bytes);
 
                         return succeeded;
                     }
