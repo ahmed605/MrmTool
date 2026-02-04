@@ -6,6 +6,7 @@ using MrmTool.Models;
 using MrmTool.Scintilla;
 using MrmTool.SVG;
 using System.Collections.ObjectModel;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -537,42 +538,78 @@ namespace MrmTool
                 }
                 else if (type is ResourceType.Svg)
                 {
-                    var size = (uint)stream.Size;
-                    using var buffer = new NativeBuffer(size + 1);
-                    await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+                    bool succeeded = false;
 
-                    unsafe
+                    if (Features.IsCompositionRadialGradientBrushAvailable)
                     {
-                        bool succeeded = false;
+                        var size = (uint)stream.Size;
+                        using var buffer = new NativeBuffer(size + 1);
+                        await stream.ReadAsync(buffer, size, InputStreamOptions.None);
 
-                        var nativeBuffer = buffer.Buffer;
-                        nativeBuffer[size] = 0;
-
-                        var parse = NanoSVG.NanoSVG.nsvgParse(nativeBuffer, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("px"u8)), 96);
-
-                        if (parse != null)
+                        unsafe
                         {
-                            if (Features.IsCompositionRadialGradientBrushAvailable)
+                            var nativeBuffer = buffer.Buffer;
+                            nativeBuffer[size] = 0;
+
+                            var parse = NanoSVG.NanoSVG.nsvgParse(nativeBuffer, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("px"u8)), 96);
+
+                            if (parse != null)
                             {
-                                Compositor compositor = Window.Current.Compositor;
+                                if (Features.IsCompositionRadialGradientBrushAvailable)
+                                {
+                                    Compositor compositor = Window.Current.Compositor;
 
-                                ShapeVisual visual = compositor.CreateShapeVisual();
-                                visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
-                                visual.RelativeSizeAdjustment = new(1, 1);
+                                    ShapeVisual visual = compositor.CreateShapeVisual();
+                                    visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
+                                    visual.RelativeSizeAdjustment = Vector2.One;
 
-                                FindName(nameof(svgPreviewerContainer));
+                                    FindName(nameof(svgPreviewerContainer));
 
-                                svgPreviewer.Width = parse->width;
-                                svgPreviewer.Height = parse->height;
-                                ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
+                                    svgPreviewer.Width = parse->width;
+                                    svgPreviewer.Height = parse->height;
+                                    ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
 
-                                succeeded = true;
+                                    succeeded = true;
+                                }
                             }
-                        }
 
-                        NanoSVG.NanoSVG.nsvgDelete(parse);
-                        return succeeded;
+                            NanoSVG.NanoSVG.nsvgDelete(parse);
+                        }
                     }
+                    else
+                    {
+                        SvgImageSource source = new()
+                        {
+                            RasterizePixelWidth = 1024,
+                            RasterizePixelHeight = 1024
+                        };
+
+                        if (await source.SetSourceAsync(stream) is SvgImageSourceLoadStatus.Success)
+                        {
+                            Viewbox viewbox = new()
+                            {
+                                Stretch = Stretch.Uniform,
+                                Width = Math.Min(512, PreviewContainer.ActualWidth - 20),
+                                Height = Math.Min(512, PreviewContainer.ActualHeight - 20),
+                                Child = new Image()
+                                {
+                                    Source = source,
+                                    Width = 1024,
+                                    Height = 1024,
+                                    Stretch = Stretch.None
+                                }
+                            };
+
+                            FindName(nameof(svgPreviewerContainer));
+                            svgPreviewer.Content = viewbox;
+                            svgPreviewer.VerticalAlignment = VerticalAlignment.Center;
+                            svgPreviewer.HorizontalAlignment = HorizontalAlignment.Center;
+
+                            succeeded = true;
+                        }
+                    }
+
+                    return succeeded;
                 }
             } catch { }
 

@@ -339,7 +339,7 @@
                         
                         <!-- SVG Previewer -->
                         <ScrollViewer x:Name="svgPreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
-                            <Border x:Name="svgPreviewer" />
+                            <ContentPresenter x:Name="svgPreviewer" />
                         </ScrollViewer>
                     </Grid>
                 </Border>

@@ -5,6 +5,7 @@ using TerraFX.Interop.DirectX;
 using TerraFX.Interop.Windows;
 using Windows.UI;
 using Windows.UI.Composition;
+using Windows.UI.Xaml.Media;
 
 namespace MrmTool.SVG;
 
@@ -127,6 +128,86 @@ internal static class GeometryExtensions
                 return null;
         }
     }
+
+#if false
+    public static unsafe Brush? CreateBrushFromNSVGPaint(ref NSVGpaint paint, float opacity)
+    {
+        switch (paint.type)
+        {
+            case NSVGpaintType.NSVG_PAINT_COLOR:
+                return new SolidColorBrush(DecodeRGBA(paint.union.color, opacity));
+
+            case NSVGpaintType.NSVG_PAINT_LINEAR_GRADIENT:
+                {
+                    var gradientBrush = new LinearGradientBrush();
+                    for (int i = 0; i < paint.union.gradient->nstops; i++)
+                    {
+                        NSVGgradientStop stop = paint.union.gradient->Stops[i];
+                        var color = DecodeRGBA(stop.color, opacity);
+                        gradientBrush.GradientStops.Add(new() { Offset = stop.offset, Color = color });
+                    }
+
+                    var xform = paint.union.gradient->xform;
+                    gradientBrush.Transform = new MatrixTransform() { Matrix = new(
+                        xform[0], xform[1],
+                        xform[2], xform[3],
+                        xform[4], xform[5])};
+
+                    gradientBrush.MappingMode = BrushMappingMode.Absolute;
+                    gradientBrush.StartPoint = new(0, 0);
+                    gradientBrush.EndPoint = new(1, 0);
+                    gradientBrush.SpreadMethod= paint.union.gradient->spread switch
+                    {
+                        NSVGspreadType.NSVG_SPREAD_PAD => GradientSpreadMethod.Pad,
+                        NSVGspreadType.NSVG_SPREAD_REFLECT => GradientSpreadMethod.Reflect,
+                        NSVGspreadType.NSVG_SPREAD_REPEAT => GradientSpreadMethod.Repeat,
+                        _ => GradientSpreadMethod.Pad
+                    };
+
+                    return gradientBrush;
+                }
+
+            case NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT:
+                {
+                    var gradientBrush = new RadialGradientBrush();
+                    for (int i = 0; i < paint.union.gradient->nstops; i++)
+                    {
+                        NSVGgradientStop stop = paint.union.gradient->Stops[i];
+                        var color = DecodeRGBA(stop.color, opacity);
+                        gradientBrush.ColorStops.Add(compositor.CreateColorGradientStop(stop.offset, color));
+                    }
+
+                    var xform = paint.union.gradient->xform;
+                    gradientBrush.TransformMatrix = new(
+                        xform[0], xform[1],
+                        xform[2], xform[3],
+                        xform[4], xform[5]);
+
+                    gradientBrush.MappingMode = CompositionMappingMode.Absolute;
+                    gradientBrush.EllipseCenter = new(0, 0);
+                    gradientBrush.EllipseRadius = new(1, 1);
+                    gradientBrush.GradientOriginOffset = new(paint.union.gradient->fx, paint.union.gradient->fy);
+                    gradientBrush.ExtendMode = paint.union.gradient->spread switch
+                    {
+                        NSVGspreadType.NSVG_SPREAD_PAD => CompositionGradientExtendMode.Clamp,
+                        NSVGspreadType.NSVG_SPREAD_REFLECT => CompositionGradientExtendMode.Mirror,
+                        NSVGspreadType.NSVG_SPREAD_REPEAT => CompositionGradientExtendMode.Wrap,
+                        _ => CompositionGradientExtendMode.Clamp
+                    };
+
+                    return gradientBrush;
+                    return null;
+                }
+
+            case NSVGpaintType.NSVG_PAINT_NONE:
+                return null;
+
+            default:
+                ThrowHelpers.ThrowArgumentException("Unknown SVG paint type.");
+                return null;
+        }
+    }
+#endif
 
     [SupportedOSPlatform("windows10.0.18362")]
     public static unsafe CompositionContainerShape CreateShapeFromNSVGImage(this Compositor compositor, NSVGimage* image)
