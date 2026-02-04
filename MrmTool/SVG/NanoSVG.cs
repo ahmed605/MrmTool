@@ -48,10 +48,22 @@ namespace NanoSVG
         NSVG_FILLRULE_EVENODD = 1
     }
 
+    [Flags]
     public enum NSVGflags : byte
     {
+        NSVG_FLAGS_NONE = 0x00,
         NSVG_FLAGS_VISIBLE = 0x01
     }
+
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/118
+    [Flags]
+    public enum NSVGvisibility : byte
+    {
+        NSVG_VIS_NONE = 0x00,
+        NSVG_VIS_DISPLAY = 0x01,
+        NSVG_VIS_VISIBLE = 0x02
+    }
+#endif
 
     public enum NSVGpaintOrder : byte
     {
@@ -87,6 +99,7 @@ namespace NanoSVG
         public float offset;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct NSVGgradient
     {
         public fixed float xform[6];
@@ -151,7 +164,7 @@ namespace NanoSVG
         public float miterLimit;                        // Miter limit
         public NSVGfillRule fillRule;                   // Fill rule, see NSVGfillRule.
         public byte paintOrder;                         // Encoded paint order (3×2-bit fields) see NSVGpaintOrder
-        public byte flags;                              // Logical or of NSVG_FLAGS_* flags
+        public NSVGflags flags;                         // Logical or of NSVG_FLAGS_* flags
         public fixed float bounds[4];                   // Tight bounding box of the shape [minx,miny,maxx,maxy].
         public fixed byte fillGradient[64];             // Optional 'id' of fill gradient
         public fixed byte strokeGradient[64];           // Optional 'id' of stroke gradient
@@ -253,7 +266,11 @@ namespace NanoSVG
         public float stopOffset;
         public byte hasFill;
         public byte hasStroke;
+#if NANOSVG_PORT_DISABLE_PATCHES
         public bool visible;
+#else // https://github.com/memononen/nanosvg/pull/118
+        public NSVGvisibility visible;
+#endif
         public byte paintOrder;
     }
 
@@ -314,6 +331,11 @@ namespace NanoSVG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint NSVG_RGB(uint r, uint g, uint b) => (r) | (g << 8) | (b << 16);
 
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/163
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint NSVG_RGBA(uint r, uint g, uint b, uint a) => (r) | (g << 8) | (b << 16) | (a << 24);
+#endif
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool nsvg__isspace(byte c)
         {
@@ -339,7 +361,7 @@ namespace NanoSVG
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("gray"u8)), color = NSVG_RGB(128, 128, 128) },
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("white"u8)), color = NSVG_RGB(255, 255, 255) },
 
-        #if NANOSVG_ALL_COLOR_KEYWORDS
+#if NANOSVG_ALL_COLOR_KEYWORDS
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("aliceblue"u8)), color = NSVG_RGB(240, 248, 255) },
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("antiquewhite"u8)), color = NSVG_RGB(250, 235, 215) },
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("aqua"u8)), color = NSVG_RGB( 0, 255, 255) },
@@ -477,7 +499,7 @@ namespace NanoSVG
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("wheat"u8)), color = NSVG_RGB(245, 222, 179) },
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("whitesmoke"u8)), color = NSVG_RGB(245, 245, 245) },
             new() { name = (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("yellowgreen"u8)), color = NSVG_RGB(154, 205, 50) },
-        #endif
+#endif
         ];
     }
 
@@ -904,7 +926,13 @@ namespace NanoSVG
             p->attr[0].miterLimit = 4;
             p->attr[0].fillRule = (byte)NSVGfillRule.NSVG_FILLRULE_NONZERO;
             p->attr[0].hasFill = 1;
+
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/118
+            p->attr[0].visible = NSVGvisibility.NSVG_VIS_DISPLAY | NSVGvisibility.NSVG_VIS_VISIBLE;
+#else
             p->attr[0].visible = true;
+#endif
+
             p->attr[0].paintOrder = nsvg__encodePaintOrder(NSVGpaintOrder.NSVG_PAINT_FILL, NSVGpaintOrder.NSVG_PAINT_STROKE, NSVGpaintOrder.NSVG_PAINT_MARKERS);
 
             return p;
@@ -1181,8 +1209,14 @@ namespace NanoSVG
                 grad->xform[0] = r; grad->xform[1] = 0;
                 grad->xform[2] = 0; grad->xform[3] = r;
                 grad->xform[4] = cx; grad->xform[5] = cy;
+
+#if NANOSVG_PORT_DISABLE_PATCHES
                 grad->fx = fx / r;
                 grad->fy = fy / r;
+#else // https://github.com/memononen/nanosvg/pull/164
+                grad->fx = (fx - cx) / r;
+                grad->fy = (fy - cy) / r;
+#endif
             }
 
             nsvg__xformMultiply(grad->xform, data->xform);
@@ -1320,7 +1354,14 @@ namespace NanoSVG
             }
 
             // Set flags
-            shape->flags = attr->visible ? (byte)NSVGflags.NSVG_FLAGS_VISIBLE : (byte)0x00;
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/118
+            shape->flags = (attr->visible & NSVGvisibility.NSVG_VIS_DISPLAY) is NSVGvisibility.NSVG_VIS_DISPLAY &&
+                           (attr->visible & NSVGvisibility.NSVG_VIS_VISIBLE) is NSVGvisibility.NSVG_VIS_VISIBLE ?
+                           NSVGflags.NSVG_FLAGS_VISIBLE :
+                           0x00;
+#else
+            shape->flags = attr->visible ? NSVGflags.NSVG_FLAGS_VISIBLE : NSVGflags.NSVG_FLAGS_NONE;
+#endif
 
             // Add to tail
             if (p->image->shapes == null)
@@ -1663,6 +1704,92 @@ namespace NanoSVG
             return NSVG_RGB(rgbi[0], rgbi[1], rgbi[2]);
         }
 
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/163
+        private static uint nsvg__parseColorRGBA(byte* str)
+        {
+            int i;
+            uint* rgbai = stackalloc uint[4];
+            float* rgbaf = stackalloc float[4];
+
+            bool TryParseInts()
+            {
+                var s = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(str);
+                if (!s.StartsWith("rgba("u8)) return false;
+                s = s.Slice(5);
+
+                for (int k = 0; k < 4; k++)
+                {
+                    while (!s.IsEmpty && nsvg__isspace(s[0])) s = s.Slice(1);
+                    if (!Utf8Parser.TryParse(s, out rgbai[k], out int c)) return false;
+                    s = s.Slice(c);
+
+                    if (k < 3)
+                    {
+                        while (!s.IsEmpty && nsvg__isspace(s[0])) s = s.Slice(1);
+                        if (s.IsEmpty || s[0] != (byte)',') return false;
+                        s = s.Slice(1);
+                    }
+                }
+
+                return true;
+            }
+
+            // try decimal integers first
+            if (!TryParseInts())
+            {
+                // integers failed, try percent values (float, locale independent)
+                ReadOnlySpan<byte> delimiter = [(byte)',', (byte)',', (byte)',', (byte)')'];
+                str += 5; // skip "rgba("
+                for (i = 0; i < 4; i++)
+                {
+                    while (*str is not 0 && (nsvg__isspace(*str))) str++; 	// skip leading spaces
+                    if (*str == '+') str++;				// skip '+' (don't allow '-')
+                    if (*str is 0) break;
+                    rgbaf[i] = nsvg__atof(str);
+
+                    // Note 1: it would be great if nsvg__atof() returned how many
+                    // bytes it consumed but it doesn't. We need to skip the number,
+                    // the '%' character, spaces, and the delimiter ',' or ')'.
+
+                    // Note 2: The following code does not allow values like "33.%",
+                    // i.e. a decimal point w/o fractional part, but this is consistent
+                    // with other image viewers, e.g. firefox, chrome, eog, gimp.
+
+                    while (*str is not 0 && nsvg__isdigit(*str)) str++;		// skip integer part
+                    if (*str == (byte)'.')
+                    {
+                        str++;
+                        if (!nsvg__isdigit(*str)) break;		// error: no digit after '.'
+                        while (*str is not 0 && nsvg__isdigit(*str)) str++;	// skip fractional part
+                    }
+                    if (*str == '%') str++; else break;
+                    while (*str is not 0 && nsvg__isspace(*str)) str++;
+                    if (*str == delimiter[i]) str++;
+                    else break;
+                }
+                if (i == 4)
+                {
+                    rgbai[0] = (uint)MathF.Round(rgbaf[0] * 2.55f);
+                    rgbai[1] = (uint)MathF.Round(rgbaf[1] * 2.55f);
+                    rgbai[2] = (uint)MathF.Round(rgbaf[2] * 2.55f);
+                    rgbai[3] = (uint)MathF.Round(rgbaf[3] * 2.55f);
+                }
+                else
+                {
+                    rgbai[0] = rgbai[1] = rgbai[2] = rgbai[3] = 128;
+                }
+            }
+
+            // clip values as the CSS spec requires
+            for (i = 0; i < 4; i++)
+            {
+                if (rgbai[i] > 255) rgbai[i] = 255;
+            }
+
+            return NSVG_RGBA(rgbai[0], rgbai[1], rgbai[2], rgbai[3]);
+        }
+#endif
+
         private static uint nsvg__parseColorName(byte* str)
         {
             int i, ncolors = nsvg__colors.Length;
@@ -1688,6 +1815,10 @@ namespace NanoSVG
                 return nsvg__parseColorHex(str);
             else if (len >= 4 && str[0] == 'r' && str[1] == 'g' && str[2] == 'b' && str[3] == '(')
                 return nsvg__parseColorRGB(str);
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/163
+            else if (len >= 5 && str[0] == 'r' && str[1] == 'g' && str[2] == 'b' && str[3] == 'a' && str[4] == '(')
+                return nsvg__parseColorRGBA(str);
+#endif
             return nsvg__parseColorName(str);
         }
 
@@ -2041,10 +2172,27 @@ namespace NanoSVG
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("display"u8))) == 0)
             {
                 if (strcmp(value, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("none"u8))) == 0)
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/118
+                    attr->visible &= ~NSVGvisibility.NSVG_VIS_DISPLAY;
+#else
                     attr->visible = false;
+#endif
                 // Don't reset ->visible on display:inline, one display:none hides the whole subtree
 
             }
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/118
+            else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("visibility"u8))) == 0)
+            {
+                if (strcmp(value, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("hidden"u8))) == 0)
+                {
+                    attr->visible &= ~NSVGvisibility.NSVG_VIS_VISIBLE;
+                }
+                else if (strcmp(value, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("visible"u8))) == 0)
+                {
+                    attr->visible |= NSVGvisibility.NSVG_VIS_VISIBLE;
+                }
+            }
+#endif
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("fill"u8))) == 0)
             {
                 if (strcmp(value, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("none"u8))) == 0)
@@ -2060,6 +2208,17 @@ namespace NanoSVG
                 {
                     attr->hasFill = 1;
                     attr->fillColor = nsvg__parseColor(value);
+
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/163
+                    // if the fillColor has an alpha value then use it to
+                    // set the fillOpacity
+                    if ((attr->fillColor & 0xFF000000) is not 0)
+                    {
+                        attr->fillOpacity = ((attr->fillColor >> 24) & 0xFF) / 255.0f;
+                        // remove the alpha value from the color
+                        attr->fillColor &= 0x00FFFFFF;
+                    }
+#endif
                 }
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("opacity"u8))) == 0)
@@ -2068,7 +2227,11 @@ namespace NanoSVG
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("fill-opacity"u8))) == 0)
             {
+#if NANOSVG_PORT_DISABLE_PATCHES
                 attr->fillOpacity = nsvg__parseOpacity(value);
+#else // https://github.com/memononen/nanosvg/pull/163
+                attr->fillOpacity *= nsvg__parseOpacity(value);
+#endif
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stroke"u8))) == 0)
             {
@@ -2085,6 +2248,16 @@ namespace NanoSVG
                 {
                     attr->hasStroke = 1;
                     attr->strokeColor = nsvg__parseColor(value);
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/163
+                    // if the strokeColor has an alpha value then use it to
+                    // set the strokeOpacity
+                    if ((attr->strokeColor & 0xFF000000) is not 0)
+                    {
+                        attr->strokeOpacity = ((attr->strokeColor >> 24) & 0xFF) / 255.0f;
+                        // remove the alpha value from the color
+                        attr->strokeColor &= 0x00FFFFFF;
+                    }
+#endif
                 }
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stroke-width"u8))) == 0)
@@ -2101,7 +2274,11 @@ namespace NanoSVG
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stroke-opacity"u8))) == 0)
             {
+#if NANOSVG_PORT_DISABLE_PATCHES
                 attr->strokeOpacity = nsvg__parseOpacity(value);
+#else // https://github.com/memononen/nanosvg/pull/163
+                attr->strokeOpacity *= nsvg__parseOpacity(value);
+#endif
             }
             else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("stroke-linecap"u8))) == 0)
             {
@@ -2149,6 +2326,18 @@ namespace NanoSVG
                 strncpy(attr->id, value, 63);
                 attr->id[63] = (byte)'\0';
             }
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/131
+            else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("x"u8))) == 0)
+            {
+                nsvg__xformSetTranslation(xform, (float)nsvg__atof(value), 0);
+                nsvg__xformPremultiply(attr->xform, xform);
+            }
+            else if (strcmp(name, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("y"u8))) == 0)
+            {
+                nsvg__xformSetTranslation(xform, 0, (float)nsvg__atof(value));
+                nsvg__xformPremultiply(attr->xform, xform);
+            }
+#endif
             else
             {
                 return false;
@@ -2767,6 +2956,7 @@ namespace NanoSVG
 
             for (i = 0; attr[i] is not null; i += 2)
             {
+#if NANOSVG_PORT_DISABLE_PATCHES
                 if (!nsvg__parseAttr(p, attr[i], attr[i + 1]))
                 {
                     if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("x"u8))) == 0) x = nsvg__parseCoordinate(p, attr[i + 1], nsvg__actualOrigX(p), nsvg__actualWidth(p));
@@ -2776,6 +2966,15 @@ namespace NanoSVG
                     if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("rx"u8))) == 0) rx = MathF.Abs(nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualWidth(p)));
                     if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("ry"u8))) == 0) ry = MathF.Abs(nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualHeight(p)));
                 }
+#else // https://github.com/memononen/nanosvg/pull/131
+                if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("x"u8))) == 0) x = nsvg__parseCoordinate(p, attr[i + 1], nsvg__actualOrigX(p), nsvg__actualWidth(p));
+                else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("y"u8))) == 0) y = nsvg__parseCoordinate(p, attr[i + 1], nsvg__actualOrigY(p), nsvg__actualHeight(p));
+                else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("width"u8))) == 0) w = nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualWidth(p));
+                else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("height"u8))) == 0) h = nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualHeight(p));
+                else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("rx"u8))) == 0) rx = MathF.Abs(nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualWidth(p)));
+                else if (strcmp(attr[i], (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("ry"u8))) == 0) ry = MathF.Abs(nsvg__parseCoordinate(p, attr[i + 1], 0.0f, nsvg__actualHeight(p)));
+                else nsvg__parseAttr(p, attr[i], attr[i + 1]);
+#endif
             }
 
             if (rx < 0.0f && ry > 0.0f) rx = ry;
@@ -3259,6 +3458,9 @@ namespace NanoSVG
             }
             else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("svg"u8))) == 0)
             {
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/131
+                nsvg__pushAttr(p);
+#endif
                 nsvg__parseSVG(p, attr);
             }
         }
@@ -3279,6 +3481,12 @@ namespace NanoSVG
             {
                 p->defsFlag = false;
             }
+#if !NANOSVG_PORT_DISABLE_PATCHES // https://github.com/memononen/nanosvg/pull/131
+            else if (strcmp(el, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("svg"u8))) == 0)
+            {
+                nsvg__popAttr(p);
+            }
+#endif
         }
 
         private static void nsvg__content(void* ud, byte* s)

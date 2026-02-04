@@ -216,6 +216,9 @@ internal static class GeometryExtensions
 
         for (NSVGshape* shape = image->shapes; shape != null; shape = shape->next)
         {
+            if ((shape->flags & NSVGflags.NSVG_FLAGS_VISIBLE) is not NSVGflags.NSVG_FLAGS_VISIBLE)
+                continue;
+
             using ComPtr<ID2D1PathGeometry> geometry = default;
             D2D1Factory.CreatePathGeometry(geometry.GetAddressOf());
 
