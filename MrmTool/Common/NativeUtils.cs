@@ -507,6 +507,8 @@ namespace MrmTool
             return E.E_FAIL;
         }
 
+        private static Dictionary<nuint, nuint> PatchedFunctions = [];
+
         internal static HRESULT XWinePatchImport(HMODULE Module, HMODULE ImportModule, byte* Import, void* Function)
         {
             HRESULT hr;
@@ -523,7 +525,10 @@ namespace MrmTool
                 return HRESULT_FROM_WIN32(GetLastError());
             }
 
+            nuint originalFunction = (nuint)pThunk->u1.Function;
             pThunk->u1.Function = (nuint)Function;
+
+            PatchedFunctions.TryAdd((nuint)(void*)&pThunk->u1.Function, originalFunction);
 
             if (!VirtualProtect(&pThunk->u1.Function, (nuint)sizeof(nuint), protect, &protect))
             {
@@ -598,13 +603,32 @@ namespace MrmTool
                     if (SUCCEEDED_LOG(XWinePatchImport(xaml, appmodel, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("GetCurrentPackageInfo"u8)), fptr2)))
                     {
                         var fptr3 = (delegate* unmanaged[Stdcall]<HMODULE, sbyte*, void*>)&GetProcAddressHook;
-                        return SUCCEEDED_LOG(XWinePatchImport(iertutil, kb, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("GetProcAddress"u8)), fptr3)) &&
-                            SUCCEEDED_LOG(IEConfiguration_SetBrowserAppProfile((char*)Unsafe.AsPointer(in MemoryMarshal.GetReference("MicrosoftEdge".AsSpan())), 2, 0));
+                        if(SUCCEEDED_LOG(XWinePatchImport(iertutil, kb, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("GetProcAddress"u8)), fptr3)) &&
+                           SUCCEEDED_LOG(IEConfiguration_SetBrowserAppProfile((char*)Unsafe.AsPointer(in MemoryMarshal.GetReference("MicrosoftEdge".AsSpan())), 2, 0)))
+                        {
+                            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+                            return true;
+                        }
                     }
                 }
             }
 
             return false;
+        }
+
+        private static void OnProcessExit(object? sender, EventArgs e)
+        {
+            foreach (var item in PatchedFunctions)
+            {
+                var thunk = (nuint*)item.Key;
+
+                uint protect;
+                if (VirtualProtect(thunk, (nuint)sizeof(nuint), PAGE.PAGE_READWRITE, &protect))
+                {
+                    *thunk = item.Value;
+                    VirtualProtect(thunk, (nuint)sizeof(nuint), protect, &protect);
+                }
+            }
         }
     }
 

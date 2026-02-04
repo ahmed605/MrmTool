@@ -13,6 +13,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Resources;
 using WinRT;
+
 using static MrmTool.Common.ErrorHelpers;
 using static MrmTool.NativeUtils;
 using static TerraFX.Interop.Windows.Windows;
