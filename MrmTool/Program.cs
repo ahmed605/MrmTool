@@ -28,6 +28,8 @@ namespace MrmTool
         private static HWND _coreHwnd;
         public static HWND WindowHandle;
 
+        public static bool IsWebViewAvailable = false;
+
         #nullable disable
         public static App Application => _xamlApp;
         public static ResourceMap ResourceMap => _resourceMap;
@@ -36,6 +38,7 @@ namespace MrmTool
         [STAThread]
         static unsafe void Main()
         {
+            IsWebViewAvailable = PatchWebViewAppModelChecks();
             ComWrappersSupport.InitializeComWrappers();
             _resourceMap = NativeUtils.InitializeResourceManager().MainResourceMap;
 
