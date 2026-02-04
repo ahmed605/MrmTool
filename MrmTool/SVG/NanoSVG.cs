@@ -1,5 +1,6 @@
 ﻿using System.Buffers.Text;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -114,6 +115,7 @@ namespace NanoSVG
             get => (NSVGgradientStop*)Unsafe.AsPointer(in _stops);
         }
 
+        // Specific to the C# port
         public ReadOnlySpan<NSVGgradientStop> Stops
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -291,6 +293,11 @@ namespace NanoSVG
         public float dpi;
         public bool pathFlag;
         public bool defsFlag;
+
+#if !NANOSVG_PORT_DISABLE_PATCHES
+        // Specific to C# port
+        internal byte* unknownElement;
+#endif
 
         [InlineArray(NSVG_MAX_ATTR)]
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -3373,6 +3380,14 @@ namespace NanoSVG
         {
             NSVGparser* p = (NSVGparser*)ud;
 
+#if !NANOSVG_PORT_DISABLE_PATCHES
+            // Specific to the C# port
+            if (p->unknownElement is not null)
+            {
+                return;
+            }
+#endif
+
             if (p->defsFlag)
             {
                 // Skip everything but gradients in defs
@@ -3463,6 +3478,21 @@ namespace NanoSVG
 #endif
                 nsvg__parseSVG(p, attr);
             }
+#if !NANOSVG_PORT_DISABLE_PATCHES
+            else // Specific to the C# port
+            {
+                p->unknownElement = el;
+
+#if NANOSVG_WARN_ON_UNKNOWN_ELEMENTS
+#if DEBUG || NANOSVG_DISABLE_WARNS_ON_RELEASE
+                Debug.
+#else
+                Console.
+#endif
+                WriteLine($"[WARNING] NanoSVG: Skipping unknown element \"{new((sbyte*)el)}\"");
+#endif
+            }
+#endif
         }
 
         private static void nsvg__endElement(void* ud, byte* el)
@@ -3487,8 +3517,16 @@ namespace NanoSVG
                 nsvg__popAttr(p);
             }
 #endif
+#if !NANOSVG_PORT_DISABLE_PATCHES
+            // Specific to the C# port
+            if (p->unknownElement is not null && strcmp(el, p->unknownElement) == 0)
+            {
+                p->unknownElement = null;
+            }
+#endif
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void nsvg__content(void* ud, byte* s)
         {
             //NSVG_NOTUSED(ud);
@@ -3711,6 +3749,32 @@ namespace NanoSVG
             return ret;
         }
 
+        // Specific to the C# port
+        // Adaptation of https://github.com/memononen/nanosvg/pull/208
+        /// <summary>
+        /// WARNING: This method copies the input
+        /// </summary>
+        public static NSVGimage* nsvgParse(ReadOnlySpan<byte> file_data, byte* units, float dpi)
+        {
+            byte* data = null;
+            NSVGimage* image = null;
+
+            int file_data_size = file_data.Length;
+            data = (byte*)malloc(file_data_size + 1);
+            if (data == null) goto error;
+            file_data.CopyTo(new(data, file_data_size));
+            data[file_data_size] = (byte)'\0';	// Must be null terminated.
+            image = nsvgParse(data, units, dpi);
+            free(data);
+            return image;
+
+        error:
+            if (data is not null) free(data);
+            if (image is not null) nsvgDelete(image);
+            return null;
+        }
+
+        // Specific to the C# port
         public static NSVGimage* nsvgParseFromFile(ReadOnlySpan<byte> filename, byte* units, float dpi)
         {
             int size;
