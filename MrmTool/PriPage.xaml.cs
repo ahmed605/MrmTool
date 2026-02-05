@@ -636,6 +636,8 @@ namespace MrmTool
 
                         var size = (uint)stream.Size;
                         using var buffer = new NativeBuffer(size);
+
+                        stream.Seek(0);
                         await stream.ReadAsync(buffer, size, InputStreamOptions.None);
 
                         unsafe
