@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using MrmTool.Common;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -8,14 +9,6 @@ using Windows.Management.Deployment;
 
 using static MrmTool.Common.ErrorHelpers;
 using static TerraFX.Interop.Windows.Windows;
-
-#if IS_64_BIT
-using IMAGE_THUNK_DATA = TerraFX.Interop.Windows.IMAGE_THUNK_DATA64;
-using IMAGE_NT_HEADERS = TerraFX.Interop.Windows.IMAGE_NT_HEADERS64;
-#else
-using IMAGE_THUNK_DATA = TerraFX.Interop.Windows.IMAGE_THUNK_DATA32;
-using IMAGE_NT_HEADERS = TerraFX.Interop.Windows.IMAGE_NT_HEADERS32;
-#endif
 
 namespace MrmTool
 {
@@ -421,126 +414,6 @@ namespace MrmTool
             }
         }
 
-        // Originally written by @DaZombieKiller for the XWine1 project
-        private static HRESULT XWineFindImport(HMODULE Module, byte* Import, IMAGE_THUNK_DATA* pImportAddressTable, IMAGE_THUNK_DATA* pImportNameTable, IMAGE_THUNK_DATA** pThunk)
-        {
-            for (nuint j = 0; pImportNameTable[j].u1.AddressOfData > 0; j++)
-            {
-                if ((pImportNameTable[j].u1.AddressOfData & IMAGE.IMAGE_ORDINAL_FLAG) != 0)
-                {
-                    if (!IS_INTRESOURCE((nuint)Import))
-                        continue;
-
-                    if (((pImportNameTable[j].u1.Ordinal & ~IMAGE.IMAGE_ORDINAL_FLAG) == (nuint)Import))
-                    {
-                        *pThunk = &pImportAddressTable[j];
-                        return S.S_OK;
-                    }
-
-                    continue;
-                }
-
-                var name = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)Unsafe.AsPointer(in ((IMAGE_IMPORT_BY_NAME*)((byte*)Module + pImportNameTable[j].u1.AddressOfData))->Name.e0));
-                var importName = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(Import);
-
-                if (!name.SequenceEqual(importName))
-                    continue;
-
-                *pThunk = &pImportAddressTable[j];
-                return S.S_OK;
-            }
-
-            *pThunk = null;
-            return E.E_FAIL;
-        }
-
-        // Originally written by @DaZombieKiller for the XWine1 project
-        internal static HRESULT XWineGetImport(HMODULE Module, HMODULE ImportModule, byte* Import, IMAGE_THUNK_DATA** pThunk)
-        {
-            if (ImportModule.Value is null)
-                return E.E_INVALIDARG;
-
-            if (pThunk == null)
-                return E.E_POINTER;
-
-            if (Module.Value is null)
-                Module = GetModuleHandleW(null);
-
-            var dosHeader = (IMAGE_DOS_HEADER*)Module;
-            var ntHeaders = (IMAGE_NT_HEADERS*)((byte*)Module + dosHeader->e_lfanew);
-            var directory = &ntHeaders->OptionalHeader.DataDirectory[IMAGE.IMAGE_DIRECTORY_ENTRY_IMPORT];
-
-            if (directory->VirtualAddress <= 0 || directory->Size <= 0)
-                return E.E_FAIL;
-
-            var peImports = (IMAGE_IMPORT_DESCRIPTOR*)((byte*)Module + directory->VirtualAddress);
-
-            for (nuint i = 0; peImports[i].Name > 0; i++)
-            {
-                if (GetModuleHandleA((sbyte*)((byte*)Module + peImports[i].Name)) != ImportModule)
-                    continue;
-
-                var iatThunks = (IMAGE_THUNK_DATA*)((byte*)Module + peImports[i].FirstThunk);
-                var intThunks = (IMAGE_THUNK_DATA*)((byte*)Module + peImports[i].OriginalFirstThunk);
-
-                if (SUCCEEDED(XWineFindImport(Module, Import, iatThunks, intThunks, pThunk)))
-                    return S.S_OK;
-            }
-
-            var delayDir = &ntHeaders->OptionalHeader.DataDirectory[IMAGE.IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
-            if (delayDir->VirtualAddress > 0 && directory->Size > 0)
-            {
-                var delayImports = (IMAGE_DELAYLOAD_DESCRIPTOR*)((byte*)Module + delayDir->VirtualAddress);
-
-                for (nuint i = 0; delayImports[i].DllNameRVA > 0; i++)
-                {
-                    if (GetModuleHandleA((sbyte*)((byte*)Module + delayImports[i].DllNameRVA)) != ImportModule)
-                        continue;
-
-                    var iatThunks = (IMAGE_THUNK_DATA*)((byte*)Module + delayImports[i].ImportAddressTableRVA);
-                    var intThunks = (IMAGE_THUNK_DATA*)((byte*)Module + delayImports[i].ImportNameTableRVA);
-
-                    if (SUCCEEDED(XWineFindImport(Module, Import, iatThunks, intThunks, pThunk)))
-                        return S.S_OK;
-                }
-            }
-
-            *pThunk = null;
-            return E.E_FAIL;
-        }
-
-        private static readonly Dictionary<nuint, nuint> PatchedFunctions = [];
-
-        // Originally written by @DaZombieKiller for the XWine1 project
-        internal static HRESULT XWinePatchImport(HMODULE Module, HMODULE ImportModule, byte* Import, void* Function)
-        {
-            HRESULT hr;
-
-            uint protect;
-            IMAGE_THUNK_DATA* pThunk;
-            if (!SUCCEEDED_LOG(hr = XWineGetImport(Module, ImportModule, Import, &pThunk)))
-            {
-                return hr;
-            }
-
-            if (!VirtualProtect(&pThunk->u1.Function, (nuint)sizeof(nuint), PAGE.PAGE_READWRITE, &protect))
-            {
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
-
-            nuint originalFunction = (nuint)pThunk->u1.Function;
-            pThunk->u1.Function = (nuint)Function;
-
-            PatchedFunctions.TryAdd((nuint)(void*)&pThunk->u1.Function, originalFunction);
-
-            if (!VirtualProtect(&pThunk->u1.Function, (nuint)sizeof(nuint), protect, &protect))
-            {
-                return HRESULT_FROM_WIN32(GetLastError());
-            }
-            
-            return S.S_OK;
-        }
-
         [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
         private static int AppPolicyGetWindowingModelHook(HANDLE processToken, AppPolicyWindowingModel* policy)
         {
@@ -599,17 +472,19 @@ namespace MrmTool
             var iertutil = LoadLibraryA((sbyte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("iertutil.dll"u8)));
             var kb = GetModuleHandleA((sbyte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("kernelbase.dll"u8)));
 
-            if (appmodel.Value is not null && xaml.Value is not null && iertutil.Value is not null)
+            if (appmodel.Value is not null &&
+                xaml.Value is not null &&
+                iertutil.Value is not null)
             {
                 var fptr = (delegate* unmanaged[Stdcall]<HANDLE, AppPolicyWindowingModel*, int>)&AppPolicyGetWindowingModelHook;
-                if (SUCCEEDED_LOG(XWinePatchImport(xaml, appmodel, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("AppPolicyGetWindowingModel"u8)), fptr)))
+                if (SUCCEEDED_LOG(PatchingHelper.XWinePatchImport(xaml, appmodel, "AppPolicyGetWindowingModel"u8, fptr, 0)))
                 {
                     var fptr2 = (delegate* unmanaged[Stdcall]<uint, uint*, byte*, uint*, int>)&GetCurrentPackageInfoHook;
-                    if (SUCCEEDED_LOG(XWinePatchImport(xaml, appmodel, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("GetCurrentPackageInfo"u8)), fptr2)))
+                    if (SUCCEEDED_LOG(PatchingHelper.XWinePatchImport(xaml, appmodel, "GetCurrentPackageInfo"u8, fptr2, 1)))
                     {
                         var fptr3 = (delegate* unmanaged[Stdcall]<HMODULE, sbyte*, void*>)&GetProcAddressHook;
-                        if(SUCCEEDED_LOG(XWinePatchImport(iertutil, kb, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("GetProcAddress"u8)), fptr3)) &&
-                           SUCCEEDED_LOG(IEConfiguration_SetBrowserAppProfile((char*)Unsafe.AsPointer(in MemoryMarshal.GetReference("MicrosoftEdge".AsSpan())), 2, 0)))
+                        if (SUCCEEDED_LOG(PatchingHelper.XWinePatchImport(iertutil, kb, "GetProcAddress"u8, fptr3, 2)) &&
+                            SUCCEEDED_LOG(IEConfiguration_SetBrowserAppProfile((char*)Unsafe.AsPointer(in MemoryMarshal.GetReference("MicrosoftEdge".AsSpan())), 2, 0)))
                         {
                             AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
                             return true;
@@ -623,20 +498,31 @@ namespace MrmTool
 
         private static void OnProcessExit(object? sender, EventArgs e)
         {
-            foreach (var item in PatchedFunctions)
+            foreach (var (Thunk, OriginalFunction) in PatchingHelper.PatchedFunctions)
             {
-                var thunk = (nuint*)item.Key;
+                var thunk = (nuint*)Thunk;
 
                 uint protect;
                 if (VirtualProtect(thunk, (nuint)sizeof(nuint), PAGE.PAGE_READWRITE, &protect))
                 {
-                    *thunk = item.Value;
+                    *thunk = OriginalFunction;
                     VirtualProtect(thunk, (nuint)sizeof(nuint), protect, &protect);
+                }
+            }
+
+            var edge = GetModuleHandleA((sbyte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("edgehtml.dll"u8)));
+            if (edge.Value is not null)
+            {
+                var dllmain = (delegate* unmanaged[Stdcall]<HINSTANCE, uint, void*, BOOL>)PatchingHelper.GetModuleEntryPoint(edge);
+                if (dllmain is not null)
+                {
+                    LOG_LAST_ERROR_IF(!dllmain(edge, DLL_PROCESS_DETACH, null));
                 }
             }
         }
     }
 
+#if ENABLE_HSTRING_MARSHALLER
     [CustomMarshaller(typeof(string), MarshalMode.Default, typeof(HStringMarshaller))]
     internal static unsafe class HStringMarshaller
     {
@@ -649,9 +535,10 @@ namespace MrmTool
         public static void Free(nint unmanaged)
             => WinRT.MarshalString.DisposeAbi(unmanaged);
     }
+#endif
 
-    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("4a8eac58-b652-459d-8de1-239471e8b22b")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     internal unsafe partial interface IResourceManagerStaticInternal
     {
         void _stub0();
@@ -663,8 +550,8 @@ namespace MrmTool
         int GetCurrentResourceManagerForSystemProfile(void** ppResult);
     }
 
-    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("7d9da47a-8bc7-49d3-97aa-f7db06049172")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     internal unsafe partial interface IResourceManagerStaticInternalOld
     {
         void _stub0();
@@ -676,8 +563,8 @@ namespace MrmTool
         int GetCurrentResourceManagerForSystemProfile(void** ppResult);
     }
 
-    [GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16, Options = ComInterfaceOptions.ComObjectWrapper)]
     [Guid("8c25e859-1042-4da0-9232-bf2aa8ff3726")]
+    [GeneratedComInterface(StringMarshalling = StringMarshalling.Utf16, Options = ComInterfaceOptions.ComObjectWrapper)]
     internal unsafe partial interface ISystemResourceManagerExtensions2
     {
         void _stub0();
@@ -687,7 +574,8 @@ namespace MrmTool
         void LoadPriFileForSystemUse(string path);
     }
 
-    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("4dc10e42-52e7-46da-8ae8-92a4e8afe20c")]
+    [Guid("4dc10e42-52e7-46da-8ae8-92a4e8afe20c")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     internal unsafe partial interface IPickerPrivateInitialization
     {
         void _stub0();
@@ -702,10 +590,13 @@ namespace MrmTool
 
         void SetTargetFolderLibrary(void* pShellItem);
 
+#if ENABLE_HSTRING_MARSHALLER
         void PrepopulateCallingAppData([MarshalUsing(typeof(HStringMarshaller))] string appId, [MarshalUsing(typeof(HStringMarshaller))] string packageFullName);
+#endif
     }
 
-    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")]
+    [Guid("6090202d-2843-4ba5-9b0d-fc88eecd9ce5")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     internal partial interface ICoreApplicationPrivate2
     {
         void _stub3();
@@ -723,7 +614,8 @@ namespace MrmTool
         public byte TransparentBackground, IsCoreNavigationClient;
     }
 
-    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper), Guid("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")]
+    [Guid("c45f3f8c-61e6-4f9a-be88-fe4fe6e64f5f")]
+    [GeneratedComInterface(Options = ComInterfaceOptions.ComObjectWrapper)]
     internal unsafe partial interface IFrameworkApplicationStaticsPrivate
     {
         void _stub0();
