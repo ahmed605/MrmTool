@@ -913,8 +913,7 @@ namespace MrmTool
         {
             _useWebViewForSvg = ((ToggleMenuFlyoutItem)sender).IsChecked;
 
-            if (_useWebViewForSvg &&
-                _selectedResource?.Type is ResourceType.Svg &&
+            if (_selectedResource?.Type is ResourceType.Svg &&
                 candidatesList.SelectedItem is CandidateItem item)
             {
                 await DisplayCandidate(item);

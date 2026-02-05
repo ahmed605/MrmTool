@@ -347,7 +347,7 @@
                             <ContentPresenter x:Name="svgPreviewer" />
                         </ScrollViewer>
 
-                        <WebView x:Name="webView" DefaultBackgroundColor="Transparent" x:Load="False"/>
+                        <WebView x:Name="webView" x:Load="False" DefaultBackgroundColor="Transparent" />
                     </Grid>
                 </Border>
 

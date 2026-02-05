@@ -421,6 +421,7 @@ namespace MrmTool
             }
         }
 
+        // Originally written by @DaZombieKiller for the XWine1 project
         private static HRESULT XWineFindImport(HMODULE Module, byte* Import, IMAGE_THUNK_DATA* pImportAddressTable, IMAGE_THUNK_DATA* pImportNameTable, IMAGE_THUNK_DATA** pThunk)
         {
             for (nuint j = 0; pImportNameTable[j].u1.AddressOfData > 0; j++)
@@ -453,6 +454,7 @@ namespace MrmTool
             return E.E_FAIL;
         }
 
+        // Originally written by @DaZombieKiller for the XWine1 project
         internal static HRESULT XWineGetImport(HMODULE Module, HMODULE ImportModule, byte* Import, IMAGE_THUNK_DATA** pThunk)
         {
             if (ImportModule.Value is null)
@@ -507,8 +509,9 @@ namespace MrmTool
             return E.E_FAIL;
         }
 
-        private static Dictionary<nuint, nuint> PatchedFunctions = [];
+        private static readonly Dictionary<nuint, nuint> PatchedFunctions = [];
 
+        // Originally written by @DaZombieKiller for the XWine1 project
         internal static HRESULT XWinePatchImport(HMODULE Module, HMODULE ImportModule, byte* Import, void* Function)
         {
             HRESULT hr;
@@ -545,13 +548,15 @@ namespace MrmTool
             return TerraFX.Interop.Windows.ERROR.ERROR_SUCCESS;
         }
 
+        private static readonly string? settingsPFN =
+            new PackageManager().FindPackagesForUser(null, "windows.immersivecontrolpanel_cw5n1h2txyewy").FirstOrDefault()?.Id.FullName;
+
         [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
         private static int GetCurrentPackageInfoHook(uint flags, uint* bufferLength, byte* buffer, uint* count)
         {
-            var settingsPackage = new PackageManager().FindPackagesForUser(null, "windows.immersivecontrolpanel_cw5n1h2txyewy").FirstOrDefault();
-            if (settingsPackage is not null)
+            if (settingsPFN is not null)
             {
-                fixed (char* pSettingPFN = settingsPackage.Id.FullName)
+                fixed (char* pSettingPFN = settingsPFN)
                 {
                     PACKAGE_INFO_REFERENCE pir;
                     if (OpenPackageInfoByFullName(pSettingPFN, 0, &pir) is TerraFX.Interop.Windows.ERROR.ERROR_SUCCESS)
