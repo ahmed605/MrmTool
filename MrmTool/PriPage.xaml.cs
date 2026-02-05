@@ -37,6 +37,8 @@ namespace MrmTool
         private StorageFolder? _rootFolder;
         private ResourceItem? _selectedResource;
 
+        private bool _useWebViewForSvg = false;
+
         public ObservableCollection<ResourceItem> ResourceItems { get; } = [];
 
         public PriPage()
@@ -344,8 +346,22 @@ namespace MrmTool
             if (_selectedResource?.Type is not ResourceType.Image)
                 UnloadObject(imagePreviewerContainer);
 
-            if (_selectedResource?.Type is not ResourceType.Svg)
+            if (_selectedResource?.Type is ResourceType.Svg)
+            {
+                if (_useWebViewForSvg)
+                {
+                    UnloadObject(svgPreviewerContainer);
+                }
+                else
+                {
+                    UnloadObject(webView);
+                }
+            }
+            else
+            {
                 UnloadObject(svgPreviewerContainer);
+                UnloadObject(webView);
+            }
 
             if (!(item.ValueType is ResourceValueType.EmbeddedData && _selectedResource?.Type.IsPreviewable is not true))
                 UnloadObject(exportContainer);
@@ -362,6 +378,7 @@ namespace MrmTool
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(svgPreviewerContainer);
+            UnloadObject(webView);
             UnloadObject(exportContainer);
             UnloadObject(openFolderContainer);
         }
@@ -371,6 +388,7 @@ namespace MrmTool
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(svgPreviewerContainer);
+            UnloadObject(webView);
             UnloadObject(exportContainer);
             UnloadObject(openFolderContainer);
         }
@@ -540,70 +558,108 @@ namespace MrmTool
                 {
                     bool succeeded = false;
 
-                    if (Features.IsCompositionRadialGradientBrushAvailable)
+                    if (!_useWebViewForSvg)
                     {
+                        if (Features.IsCompositionRadialGradientBrushAvailable)
+                        {
+                            var size = (uint)stream.Size;
+                            using var buffer = new NativeBuffer(size + 1);
+                            await stream.ReadAsync(buffer, size, InputStreamOptions.None);
+
+                            unsafe
+                            {
+                                var nativeBuffer = buffer.Buffer;
+                                nativeBuffer[size] = 0;
+
+                                var parse = NanoSVG.NanoSVG.nsvgParse(nativeBuffer, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("px"u8)), 96);
+
+                                if (parse != null)
+                                {
+                                    if (Features.IsCompositionRadialGradientBrushAvailable)
+                                    {
+                                        Compositor compositor = Window.Current.Compositor;
+
+                                        ShapeVisual visual = compositor.CreateShapeVisual();
+                                        visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
+                                        visual.RelativeSizeAdjustment = Vector2.One;
+
+                                        FindName(nameof(svgPreviewerContainer));
+
+                                        svgPreviewer.Width = parse->width;
+                                        svgPreviewer.Height = parse->height;
+                                        ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
+
+                                        succeeded = true;
+                                    }
+                                }
+
+                                NanoSVG.NanoSVG.nsvgDelete(parse);
+                            }
+                        }
+                        else
+                        {
+                            SvgImageSource source = new()
+                            {
+                                RasterizePixelWidth = 1024,
+                                RasterizePixelHeight = 1024
+                            };
+
+                            if (await source.SetSourceAsync(stream) is SvgImageSourceLoadStatus.Success)
+                            {
+                                Viewbox viewbox = new()
+                                {
+                                    Stretch = Stretch.Uniform,
+                                    Width = Math.Min(512, PreviewContainer.ActualWidth - 20),
+                                    Height = Math.Min(512, PreviewContainer.ActualHeight - 20),
+                                    Child = new Image()
+                                    {
+                                        Source = source,
+                                        Width = 1024,
+                                        Height = 1024,
+                                        Stretch = Stretch.None
+                                    }
+                                };
+
+                                FindName(nameof(svgPreviewerContainer));
+                                svgPreviewer.Content = viewbox;
+                                svgPreviewer.VerticalAlignment = VerticalAlignment.Center;
+                                svgPreviewer.HorizontalAlignment = HorizontalAlignment.Center;
+
+                                succeeded = true;
+                            }
+                        }
+                    }
+
+                    if (!succeeded && Program.IsWebViewAvailable)
+                    {
+                        UnloadObject(svgPreviewerContainer);
+
                         var size = (uint)stream.Size;
-                        using var buffer = new NativeBuffer(size + 1);
+                        using var buffer = new NativeBuffer(size);
                         await stream.ReadAsync(buffer, size, InputStreamOptions.None);
 
                         unsafe
                         {
-                            var nativeBuffer = buffer.Buffer;
-                            nativeBuffer[size] = 0;
+                            var svg = Encoding.UTF8.GetString(buffer.Buffer, (int)size);
+                            var html = @$"
+                            <html>
+                                <head>
+                                <meta charset=""UTF-16"">
+                                <style>
+                                    html, body {{
+                                    width: 100%;
+                                    height: 100%;
+                                    margin: 0;
+                                    }}
+                                </style>
+                                </head>
+                                <body style=""display:flex;justify-content:center;align-items:center;background-color:transparent;"">
+                                <div>{svg}</div>
+                                </body>
+                            </html>";
 
-                            var parse = NanoSVG.NanoSVG.nsvgParse(nativeBuffer, (byte*)Unsafe.AsPointer(in MemoryMarshal.GetReference("px"u8)), 96);
-
-                            if (parse != null)
-                            {
-                                if (Features.IsCompositionRadialGradientBrushAvailable)
-                                {
-                                    Compositor compositor = Window.Current.Compositor;
-
-                                    ShapeVisual visual = compositor.CreateShapeVisual();
-                                    visual.Shapes.Add(compositor.CreateShapeFromNSVGImage(parse));
-                                    visual.RelativeSizeAdjustment = Vector2.One;
-
-                                    FindName(nameof(svgPreviewerContainer));
-
-                                    svgPreviewer.Width = parse->width;
-                                    svgPreviewer.Height = parse->height;
-                                    ElementCompositionPreview.SetElementChildVisual(svgPreviewer, visual);
-
-                                    succeeded = true;
-                                }
-                            }
-
-                            NanoSVG.NanoSVG.nsvgDelete(parse);
-                        }
-                    }
-                    else
-                    {
-                        SvgImageSource source = new()
-                        {
-                            RasterizePixelWidth = 1024,
-                            RasterizePixelHeight = 1024
-                        };
-
-                        if (await source.SetSourceAsync(stream) is SvgImageSourceLoadStatus.Success)
-                        {
-                            Viewbox viewbox = new()
-                            {
-                                Stretch = Stretch.Uniform,
-                                Width = Math.Min(512, PreviewContainer.ActualWidth - 20),
-                                Height = Math.Min(512, PreviewContainer.ActualHeight - 20),
-                                Child = new Image()
-                                {
-                                    Source = source,
-                                    Width = 1024,
-                                    Height = 1024,
-                                    Stretch = Stretch.None
-                                }
-                            };
-
-                            FindName(nameof(svgPreviewerContainer));
-                            svgPreviewer.Content = viewbox;
-                            svgPreviewer.VerticalAlignment = VerticalAlignment.Center;
-                            svgPreviewer.HorizontalAlignment = HorizontalAlignment.Center;
+                            FindName(nameof(webView));
+                            webView.NavigateToString(html);
 
                             succeeded = true;
                         }
@@ -847,6 +903,19 @@ namespace MrmTool
                         _pri.ResourceCandidates.Add(candidate);
                     }
                 }
+            }
+        }
+
+        [DynamicWindowsRuntimeCast(typeof(ToggleMenuFlyoutItem))]
+        private async void UseWebViewForSvg_Click(object sender, RoutedEventArgs e)
+        {
+            _useWebViewForSvg = ((ToggleMenuFlyoutItem)sender).IsChecked;
+
+            if (_useWebViewForSvg &&
+                _selectedResource?.Type is ResourceType.Svg &&
+                candidatesList.SelectedItem is CandidateItem item)
+            {
+                await DisplayCandidate(item);
             }
         }
     }

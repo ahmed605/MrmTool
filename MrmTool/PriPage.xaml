@@ -142,6 +142,11 @@
                 </MenuFlyoutItem>
             </muxc:MenuBarItem>
             <muxc:MenuBarItem Title="View">
+                <ToggleMenuFlyoutItem Visibility="{x:Bind local:Program.IsWebViewAvailable}" Text="Use WebView for SVG" Click="UseWebViewForSvg_Click">
+                    <ToggleMenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Globe"/>
+                    </ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
                 <MenuFlyoutSubItem Text="Previewer theme">
                     <muxc:RadioMenuFlyoutItem Text="System" GroupName="PreviewerTheme" Click="SystemTheme_Click" IsChecked="True" />
                     <muxc:RadioMenuFlyoutItem Text="Light" GroupName="PreviewerTheme" Click="LightTheme_Click" />
@@ -341,6 +346,8 @@
                         <ScrollViewer x:Name="svgPreviewerContainer" x:Load="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalScrollBarVisibility="Visible" HorizontalScrollMode="Auto" VerticalScrollMode="Auto" ZoomMode="Enabled" IsZoomInertiaEnabled="True">
                             <ContentPresenter x:Name="svgPreviewer" />
                         </ScrollViewer>
+
+                        <WebView x:Name="webView" DefaultBackgroundColor="Transparent" x:Load="False"/>
                     </Grid>
                 </Border>
 
