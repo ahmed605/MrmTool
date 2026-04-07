@@ -75,7 +75,25 @@ namespace MrmTool
             wc.lpszClassName = lpszClassName;
             ThrowLastErrorIfNull(RegisterClassW(&wc));
 
-            WindowHandle = CreateWindowExW(WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME, lpszClassName, lpWindowName, WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, HWND.NULL, HMENU.NULL, wc.hInstance, null);
+            BOOL dwmFrameEnabled = TRUE;
+            if (FAILED(DwmIsCompositionEnabled(&dwmFrameEnabled)))
+            {
+                dwmFrameEnabled = TRUE;
+            }
+
+            WindowHandle = CreateWindowExW(dwmFrameEnabled ? WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME : 0u,
+                                           lpszClassName,
+                                           lpWindowName,
+                                           WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           CW_USEDEFAULT,
+                                           HWND.NULL,
+                                           HMENU.NULL,
+                                           wc.hInstance,
+                                           null);
+            
             ThrowLastErrorIfDefault(WindowHandle);
 
             LoadLibraryA((sbyte*)Unsafe.AsPointer(in "twinapi.appcore.dll"u8.GetPinnableReference()));
@@ -163,6 +181,11 @@ namespace MrmTool
                     break;
                 case WM_SETFOCUS:
                     SetFocus(_coreHwnd);
+                    break;
+                case WM_DWMNCRENDERINGCHANGED:
+                    SetWindowLongW(hWnd, GWL.GWL_EXSTYLE, (BOOL)wParam ?
+                        WS_EX_NOREDIRECTIONBITMAP | WS_EX_DLGMODALFRAME :
+                        NULL);
                     break;
                 case WM_DESTROY:
                     _xamlApp = null;
