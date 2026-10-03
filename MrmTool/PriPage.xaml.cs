@@ -341,7 +341,7 @@ namespace MrmTool
             UnloadObject(xbfFallbackContainer);
 
             if (_selectedResource?.Type.IsPreviewedAsText is not true)
-                UnloadObject(valueTextEditor);
+                UnloadObject(textContainer);
 
             if (_selectedResource?.Type is not ResourceType.Image)
                 UnloadObject(imagePreviewerContainer);
@@ -375,7 +375,7 @@ namespace MrmTool
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
             UnloadObject(xbfFallbackContainer);
-            UnloadObject(valueTextEditor);
+            UnloadObject(textContainer);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(svgPreviewerContainer);
             UnloadObject(webView);
@@ -385,7 +385,7 @@ namespace MrmTool
 
         private void UnloadNonErrorPreviewElements()
         {
-            UnloadObject(valueTextEditor);
+            UnloadObject(textContainer);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(svgPreviewerContainer);
             UnloadObject(webView);
@@ -430,7 +430,7 @@ namespace MrmTool
 
         private void DisplayStringCandidate(string str)
         {
-            FindName(nameof(valueTextEditor));
+            FindName(nameof(textContainer));
 
             var editor = valueTextEditor.Editor;
             editor.ReadOnly = false;

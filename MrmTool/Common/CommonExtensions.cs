@@ -103,18 +103,6 @@ namespace MrmTool.Common
             return name.LastIndexOf('/', out var idx) != -1 ? name[..idx] : null;
         }
 
-        private const char DirectorySeparatorChar = '\\';
-        private const char AltDirectorySeparatorChar = '/';
-
-        [return: NotNullIfNotNull(nameof(path))]
-        internal static string? GetExtensionAfterPeriod(this string path)
-        {
-            if (path == null)
-                return null;
-
-            return path.ToLowerInvariant().AsSpan().GetExtensionAfterPeriod().ToString();
-        }
-
         internal static string ToScintillaLanguage(this string extensionAfterPeriod)
         {
             return extensionAfterPeriod switch
@@ -124,7 +112,7 @@ namespace MrmTool.Common
                 "js" => "javascript",
                 "htm" => "html",
                 "ini" or "inf" => "props",
-                "resw" or "resx" or "xaml" => "xml",
+                "xsl" or "resw" or "resx" or "xaml" => "xml",
                 "scss" or "less" or "hss" => "css",
                 _ => extensionAfterPeriod,
             };
@@ -156,7 +144,7 @@ namespace MrmTool.Common
                 ".svg"
                     => ResourceType.Svg,
 
-                ".txt" or ".xml" or ".csv" or ".ini" or ".inf" or ".json" or ".html" or
+                ".txt" or ".xml" or ".xsl" or ".csv" or ".ini" or ".inf" or ".json" or ".html" or
                 ".htm" or ".css" or ".scss" or ".less" or ".hss" or ".js" or ".cs" or
                 ".resw" or ".resx"
                     => ResourceType.Text,
@@ -196,6 +184,18 @@ namespace MrmTool.Common
                 ResourceType.Xaml or ResourceType.Xbf => Icons.XamlLarge.Value,
                 _ => Icons.UnknownLarge.Value,
             };
+        }
+
+        private const char DirectorySeparatorChar = '\\';
+        private const char AltDirectorySeparatorChar = '/';
+
+        [return: NotNullIfNotNull(nameof(path))]
+        internal static string? GetExtensionAfterPeriod(this string path)
+        {
+            if (path == null)
+                return null;
+
+            return path.ToLowerInvariant().AsSpan().GetExtensionAfterPeriod().ToString();
         }
 
         internal static ReadOnlySpan<char> GetExtensionAfterPeriod(this ReadOnlySpan<char> path)
@@ -344,6 +344,34 @@ namespace MrmTool.Common
             }
 
             return null;
+        }
+
+        internal unsafe static IReadOnlyList<string> GetStorageItemPathsUnsafe(this DataPackageView view)
+        {
+            var hDrop = view.GetHDropUnsafe();
+            if (hDrop is null) return [];
+
+            var dropFiles = *(DROPFILES**)hDrop;
+            if (dropFiles is null) return [];
+
+            var buffer = (char*)((byte*)dropFiles + dropFiles->pFiles);
+
+            var start = buffer;
+            var paths = new List<string>();
+            while (*(uint*)buffer != 0)
+            {
+                var pNextChar = ++buffer;
+                if (*pNextChar == 0)
+                {
+                    var length = (int)(pNextChar - start);
+                    paths.Add(new(start, 0, length));
+
+                    start = pNextChar + 1;
+                }
+            }
+
+            LOG_LAST_ERROR_IF(GlobalFree((HGLOBAL)hDrop).Value is not null);
+            return paths;
         }
 
         internal unsafe static NativeBuffer GetBuffer(this Encoding encoding, string s)

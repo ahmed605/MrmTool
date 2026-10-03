@@ -154,7 +154,8 @@ namespace MrmTool
                     SendMessageW(_coreHwnd, message, wParam, lParam);
                     break;
                 case WM_SETTINGCHANGE:
-                    if ((BOOL)lParam && new string((char*)lParam) == "ImmersiveColorSet")
+                    if (lParam.Value is not 0 &&
+                        MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)lParam).SequenceEqual("ImmersiveColorSet"))
                         NativeUtils.EnsureTitleBarTheme(hWnd);
 
                     goto case WM_THEMECHANGED;

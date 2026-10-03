@@ -18,6 +18,7 @@
     xmlns:contract7Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,7)"
     xmlns:contract5Present="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract,5)"
     xmlns:contract5NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,5)"
+    xmlns:contract7NotPresent="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractNotPresent(Windows.Foundation.UniversalApiContract,7)"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
     
@@ -296,8 +297,66 @@
                     </Border.BorderBrush>
                     <Grid>
                         <!-- String values -->
-                        <winuieditor:CodeEditorControl Padding="-10,12,0,0" x:Name="valueTextEditor" SyntaxHighlightingApplied="SyntaxHighlightingApplied" x:Load="False" />
-                        
+                        <Grid x:Name="textContainer" x:Load="False">
+                            <winuieditor:CodeEditorControl Padding="-10,12,0,0" x:Name="valueTextEditor" SyntaxHighlightingApplied="SyntaxHighlightingApplied" />
+
+                            <Popup IsLightDismissEnabled="True" IsOpen="True" HorizontalOffset="-300" VerticalOffset="10" VerticalAlignment="Top" HorizontalAlignment="Right">
+                                <Border CornerRadius="8" Width="290" Translation="0,0,64" contract7NotPresent:Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
+                                    <contract7Present:Border.Resources>
+                                        <ResourceDictionary>
+                                            <ResourceDictionary.ThemeDictionaries>
+                                                <ResourceDictionary x:Key="Default">
+                                                    <Color x:Key="PopupAcrylicBackgroundDarkColor">#2C2C2C</Color>
+                                                </ResourceDictionary>
+                                                <ResourceDictionary x:Key="Light">
+                                                    <Color x:Key="PopupAcrylicBackgroundDarkColor">#FCFCFC</Color>
+                                                </ResourceDictionary>
+                                            </ResourceDictionary.ThemeDictionaries>
+                                        </ResourceDictionary>
+                                    </contract7Present:Border.Resources>
+
+                                    <Border.Shadow>
+                                        <ThemeShadow/>
+                                    </Border.Shadow>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid Grid.Row="0" Padding="10">
+                                            <contract7Present:Grid.Background>
+                                                <contract5Present:AcrylicBrush BackgroundSource="Backdrop" TintColor="{ThemeResource PopupAcrylicBackgroundDarkColor}" TintOpacity="0.3" FallbackColor="#2C2C2C"/>
+                                            </contract7Present:Grid.Background>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <FontIcon Grid.Column="0" RenderTransformOrigin="0.5,0.5" Opacity="0.7" Margin="0,0,8,0" FontSize="14" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE00F;" >
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform Angle="90" />
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                            <TextBox Grid.Column="1" PlaceholderText="Type to search..." BorderThickness="1.1" CornerRadius="4" Background="Transparent"/>
+                                            <FontIcon Grid.Column="2" Opacity="0.7" Margin="10,0,10,0" FontSize="14" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74B;" />
+                                            <FontIcon Grid.Column="3" Opacity="0.7" FontSize="14" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74A;" />
+                                        </Grid>
+                                        <Border Grid.Row="1" Visibility="Collapsed" contract7NotPresent:CornerRadius="0,0,8,8" contract7NotPresent:Background="{ThemeResource MenuFlyoutItemFocusedBackgroundThemeBrush}">
+                                            <contract7Present:Border.Background>
+                                                <contract5Present:AcrylicBrush BackgroundSource="Backdrop" TintColor="{ThemeResource PopupAcrylicBackgroundDarkColor}" TintOpacity="0.0" FallbackColor="#2C2C2C"/>
+                                            </contract7Present:Border.Background>
+                                            <StackPanel Padding="10" Orientation="Vertical">
+                                                <ToggleSwitch OnContent="Match case" OffContent="Match case"/>
+                                                <ToggleSwitch Margin="0,2,0,0" OnContent="Match whole word" OffContent="Match whole word"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
                         <!-- Path error: Invalid root -->
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Load="False" x:Name="invalidRootPathContainer">
                             <TextBlock TextWrapping="Wrap" Text="The root path doesn't contain the the file. You can specify another one below." HorizontalAlignment="Center" />
