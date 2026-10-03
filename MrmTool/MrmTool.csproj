@@ -40,7 +40,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Dongle.GuidRVAGen" Version="1.0.5" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251115.2" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Uwp.Managed" Version="3.0.1" />

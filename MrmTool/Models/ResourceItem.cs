@@ -1,60 +1,54 @@
 ﻿using MrmLib;
-using CommunityToolkit.Mvvm.ComponentModel;
 using MrmTool.Common;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace MrmTool.Models
 {
-    public partial class ResourceItem : ObservableObject
+    public partial class ResourceItem(string name, ObservableCollection<ResourceItem> parent) : INotifyPropertyChanged
     {
-        public ResourceItem(string name, ObservableCollection<ResourceItem> parent)
+        private string _name = name;
+        private string _displayName = name.GetDisplayName();
+
+        internal ObservableCollection<ResourceItem> Parent = parent;
+
+        public string Name
         {
-            Parent = parent;
-            Name = name;
-        }
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(DisplayName))]
-        public partial string Name { get; set; }
-
-        [ObservableProperty]
-        public partial BitmapImage? Icon { get; private set; }
-
-        private int _oldNameLength;
-
-        internal ObservableCollection<ResourceItem> Parent = null!;
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(IsFolder))]
-        internal partial ResourceType Type { get; private set; }
-
-        partial void OnNameChanging(string value)
-        {
-            _oldNameLength = Name?.Length ?? 0;
-        }
-
-        partial void OnNameChanged(string value)
-        {
-            foreach (var candidate in Candidates)
-            {
-                candidate.Candidate.ResourceName = value;
-            }
-
-            foreach (var child in Children)
-            {
-                child.Name = value + child.Name[_oldNameLength..];
-            }
-
-            EnsureIconAndType(true);
-        }
-
-        public string DisplayName
-        {
-            get => Name.GetDisplayName();
+            get => _name;
             set
             {
-                if (!string.Equals(DisplayName, value, StringComparison.Ordinal))
+                if (!_name.Equals(value, StringComparison.Ordinal))
+                {
+                    var oldNameLength = _name.Length;
+
+                    _name = value;
+                    _displayName = value.GetDisplayName();
+
+                    foreach (var candidate in Candidates)
+                    {
+                        candidate.Candidate.ResourceName = value;
+                    }
+
+                    foreach (var child in Children)
+                    {
+                        child.Name = value + child.Name[oldNameLength..];
+                    }
+
+                    PropertyChanged?.Invoke(this, new(nameof(Name)));
+                    PropertyChanged?.Invoke(this, new(nameof(DisplayName)));
+
+                    EnsureIconAndType(true);
+                }
+            }
+        }
+
+        public string DisplayName 
+        {
+            get => _displayName;
+            set
+            {
+                if (!_displayName.Equals(value, StringComparison.Ordinal))
                 {
                     Name = Name.SetDisplayName(value);
                 }
@@ -65,7 +59,13 @@ namespace MrmTool.Models
 
         public ObservableCollection<CandidateItem> Candidates { get; } = [];
 
+        public BitmapImage? Icon { get; private set; }
+
+        internal ResourceType Type { get; private set; } = ResourceType.Unknown;
+
         internal bool IsFolder => Type is ResourceType.Folder || Children.Count > 0;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private void DetermineType()
         {
@@ -93,6 +93,7 @@ namespace MrmTool.Models
                 DetermineType();
 
                 Icon = Type.GetCorrespondingIcon();
+                PropertyChanged?.Invoke(this, new(nameof(Icon)));
             }
         }
 

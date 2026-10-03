@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using Common;
 using MrmLib;
 using MrmTool.Common;
@@ -33,8 +32,7 @@ using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace MrmTool
 {
-    [ObservableObject]
-    public sealed partial class PriPage : Page
+    public sealed partial class PriPage : Page, INotifyPropertyChanged
     {
         private static readonly IComparer<ResourceItem> ResourceItemComparer =
             Comparer<ResourceItem>.Create(static (left, right) =>
@@ -55,8 +53,22 @@ namespace MrmTool
         private CandidateEditState? _displayedEdit;
         private Editor? _subscribedEditor;
         private bool _settingEditorText;
+        private PriFile? _document;
+        private StorageFile? _currentFile;
+        private StorageFolder? _rootFolder;
+        private ResourceItem? _selectedResource;
+        private CandidateItem? _selectedCandidate;
+        private ObservableCollection<ResourceItem> _resourceItems = [];
+        private XbfDialect _xbf2Dialect = XbfDialect.WUX;
+        private bool _isBusy;
+        private bool _isDirty;
         private bool _hasDocumentChanges;
+        private bool _includeConnectionIds = true;
+        private bool _useWebViewForSvg;
+        private bool _sortResources;
         private int _loadVersion;
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         private sealed class CandidateEditState(CandidateItem candidate, ResourceType resourceType, string originalText, XbfVersion? xbfVersion, XbfDialect dialect)
         {
@@ -97,66 +109,103 @@ namespace MrmTool
             internal object Value { get; } = value;
         }
 
-        [ObservableProperty]
-        public partial PriFile? Document { get; private set; }
+        public PriFile? Document
+        {
+            get => _document;
+            private set => SetProperty(ref _document, value);
+        }
 
-        [ObservableProperty]
-        public partial StorageFile? CurrentFile { get; private set; }
+        public StorageFile? CurrentFile
+        {
+            get => _currentFile;
+            private set => SetProperty(ref _currentFile, value);
+        }
 
-        [ObservableProperty]
-        public partial StorageFolder? RootFolder { get; private set; }
+        public StorageFolder? RootFolder
+        {
+            get => _rootFolder;
+            private set => SetProperty(ref _rootFolder, value);
+        }
 
-        [ObservableProperty]
-        public partial ObservableCollection<ResourceItem> ResourceItems { get; private set; }
+        public ObservableCollection<ResourceItem> ResourceItems
+        {
+            get => _resourceItems;
+            private set => SetProperty(ref _resourceItems, value);
+        }
 
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CanRemoveResource))]
-        public partial ResourceItem? SelectedResource { get; set; }
+        public ResourceItem? SelectedResource
+        {
+            get => _selectedResource;
+            set
+            {
+                if (SetProperty(ref _selectedResource, value))
+                {
+                    SelectedCandidate = value?.Candidates.FirstOrDefault();
+                    OnPropertyChanged(nameof(CanRemoveResource));
+                }
+            }
+        }
 
-        [ObservableProperty]
-        public partial CandidateItem? SelectedCandidate { get; set; }
+        public CandidateItem? SelectedCandidate
+        {
+            get => _selectedCandidate;
+            set => SetProperty(ref _selectedCandidate, value);
+        }
 
-        [ObservableProperty]
-        public partial XbfDialect Xbf2Dialect { get; set; }
+        public XbfDialect Xbf2Dialect
+        {
+            get => _xbf2Dialect;
+            set => SetProperty(ref _xbf2Dialect, value);
+        }
 
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(IsNotBusy))]
-        public partial bool IsBusy { get; private set; }
+        public bool IsBusy
+        {
+            get => _isBusy;
+            private set
+            {
+                if (SetProperty(ref _isBusy, value))
+                {
+                    OnPropertyChanged(nameof(IsNotBusy));
+                }
+            }
+        }
 
         public bool IsNotBusy => !IsBusy;
 
-        [ObservableProperty]
-        public partial bool IsDirty { get; private set; }
+        public bool IsDirty
+        {
+            get => _isDirty;
+            private set => SetProperty(ref _isDirty, value);
+        }
 
         public bool CanRemoveResource => SelectedResource is not null;
 
-        [ObservableProperty]
-        public partial bool IncludeConnectionIds { get; set; }
-
-        [ObservableProperty]
-        public partial bool UseWebViewForSvg { get; set; }
-
-        [ObservableProperty]
-        public partial bool SortResources { get; set; }
-
-        partial void OnSelectedResourceChanged(ResourceItem? value)
+        public bool IncludeConnectionIds
         {
-            SelectedCandidate = value?.Candidates.FirstOrDefault();
+            get => _includeConnectionIds;
+            set => SetProperty(ref _includeConnectionIds, value);
         }
 
-        partial void OnSortResourcesChanged(bool value)
+        public bool UseWebViewForSvg
         {
-            if (value)
+            get => _useWebViewForSvg;
+            set => SetProperty(ref _useWebViewForSvg, value);
+        }
+
+        public bool SortResources
+        {
+            get => _sortResources;
+            set
             {
-                SortResourceItems();
+                if (SetProperty(ref _sortResources, value) && value)
+                {
+                    SortResourceItems();
+                }
             }
         }
 
         public PriPage()
         {
-            ResourceItems = [];
-            Xbf2Dialect = XbfDialect.WUX;
-            IncludeConnectionIds = true;
             InitializeComponent();
             PropertyChanged += Page_PropertyChanged;
         }
@@ -538,6 +587,23 @@ namespace MrmTool
                     items.Move(currentIndex, targetIndex);
                 }
             }
+        }
+
+        private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(storage, value))
+            {
+                return false;
+            }
+
+            storage = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            return true;
+        }
+
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]

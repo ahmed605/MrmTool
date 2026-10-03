@@ -1,6 +1,7 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using MrmTool.Common;
 using MrmTool.Scintilla;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 using Windows.Storage;
@@ -17,34 +18,75 @@ using XbfKit.IO;
 
 namespace MrmTool;
 
-[ObservableObject]
-public sealed partial class XbfPage : Page
+public sealed partial class XbfPage : Page, INotifyPropertyChanged
 {
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSave))]
-    public partial StorageFile? CurrentFile { get; private set; }
+    private StorageFile? _currentFile;
+    private XbfVersion? _version;
+    private XbfDialect _dialect = XbfDialect.WUX;
+    private bool _isBusy;
+    private bool _isDirty;
+    private bool _includeConnectionIds = true;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsXbf2))]
-    [NotifyPropertyChangedFor(nameof(CanSave))]
-    [NotifyPropertyChangedFor(nameof(CanSaveAs))]
-    [NotifyPropertyChangedFor(nameof(CanSwitchDialect))]
-    public partial XbfVersion? Version { get; private set; }
+    public event PropertyChangedEventHandler? PropertyChanged;
 
-    [ObservableProperty]
-    public partial XbfDialect Dialect { get; private set; }
+    public StorageFile? CurrentFile
+    {
+        get => _currentFile;
+        private set
+        {
+            if (SetProperty(ref _currentFile, value))
+            {
+                OnPropertyChanged(nameof(CanSave));
+            }
+        }
+    }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanSave))]
-    [NotifyPropertyChangedFor(nameof(CanSaveAs))]
-    [NotifyPropertyChangedFor(nameof(CanSwitchDialect))]
-    public partial bool IsBusy { get; private set; }
+    public XbfVersion? Version
+    {
+        get => _version;
+        private set
+        {
+            if (SetProperty(ref _version, value))
+            {
+                OnPropertyChanged(nameof(IsXbf2));
+                OnPropertyChanged(nameof(CanSave));
+                OnPropertyChanged(nameof(CanSaveAs));
+                OnPropertyChanged(nameof(CanSwitchDialect));
+            }
+        }
+    }
 
-    [ObservableProperty]
-    public partial bool IsDirty { get; private set; }
+    public XbfDialect Dialect
+    {
+        get => _dialect;
+        private set => SetProperty(ref _dialect, value);
+    }
 
-    [ObservableProperty]
-    public partial bool IncludeConnectionIds { get; set; }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                OnPropertyChanged(nameof(CanSave));
+                OnPropertyChanged(nameof(CanSaveAs));
+                OnPropertyChanged(nameof(CanSwitchDialect));
+            }
+        }
+    }
+
+    public bool IsDirty
+    {
+        get => _isDirty;
+        private set => SetProperty(ref _isDirty, value);
+    }
+
+    public bool IncludeConnectionIds
+    {
+        get => _includeConnectionIds;
+        set => SetProperty(ref _includeConnectionIds, value);
+    }
 
     public bool CanSave => CurrentFile is not null && Version is not null && !IsBusy;
     public bool CanSaveAs => Version is not null && !IsBusy;
@@ -55,36 +97,9 @@ public sealed partial class XbfPage : Page
     {
         InitializeComponent();
 
-        Dialect = XbfDialect.WUX;
-        IncludeConnectionIds = true;
-
         xamlEditor.Editor.SavePointLeft += Editor_SavePointLeft;
         xamlEditor.Editor.SavePointReached += Editor_SavePointReached;
-    }
-
-    partial void OnIsBusyChanged(bool value)
-    {
-        xamlEditor.Editor.ReadOnly = value;
-    }
-
-    partial void OnCurrentFileChanged(StorageFile? value)
-    {
-        UpdateWindowTitle();
-    }
-
-    partial void OnIsDirtyChanged(bool value)
-    {
-        UpdateWindowTitle();
-    }
-
-    partial void OnDialectChanged(XbfDialect value)
-    {
-        SyncDialectMenu();
-    }
-
-    partial void OnIncludeConnectionIdsChanged(bool value)
-    {
-        SyncDecompilationMenu();
+        PropertyChanged += Page_PropertyChanged;
     }
 
     /// <inheritdoc/>
@@ -175,6 +190,23 @@ public sealed partial class XbfPage : Page
         {
             IsBusy = false;
         }
+    }
+
+    private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(storage, value))
+        {
+            return false;
+        }
+
+        storage = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        return true;
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     private async Task LoadXbf(StorageFile file, XbfDialect? dialect = null)
@@ -384,6 +416,19 @@ public sealed partial class XbfPage : Page
         if (await picker.PickSaveFileAsync() is StorageFile file)
         {
             await SaveXbf(file);
+        }
+    }
+
+    private void Page_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IsBusy))
+        {
+            xamlEditor.Editor.ReadOnly = IsBusy;
+        }
+
+        if (e.PropertyName is nameof(CurrentFile) or nameof(IsDirty))
+        {
+            UpdateWindowTitle();
         }
     }
 
