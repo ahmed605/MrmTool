@@ -5,19 +5,24 @@ using MrmTool.Dialogs;
 using MrmTool.Models;
 using MrmTool.Scintilla;
 using MrmTool.SVG;
+using System.Buffers;
+using System.Collections.Frozen;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using TerraFX.Interop.Windows;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.System;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
-using Windows.UI.Core;
+using Windows.System;
 using Windows.UI.Composition;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Hosting;
@@ -34,20 +39,24 @@ namespace MrmTool
 {
     public sealed partial class PriPage : Page, INotifyPropertyChanged
     {
-        private static readonly IComparer<ResourceItem> ResourceItemComparer =
-            Comparer<ResourceItem>.Create(static (left, right) =>
+        private static readonly Comparison<ResourceItem> ResourceItemComparer = static (left, right) =>
             {
-                int folderComparison = (right.Children.Count > 0).CompareTo(left.Children.Count > 0);
-                if (folderComparison != 0)
+                bool leftHasChildren = left.Children.Count > 0;
+                bool rightHasChildren = right.Children.Count > 0;
+
+                if (leftHasChildren != rightHasChildren)
                 {
-                    return folderComparison;
+                    return leftHasChildren ? -1 : 1;
                 }
 
-                int nameComparison = StringComparer.OrdinalIgnoreCase.Compare(left.DisplayName, right.DisplayName);
+                var leftName = left.DisplayName;
+                var rightName = right.DisplayName;
+                int nameComparison = string.Compare(leftName, rightName, StringComparison.OrdinalIgnoreCase);
+                
                 return nameComparison != 0
                     ? nameComparison
-                    : StringComparer.Ordinal.Compare(left.DisplayName, right.DisplayName);
-            });
+                    : string.CompareOrdinal(leftName, rightName);
+            };
 
         private readonly Dictionary<CandidateItem, CandidateEditState> _candidateEdits = [];
         private CandidateEditState? _displayedEdit;
@@ -58,6 +67,7 @@ namespace MrmTool
         private StorageFolder? _rootFolder;
         private ResourceItem? _selectedResource;
         private CandidateItem? _selectedCandidate;
+        private CoreWindow? _coreWindow;
         private ObservableCollection<ResourceItem> _resourceItems = [];
         private XbfDialect _xbf2Dialect = XbfDialect.WUX;
         private bool _isBusy;
@@ -216,7 +226,9 @@ namespace MrmTool
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += Dispatcher_AcceleratorKeyActivated;
+
+            _coreWindow = CoreWindow.GetForCurrentThread();
+            Dispatcher.AcceleratorKeyActivated += Dispatcher_AcceleratorKeyActivated;
 
             if (e.Parameter is ValueTuple<PriFile, StorageFile> loadedDocument)
             {
@@ -231,13 +243,10 @@ namespace MrmTool
         /// <inheritdoc/>
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated -= Dispatcher_AcceleratorKeyActivated;
-            if (_subscribedEditor is not null)
-            {
-                _subscribedEditor.Modified -= Editor_Modified;
-                _subscribedEditor = null;
-            }
+            Dispatcher.AcceleratorKeyActivated -= Dispatcher_AcceleratorKeyActivated;
+            _coreWindow = null;
 
+            UnsubscribeFromEditor();
             CancelPendingLoad();
             base.OnNavigatedFrom(e);
         }
@@ -249,10 +258,8 @@ namespace MrmTool
                 resourceLoadingIndicator.Visibility = IsBusy
                     ? Visibility.Visible
                     : Visibility.Collapsed;
-                if (_subscribedEditor is not null)
-                {
-                    _subscribedEditor.ReadOnly = IsBusy;
-                }
+
+                _subscribedEditor?.ReadOnly = IsBusy;
             }
 
             if (e.PropertyName is nameof(CurrentFile) or nameof(IsDirty))
@@ -266,20 +273,18 @@ namespace MrmTool
             ArgumentNullException.ThrowIfNull(file);
             int loadVersion = ++_loadVersion;
             IsBusy = true;
+
             try
             {
                 PriFile document = await PriFile.LoadAsync(file);
-                // Keep the projected collection enumeration on the current apartment.
-                // Moving it into Task.Run can leave the PRI page permanently busy.
                 ObservableCollection<ResourceItem> resources = BuildResourceTree(document);
-                var result = (Document: document, Resources: resources);
 
                 if (loadVersion != _loadVersion)
                 {
                     return false;
                 }
 
-                ApplyLoadedDocument(result.Document, file, result.Resources);
+                ApplyLoadedDocument(document, file, resources);
                 return true;
             }
             catch (Exception) when (loadVersion != _loadVersion)
@@ -330,9 +335,11 @@ namespace MrmTool
             IsBusy = true;
             try
             {
-                using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
+                using var stream = await file.OpenAsync(FileAccessMode.ReadWrite, StorageOpenOptions.AllowOnlyReaders);
                 stream.Size = 0;
+
                 await document.WriteAsync(stream);
+
                 CurrentFile = file;
                 _hasDocumentChanges = false;
             }
@@ -387,9 +394,11 @@ namespace MrmTool
         {
             ArgumentNullException.ThrowIfNull(resource);
             resource.Parent.Remove(resource);
+
             ObservableCollection<ResourceItem> parent = resource.Name.GetParentName() is string parentName
                 ? GetOrAddResourceItem(parentName).Children
                 : ResourceItems;
+
             resource.Parent = parent;
             parent.Add(resource);
             SortResourceItems();
@@ -405,7 +414,7 @@ namespace MrmTool
             }
 
             SelectedResource.Candidates.Add(candidate);
-            Document.ResourceCandidates.Add(candidate.Candidate);
+            Document.ResourceCandidates.Add(candidate);
             SelectedCandidate = candidate;
             MarkDirty();
         }
@@ -419,19 +428,13 @@ namespace MrmTool
             }
 
             SelectedResource.Candidates.Remove(candidate);
-            Document.ResourceCandidates.Remove(candidate.Candidate);
+            Document.ResourceCandidates.Remove(candidate);
             if (ReferenceEquals(candidate, SelectedCandidate))
             {
                 SelectedCandidate = SelectedResource.Candidates.FirstOrDefault();
             }
 
             MarkDirty();
-        }
-
-        private void SetRootFolder(StorageFolder folder)
-        {
-            ArgumentNullException.ThrowIfNull(folder);
-            RootFolder = folder;
         }
 
         private async Task EmbedPathResourcesAsync()
@@ -483,14 +486,17 @@ namespace MrmTool
 
             try
             {
-                using IRandomAccessStream stream = await file.OpenAsync(
+                using var stream = await file.OpenAsync(
                     FileAccessMode.Read,
                     StorageOpenOptions.AllowReadersAndWriters);
+
                 var buffer = new Windows.Storage.Streams.Buffer((uint)stream.Size)
                 {
                     Length = (uint)stream.Size,
                 };
+
                 await stream.ReadAsync(buffer, (uint)stream.Size, InputStreamOptions.None);
+
                 candidate.DataValueBuffer = buffer;
                 MarkDirty();
                 return true;
@@ -515,6 +521,7 @@ namespace MrmTool
             IsDirty = _hasDocumentChanges || _candidateEdits.Values.Any(static edit => edit.IsDirty);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ResourceItem GetOrAddResourceItem(string name)
         {
             return GetOrAddResourceItem(ResourceItems, name);
@@ -538,14 +545,16 @@ namespace MrmTool
             string name,
             Dictionary<string, ResourceItem>? knownItems = null)
         {
-            string[] split = name.SplitIntoResourceNames();
             ResourceItem? currentParent = null;
+            string[] split = name.SplitIntoResourceNames();
+
             foreach (string item in split)
             {
                 ObservableCollection<ResourceItem> currentList = currentParent?.Children ?? resourceItems;
                 currentParent = knownItems is not null
                     ? knownItems.GetValueOrDefault(item)
                     : currentList.FirstOrDefault(i => i.Name.Equals(item, StringComparison.Ordinal));
+
                 if (currentParent is null)
                 {
                     currentParent = new ResourceItem(item, currentList);
@@ -557,6 +566,7 @@ namespace MrmTool
             return currentParent!;
         }
 
+        [SkipLocalsInit]
         private static void SortResourceTree(
             ObservableCollection<ResourceItem> items,
             bool preserveCollectionState = false)
@@ -566,25 +576,94 @@ namespace MrmTool
                 SortResourceTree(item.Children, preserveCollectionState);
             }
 
-            List<ResourceItem> sortedItems = items.ToList();
-            sortedItems.Sort(ResourceItemComparer);
-            if (!preserveCollectionState)
+            int count = items.Count;
+            if (count < 2 || IsSorted(items))
             {
-                items.Clear();
-                foreach (ResourceItem item in sortedItems)
-                {
-                    items.Add(item);
-                }
-
                 return;
             }
 
-            for (int targetIndex = 0; targetIndex < sortedItems.Count; targetIndex++)
+            var sortedItems = ArrayPool<ResourceItem>.Shared.Rent(count);
+            var sortedSpan = sortedItems.AsSpan(0, count);
+
+            try
             {
-                int currentIndex = items.IndexOf(sortedItems[targetIndex]);
-                if (currentIndex != targetIndex)
+                items.CopyTo(sortedItems, 0);
+                sortedSpan.Sort(ResourceItemComparer);
+
+                if (!preserveCollectionState)
                 {
-                    items.Move(currentIndex, targetIndex);
+                    items.Clear();
+                    foreach (ResourceItem item in sortedSpan)
+                    {
+                        items.Add(item);
+                    }
+
+                    return;
+                }
+
+                ReorderItems(items, sortedSpan);
+            }
+            finally
+            {
+                ArrayPool<ResourceItem>.Shared.Return(sortedItems, false);
+            }
+        }
+
+        [SkipLocalsInit]
+        private static bool IsSorted(ObservableCollection<ResourceItem> items)
+        {
+            for (int i = 1; i < items.Count; i++)
+            {
+                if (ResourceItemComparer(items[i - 1], items[i]) > 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        [SkipLocalsInit]
+        private static void ReorderItems(ObservableCollection<ResourceItem> items, ReadOnlySpan<ResourceItem> sorted)
+        {
+            int n = sorted.Length;
+            var originalIndex = new Dictionary<ResourceItem, int>(n, ReferenceEqualityComparer.Instance);
+            for (int i = 0; i < n; i++)
+            {
+                originalIndex[items[i]] = i;
+            }
+
+            Span<int> tree = n < 512 ?
+                (stackalloc int[512])[..(n + 1)] :
+                GC.AllocateUninitializedArray<int>(n + 1);
+
+            tree[0] = 0;
+            for (int i = 1; i <= n; i++)
+            {
+                tree[i] = i & -i;
+            }
+
+            for (int target = 0; target < n; target++)
+            {
+                ResourceItem item = sorted[target];
+                int orig = originalIndex[sorted[target]];
+
+                int before = 0;
+                for (int i = orig; i > 0; i -= i & -i)
+                {
+                    before += tree[i];
+                }
+
+                int current = target + before;
+                if (current != target)
+                {
+                    items.RemoveAt(current);
+                    items.Insert(target, item);
+                }
+
+                for (int i = orig + 1; i <= n; i += i & -i)
+                {
+                    tree[i]--;
                 }
             }
         }
@@ -737,9 +816,10 @@ namespace MrmTool
             }
         }
 
-        private static bool IsKeyDown(VirtualKey key)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsKeyDown(VirtualKey key)
         {
-            return (Window.Current.CoreWindow.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
+            return (_coreWindow?.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
         }
 
         private void UpdateWindowTitle()
@@ -772,11 +852,10 @@ namespace MrmTool
         [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
         private async void AddResource_Click(object sender, RoutedEventArgs e)
         {
-            var parent = sender is MenuFlyoutItem item &&
-                         item.DataContext is ResourceItem resourceItem ?
+            var parent = sender is MenuFlyoutItem item && item.DataContext is ResourceItem resourceItem ?
                 resourceItem.Name :
-                         treeView.SelectedItem is ResourceItem resItem && resItem.IsFolder ?
-                resItem.Name : null;
+                treeView.SelectedItem is ResourceItem resItem && resItem.IsFolder ?
+                    resItem.Name : null;
 
             var dialog = new NewResourceDialog(Document!, parent);
 
@@ -808,10 +887,12 @@ namespace MrmTool
             ResourceItem? resourceItem = sender is MenuFlyoutItem item
                 ? item.DataContext as ResourceItem ?? SelectedResource
                 : SelectedResource;
+
             if (Document is not null && resourceItem is not null)
             {
                 bool removedSelection = ReferenceEquals(resourceItem, SelectedResource);
                 RemoveResource(resourceItem);
+
                 if (removedSelection)
                 {
                     UnloadAllPreviewElements();
@@ -828,7 +909,7 @@ namespace MrmTool
 
             if (await picker.PickSingleFolderAsync() is { } folder)
             {
-                SetRootFolder(folder);
+                RootFolder = folder;
             }
         }
 
@@ -929,7 +1010,10 @@ namespace MrmTool
             UnloadObject(xbfFallbackContainer);
 
             if (SelectedResource?.Type.IsPreviewedAsText is not true)
+            {
+                _subscribedEditor = null;
                 UnloadObject(valueTextEditor);
+            }
 
             if (SelectedResource?.Type is not ResourceType.Image)
                 UnloadObject(imagePreviewerContainer);
@@ -961,6 +1045,7 @@ namespace MrmTool
         private void UnloadAllPreviewElements()
         {
             _displayedEdit = null;
+            _subscribedEditor = null;
             UnloadObject(invalidRootPathContainer);
             UnloadObject(failedToOpenFileContainer);
             UnloadObject(xbfFallbackContainer);
@@ -975,6 +1060,7 @@ namespace MrmTool
         private void UnloadNonErrorPreviewElements()
         {
             _displayedEdit = null;
+            _subscribedEditor = null;
             UnloadObject(valueTextEditor);
             UnloadObject(imagePreviewerContainer);
             UnloadObject(svgPreviewerContainer);
@@ -1012,21 +1098,31 @@ namespace MrmTool
                 UnloadNonErrorPreviewElements();
                 FindName(nameof(invalidRootPathContainer));
             }
-            else if (candidate.ValueType is ResourceValueType.EmbeddedData)
-            {
-                var dataValue = candidate.DataValueReference;
-                using (RandomAccessStreamOverBuffer stream = new(dataValue))
-                {
-                    if (await DisplayBinaryCandidate(item, stream, SelectedResource!.Type))
-                        return;
-                }
-
-                FindName(nameof(exportContainer));
-                fileSizeLabel.Text = $"File Size: {dataValue.Length} bytes";
-            }
             else
             {
-                DisplayStringCandidate(new CandidateEditState(item, SelectedResource!.Type, candidate.StringValue, null, Xbf2Dialect));
+                var selectedResource = SelectedResource;
+                if (selectedResource is null)
+                {
+                    //TODO: show an error?
+                    return;
+                }
+
+                if (candidate.ValueType is ResourceValueType.EmbeddedData)
+                {
+                    var dataValue = candidate.DataValueReference;
+                    using (RandomAccessStreamOverBuffer stream = new(dataValue))
+                    {
+                        if (await DisplayBinaryCandidate(item, stream, selectedResource.Type))
+                            return;
+                    }
+
+                    FindName(nameof(exportContainer));
+                    fileSizeLabel.Text = $"File Size: {dataValue.Length} bytes";
+                }
+                else
+                {
+                    DisplayStringCandidate(new(item, selectedResource.Type, candidate.StringValue, null, Xbf2Dialect));
+                }
             }
         }
 
@@ -1034,21 +1130,39 @@ namespace MrmTool
         {
             FindName(nameof(valueTextEditor));
 
+            // NOTE: editing path resources is currently disabled, see the TODO in PrepareCandidateEdit.
+            var isPathResource = edit.OriginalValueType is ResourceValueType.Path;
+
             var editor = valueTextEditor.Editor;
-            SubscribeToEditor(editor);
-            _displayedEdit = edit;
-            _settingEditorText = true;
+            if (!isPathResource)
+            {
+                SubscribeToEditor(editor);
+                _displayedEdit = edit;
+                _settingEditorText = true;
+            }
+
             try
             {
                 editor.ReadOnly = false;
                 editor.WrapMode = Wrap.Word;
-                editor.CaretStyle = CaretStyle.Line;
+                editor.CaretStyle = isPathResource ? CaretStyle.Invisible : CaretStyle.Line;
                 editor.SetText(edit.Text);
                 valueTextEditor.ApplyDefaultsToDocument();
                 valueTextEditor.HighlightingLanguage = edit.ResourceType is ResourceType.Xaml or ResourceType.Xbf
                     ? "xml"
-                    : edit.Candidate.Candidate.ResourceName.GetDisplayName().GetExtensionAfterPeriod().ToScintillaLanguage();
-                editor.SetSavePoint();
+                    : (_selectedResource is not null ?
+                        _selectedResource.DisplayName :
+                        edit.Candidate.Candidate.ResourceName.GetDisplayName())
+                      .GetExtensionAfterPeriod().ToScintillaLanguage();
+
+                if (isPathResource)
+                {
+                    editor.ReadOnly = true;
+                }
+                else
+                {
+                    editor.SetSavePoint();
+                }
             }
             finally
             {
@@ -1070,6 +1184,15 @@ namespace MrmTool
 
             _subscribedEditor = editor;
             editor.Modified += Editor_Modified;
+        }
+
+        private void UnsubscribeFromEditor()
+        {
+            if (_subscribedEditor is not null)
+            {
+                _subscribedEditor.Modified -= Editor_Modified;
+                _subscribedEditor = null;
+            }
         }
 
         private void Editor_Modified(Editor sender, ModifiedEventArgs args)
@@ -1114,6 +1237,7 @@ namespace MrmTool
 
                 return result;
             });
+
             foreach (PreparedCandidateEdit item in prepared)
             {
                 if (item.Value is string text)
@@ -1122,7 +1246,7 @@ namespace MrmTool
                 }
                 else
                 {
-                    item.Edit.Candidate.SetValue((byte[])item.Value);
+                    item.Edit.Candidate.DataValueBuffer = (IBuffer)item.Value;
                 }
             }
 
@@ -1138,7 +1262,7 @@ namespace MrmTool
                     using MemoryStream output = new();
                     XbfDialect dialect = version.Major == 1 ? XbfDialect.WUX : edit.Dialect;
                     XbfCompiler.Compile(edit.Text, output, version, dialect);
-                    return new PreparedCandidateEdit(edit, output.ToArray());
+                    return new(edit, output.GetWindowsRuntimeBuffer());
                 }
                 catch (Exception ex)
                 {
@@ -1148,8 +1272,10 @@ namespace MrmTool
 
             object value = edit.OriginalValueType == ResourceValueType.String
                 ? edit.Text
-                : Encoding.UTF8.GetBytes(edit.Text);
-            return new PreparedCandidateEdit(edit, value);
+                : Encoding.UTF8.GetBuffer(edit.Text); // TODO: 1. Should this edit the source file in case of path resources?
+                                                      //       2. Change this once/if we add support for viewing another non-text (other than XBF) embedded/path resource as text.
+
+            return new(edit, value);
         }
 
         private async Task<bool> DisplayBinaryCandidate(CandidateItem item, IRandomAccessStream stream, ResourceType type)
@@ -1205,14 +1331,16 @@ namespace MrmTool
                 {
                     try
                     {
-                        XbfDocument document = XbfDocumentReader.Read(stream.AsStream());
+                        XbfDocument document = XbfDocumentReader.Read(stream.AsStream(0));
                         XbfDialect dialect = document.Version.Major == 1
                             ? XbfDialect.WUX
                             : Xbf2Dialect;
+
                         XbfDecompilationOptions options = new()
                         {
                             IncludeConnectionIds = IncludeConnectionIds,
                         };
+
                         DisplayStringCandidate(new CandidateEditState(item, type, XbfDecompiler.Decompile(document, dialect, options), document.Version, dialect));
                     }
                     catch (Exception ex)
@@ -1580,8 +1708,10 @@ namespace MrmTool
                 item.DataContext is ResourceItem resourceItem)
             {
                 string originalName = resourceItem.Name;
+
                 var dialog = new RenameDialog(resourceItem, false);
                 await dialog.ShowAsync();
+
                 if (!string.Equals(resourceItem.Name, originalName, StringComparison.Ordinal))
                 {
                     ReparentRenamedResource(resourceItem);

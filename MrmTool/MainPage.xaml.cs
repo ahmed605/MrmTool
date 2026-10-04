@@ -68,8 +68,6 @@ namespace MrmTool
 
             try
             {
-                // Load the PRI before navigating so the editor is never left in a
-                // partially initialized, permanently busy state.
                 var pri = await PriFile.LoadAsync(file);
                 Frame.Navigate(typeof(PriPage), (pri, file));
             }

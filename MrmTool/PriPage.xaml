@@ -148,6 +148,9 @@
                     </ToggleMenuFlyoutItem.Icon>
                 </ToggleMenuFlyoutItem>
                 <MenuFlyoutSubItem Text="XBF2 schema">
+                    <MenuFlyoutSubItem.Icon>
+                        <SymbolIcon Symbol="Document" />
+                    </MenuFlyoutSubItem.Icon>
                     <muxc:RadioMenuFlyoutItem Text="System XAML (Windows.UI.Xaml)" GroupName="Xbf2Schema" Click="SystemXaml_Click" IsChecked="True" />
                     <muxc:RadioMenuFlyoutItem Text="WinUI XAML (Microsoft.UI.Xaml)" GroupName="Xbf2Schema" Click="WinUIXaml_Click" />
                 </MenuFlyoutSubItem>

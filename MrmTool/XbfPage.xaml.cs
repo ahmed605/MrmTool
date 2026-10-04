@@ -1,12 +1,13 @@
 using MrmTool.Common;
 using MrmTool.Scintilla;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.System;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -23,6 +24,7 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
     private StorageFile? _currentFile;
     private XbfVersion? _version;
     private XbfDialect _dialect = XbfDialect.WUX;
+    private CoreWindow? _coreWindow;
     private bool _isBusy;
     private bool _isDirty;
     private bool _includeConnectionIds = true;
@@ -96,10 +98,6 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
     public XbfPage()
     {
         InitializeComponent();
-
-        xamlEditor.Editor.SavePointLeft += Editor_SavePointLeft;
-        xamlEditor.Editor.SavePointReached += Editor_SavePointReached;
-        PropertyChanged += Page_PropertyChanged;
     }
 
     /// <inheritdoc/>
@@ -107,7 +105,15 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated += Dispatcher_AcceleratorKeyActivated;
+
+        var editor = xamlEditor.Editor;
+        editor.SavePointLeft += Editor_SavePointLeft;
+        editor.SavePointReached += Editor_SavePointReached;
+        PropertyChanged += Page_PropertyChanged;
+
+        _coreWindow = CoreWindow.GetForCurrentThread();
+        Dispatcher.AcceleratorKeyActivated += Dispatcher_AcceleratorKeyActivated;
+
         if (e.Parameter is StorageFile file)
         {
             await LoadXbf(file);
@@ -117,7 +123,14 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
     /// <inheritdoc/>
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
-        Window.Current.CoreWindow.Dispatcher.AcceleratorKeyActivated -= Dispatcher_AcceleratorKeyActivated;
+        var editor = xamlEditor.Editor;
+        editor.SavePointLeft -= Editor_SavePointLeft;
+        editor.SavePointReached -= Editor_SavePointReached;
+        PropertyChanged -= Page_PropertyChanged;
+
+        Dispatcher.AcceleratorKeyActivated -= Dispatcher_AcceleratorKeyActivated;
+        _coreWindow = null;
+
         base.OnNavigatedFrom(e);
     }
 
@@ -128,28 +141,19 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
         IsBusy = true;
         try
         {
-            byte[] bytes;
-            using (IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.Read,
-                StorageOpenOptions.AllowReadersAndWriters))
-            using (Stream input = stream.AsStreamForRead())
-            using (MemoryStream copy = new())
+            var result = await Task.Run(async () =>
             {
-                await input.CopyToAsync(copy);
-                bytes = copy.ToArray();
-            }
-
-            var result = await Task.Run(() =>
-            {
-                using MemoryStream input = new(bytes, writable: false);
-                XbfDocument document = XbfDocumentReader.Read(input);
+                using var stream = await file.OpenAsync(FileAccessMode.Read, StorageOpenOptions.AllowReadersAndWriters);
+                XbfDocument document = XbfDocumentReader.Read(stream.AsStream(0));
                 XbfDialect dialect = document.Version.Major == 1
                     ? XbfDialect.WUX
                     : xbf2Dialect;
+
                 XbfDecompilationOptions options = new()
                 {
                     IncludeConnectionIds = includeConnectionIds,
                 };
+
                 return (Xaml: XbfDecompiler.Decompile(document, dialect, options), document.Version, Dialect: dialect);
             });
 
@@ -177,9 +181,9 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
         try
         {
             XbfDialect dialect = version.Major == 1 ? XbfDialect.WUX : Dialect;
-            using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
+            using IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite, StorageOpenOptions.AllowOnlyReaders);
             stream.Size = 0;
-            using Stream output = stream.AsStream();
+            using Stream output = stream.AsStream(0);
             await Task.Run(() => XbfCompiler.Compile(xaml, output, version, dialect));
             await output.FlushAsync();
 
@@ -452,9 +456,10 @@ public sealed partial class XbfPage : Page, INotifyPropertyChanged
         }
     }
 
-    private static bool IsKeyDown(VirtualKey key)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsKeyDown(VirtualKey key)
     {
-        return (Window.Current.CoreWindow.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
+        return (_coreWindow?.GetKeyState(key) & CoreVirtualKeyStates.Down) != 0;
     }
 
     private void Editor_SavePointLeft(Editor sender, SavePointLeftEventArgs args)

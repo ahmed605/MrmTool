@@ -4,7 +4,7 @@
 
 **MrmTool** relies on [MrmLib](https://github.com/ahmed605/MrmLib) for processing and modifying **PRI** files.
 
-It also includes a versioned **XBF** (XAML Binary Format) codec. It can decompile XBF v1, v2, and v2.1 to XAML, compile XAML to those versions, and reserialize an existing XBF document without passing through XAML.
+It also includes a versioned **XBF** (XAML Binary Format) decompiler and recompiler. It can decompile XBF v1, v2, and v2.1 to XAML, compile XAML to those versions, and reserialize an existing XBF document without passing through XAML.
 
 **MrmTool** supports the following **PRI** versions:
 

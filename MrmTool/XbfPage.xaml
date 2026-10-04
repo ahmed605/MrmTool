@@ -61,6 +61,9 @@
                 </ToggleMenuFlyoutItem>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutSubItem IsEnabled="{x:Bind CanSwitchDialect, Mode=OneWay}" Text="XBF2 schema">
+                    <MenuFlyoutSubItem.Icon>
+                        <SymbolIcon Symbol="Document" />
+                    </MenuFlyoutSubItem.Icon>
                     <muxc:RadioMenuFlyoutItem
                         x:Name="SystemXamlMenuItem"
                         Click="SystemXaml_Click"
