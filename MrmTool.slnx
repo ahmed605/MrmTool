@@ -1,14 +1,16 @@
-﻿<Solution>
+<Solution>
   <Configurations>
     <Platform Name="arm64" />
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Solution Items/">
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/publish.yml" />
+    <File Path="LICENSE.txt" />
     <File Path="NOTICE.txt" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="MrmTool.Xbf/MrmTool.Xbf.csproj" />
   <Project Path="MrmTool/MrmTool.csproj">
     <Platform Solution="*|arm64" Project="arm64" />
     <Platform Solution="*|x64" Project="x64" />

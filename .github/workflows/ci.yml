@@ -1,8 +1,8 @@
 name: CI
 
 on:
-  push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,6 +10,7 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    environment: ${{ github.event_name == 'pull_request' && 'PRs' || '' }}
 
     steps:
       - name: Check out repository

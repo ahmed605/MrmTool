@@ -86,7 +86,7 @@ namespace MrmTool.Common
                 "js" => "javascript",
                 "htm" => "html",
                 "ini" or "inf" => "props",
-                "resw" or "resx" or "xaml" => "xml",
+                "xsl" or "resw" or "resx" or "xaml" => "xml",
                 "scss" or "less" or "hss" => "css",
                 _ => extensionAfterPeriod,
             };
@@ -193,6 +193,34 @@ namespace MrmTool.Common
             LOG_LAST_ERROR_IF(GlobalFree((HGLOBAL)hDrop).Value is not null);
 
             return path;
+        }
+
+        internal unsafe static IReadOnlyList<string> GetStorageItemPathsUnsafe(this DataPackageView view)
+        {
+            var hDrop = view.GetHDropUnsafe();
+            if (hDrop is null) return [];
+
+            var dropFiles = *(DROPFILES**)hDrop;
+            if (dropFiles is null) return [];
+
+            var buffer = (char*)((byte*)dropFiles + dropFiles->pFiles);
+
+            var start = buffer;
+            var paths = new List<string>();
+            while (*(uint*)buffer != 0)
+            {
+                var pNextChar = ++buffer;
+                if (*pNextChar == 0)
+                {
+                    var length = (int)(pNextChar - start);
+                    paths.Add(new(start, 0, length));
+
+                    start = pNextChar + 1;
+                }
+            }
+
+            LOG_LAST_ERROR_IF(GlobalFree((HGLOBAL)hDrop).Value is not null);
+            return paths;
         }
 
         internal unsafe static byte* GetData(this IBuffer buffer)
