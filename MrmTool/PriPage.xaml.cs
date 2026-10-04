@@ -571,9 +571,9 @@ namespace MrmTool
             ObservableCollection<ResourceItem> items,
             bool preserveCollectionState = false)
         {
-            foreach (ResourceItem item in items)
+            for (int i = 0; i < items.Count; i++)
             {
-                SortResourceTree(item.Children, preserveCollectionState);
+                SortResourceTree(items[i].Children, preserveCollectionState);
             }
 
             int count = items.Count;
@@ -605,6 +605,7 @@ namespace MrmTool
             }
             finally
             {
+                sortedSpan.Clear();
                 ArrayPool<ResourceItem>.Shared.Return(sortedItems, false);
             }
         }
