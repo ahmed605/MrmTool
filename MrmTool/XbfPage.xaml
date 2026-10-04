@@ -1,0 +1,97 @@
+<Page
+    x:Class="MrmTool.XbfPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:winuieditor="using:WinUIEditor"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    mc:Ignorable="d">
+
+    <Grid
+        AllowDrop="True"
+        Background="Transparent"
+        DragOver="Grid_DragOver"
+        Drop="Grid_Drop">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <muxc:MenuBar>
+            <muxc:MenuBarItem Title="File">
+                <MenuFlyoutItem Click="Open_Click" Text="Open PRI or XBF">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="OpenFile" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    Click="Save_Click"
+                    IsEnabled="{x:Bind CanSave, Mode=OneWay}"
+                    Text="Save">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Save" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    Click="SaveAs_Click"
+                    IsEnabled="{x:Bind CanSaveAs, Mode=OneWay}"
+                    Text="Save As">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="SaveLocal" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Click="Exit_Click" Text="Exit">
+                    <MenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Cancel" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </muxc:MenuBarItem>
+            <muxc:MenuBarItem Title="View">
+                <ToggleMenuFlyoutItem
+                    x:Name="ConnectionIdsMenuItem"
+                    Click="IncludeConnectionIds_Click"
+                    IsChecked="True"
+                    Text="Include x:ConnectionId">
+                    <ToggleMenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Link" />
+                    </ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutSubItem IsEnabled="{x:Bind CanSwitchDialect, Mode=OneWay}" Text="XBF2 schema">
+                    <MenuFlyoutSubItem.Icon>
+                        <SymbolIcon Symbol="Document" />
+                    </MenuFlyoutSubItem.Icon>
+                    <muxc:RadioMenuFlyoutItem
+                        x:Name="SystemXamlMenuItem"
+                        Click="SystemXaml_Click"
+                        GroupName="Xbf2Schema"
+                        IsChecked="True"
+                        Text="System XAML (Windows.UI.Xaml)" />
+                    <muxc:RadioMenuFlyoutItem
+                        x:Name="WinUiXamlMenuItem"
+                        Click="WinUIXaml_Click"
+                        GroupName="Xbf2Schema"
+                        Text="WinUI XAML (Microsoft.UI.Xaml)" />
+                </MenuFlyoutSubItem>
+            </muxc:MenuBarItem>
+        </muxc:MenuBar>
+
+        <Border
+            Grid.Row="1"
+            Margin="16,8,16,16"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            BorderThickness="0.5"
+            CornerRadius="8">
+            <Border.BorderBrush>
+                <SolidColorBrush Opacity="0.4" Color="{ThemeResource TextFillColorSecondary}" />
+            </Border.BorderBrush>
+            <winuieditor:CodeEditorControl
+                x:Name="xamlEditor"
+                Padding="-10,12,0,0"
+                SyntaxHighlightingApplied="SyntaxHighlightingApplied" />
+        </Border>
+    </Grid>
+</Page>

@@ -94,7 +94,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <muxc:MenuBar Grid.Row="0">
+        <muxc:MenuBar Grid.Row="0" IsEnabled="{x:Bind IsNotBusy, Mode=OneWay}">
             <muxc:MenuBarItem Title="File">
                 <MenuFlyoutItem Text="Open" Click="Open_Click">
                     <MenuFlyoutItem.Icon>
@@ -124,7 +124,7 @@
                         <SymbolIcon Symbol="Add"/>
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="RemoveResourcesItem" Text="Remove Selected Resource(s)" IsEnabled="False" Click="RemoveResources_Click">
+                <MenuFlyoutItem Text="Remove Selected Resource(s)" IsEnabled="{x:Bind CanRemoveResource, Mode=OneWay}" Click="RemoveResources_Click">
                     <MenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Delete"/>
                     </MenuFlyoutItem.Icon>
@@ -142,7 +142,25 @@
                 </MenuFlyoutItem>
             </muxc:MenuBarItem>
             <muxc:MenuBarItem Title="View">
-                <ToggleMenuFlyoutItem Visibility="{x:Bind local:Program.IsWebViewAvailable}" Text="Use WebView for SVG" Click="UseWebViewForSvg_Click">
+                <ToggleMenuFlyoutItem Text="Include x:ConnectionId" IsChecked="{x:Bind IncludeConnectionIds, Mode=TwoWay}" Click="IncludeConnectionIds_Click">
+                    <ToggleMenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Link" />
+                    </ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <MenuFlyoutSubItem Text="XBF2 schema">
+                    <MenuFlyoutSubItem.Icon>
+                        <SymbolIcon Symbol="Document" />
+                    </MenuFlyoutSubItem.Icon>
+                    <muxc:RadioMenuFlyoutItem Text="System XAML (Windows.UI.Xaml)" GroupName="Xbf2Schema" Click="SystemXaml_Click" IsChecked="True" />
+                    <muxc:RadioMenuFlyoutItem Text="WinUI XAML (Microsoft.UI.Xaml)" GroupName="Xbf2Schema" Click="WinUIXaml_Click" />
+                </MenuFlyoutSubItem>
+                <MenuFlyoutSeparator />
+                <ToggleMenuFlyoutItem Text="Sort resources" IsChecked="{x:Bind SortResources, Mode=TwoWay}" Click="SortResources_Click">
+                    <ToggleMenuFlyoutItem.Icon>
+                        <SymbolIcon Symbol="Sort" />
+                    </ToggleMenuFlyoutItem.Icon>
+                </ToggleMenuFlyoutItem>
+                <ToggleMenuFlyoutItem Visibility="{x:Bind local:Program.IsWebViewAvailable}" Text="Use WebView for SVG" IsChecked="{x:Bind UseWebViewForSvg, Mode=TwoWay}" Click="UseWebViewForSvg_Click">
                     <ToggleMenuFlyoutItem.Icon>
                         <SymbolIcon Symbol="Globe"/>
                     </ToggleMenuFlyoutItem.Icon>
@@ -165,14 +183,14 @@
             </muxc:MenuBarItem>
         </muxc:MenuBar>
 
-        <Grid Grid.Row="1" Margin="0,5,0,0">
+        <Grid Grid.Row="1" Margin="0,5,0,0" IsHitTestVisible="{x:Bind IsNotBusy, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" MinWidth="280"/>
                 <ColumnDefinition Width="16"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <muxc:TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}" SelectionChanged="treeView_SelectionChanged"/>
+            <muxc:TreeView x:Name="treeView" Grid.Column="0" CanDragItems="False" CanReorderItems="False" ItemsSource="{x:Bind ResourceItems, Mode=OneWay}" ItemTemplateSelector="{StaticResource ResourceItemTemplateSelector}" SelectionChanged="TreeView_SelectionChanged"/>
 
             <Grid Grid.Column="2" VerticalAlignment="Stretch">
                 <Grid.RowDefinitions>
@@ -186,7 +204,7 @@
                         <SolidColorBrush Color="{ThemeResource TextFillColorSecondary}" Opacity="0.4"/>
                     </Border.BorderBrush>
                     <Grid>
-                        <ListView x:Name="candidatesList" SelectionChanged="candidatesList_SelectionChanged">
+                        <ListView x:Name="candidatesList" ItemsSource="{x:Bind SelectedResource.Candidates, Mode=OneWay}" SelectedItem="{x:Bind SelectedCandidate, Mode=TwoWay}" SelectionChanged="CandidatesList_SelectionChanged">
                             <ListView.Header>
                                 <Border Background="{ThemeResource SolidBackgroundFillColorTertiaryBrush}">
                                     <interactivity:Interaction.Behaviors>
@@ -237,7 +255,7 @@
                                                         <SymbolIcon Symbol="Edit"/>
                                                     </MenuFlyoutItem.Icon>
                                                 </MenuFlyoutItem>
-                                                <MenuFlyoutItem Text="Delete" Click="DeleteCandiate_Click">
+                                                <MenuFlyoutItem Text="Delete" Click="DeleteCandidate_Click">
                                                     <MenuFlyoutItem.Icon>
                                                         <SymbolIcon Symbol="Delete"/>
                                                     </MenuFlyoutItem.Icon>
@@ -370,5 +388,7 @@
                 </wct:GridSplitter.RenderTransform>
             </wct:GridSplitter>
         </Grid>
+
+        <ProgressRing x:Name="resourceLoadingIndicator" Grid.Row="1" Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="{x:Bind IsBusy, Mode=OneWay}" Visibility="Collapsed" AutomationProperties.Name="Loading resources" />
     </Grid>
 </Page>

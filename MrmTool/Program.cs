@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.System;
 using MrmTool.Polyfills;
 using MrmTool.Resources;
@@ -199,5 +199,19 @@ namespace MrmTool
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Exit() => SendMessageW(WindowHandle, WM_CLOSE, 0, 0);
+
+        /// <summary>Sets the application title to the current file path and its save state.</summary>
+        /// <param name="filePath">The path displayed in the title.</param>
+        /// <param name="isUnsaved">Whether to append an unsaved-change indicator.</param>
+        internal static unsafe void SetWindowTitle(string filePath, bool isUnsaved = false)
+        {
+            string title = isUnsaved
+                ? $"MrmTool - {filePath} *"
+                : $"MrmTool - {filePath}";
+            fixed (char* titlePointer = title)
+            {
+                _ = SetWindowTextW(WindowHandle, titlePointer);
+            }
+        }
     }
 }

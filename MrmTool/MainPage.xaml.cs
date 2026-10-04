@@ -2,7 +2,6 @@ using WinRT;
 using MrmLib;
 using MrmTool.Common;
 using Windows.Storage;
-using Windows.Storage.Pickers;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -10,9 +9,6 @@ using MrmTool.Dialogs;
 
 namespace MrmTool
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
         public MainPage()
@@ -22,14 +18,9 @@ namespace MrmTool
 
         private async void OnOpenFileClicked(object sender, RoutedEventArgs e)
         {
-            FileOpenPicker picker = new();
-            picker.FileTypeFilter.Add(".pri");
-            picker.CommitButtonText = "Load";
-            picker.Initialize();
-
-            if (await picker.PickSingleFileAsync() is { } file)
+            if (await OpenFileHelper.PickAsync() is { } file)
             {
-                await LoadPri(file);
+                await OpenFile(file);
             }
         }
 
@@ -39,10 +30,10 @@ namespace MrmTool
             if (view.Contains(StandardDataFormats.StorageItems))
             {
                 var path = view.GetFirstStorageItemPathUnsafe();
-                if (path is null || Path.GetExtension(path).ToLowerInvariant() is ".pri")
+                if (path is null || OpenFileHelper.IsSupported(path))
                 {
                     e.AcceptedOperation = DataPackageOperation.Copy;
-                    e.DragUIOverride.Caption = "Drop to load the PRI file";
+                    e.DragUIOverride.Caption = "Drop to load the PRI or XBF file";
                     e.Handled = true;
                 }
                 else
@@ -58,17 +49,23 @@ namespace MrmTool
             if (e.DataView.Contains(StandardDataFormats.StorageItems))
             {
                 var items = await e.DataView.GetStorageItemsAsync();
-                if (items.Count > 0 && items[0] is StorageFile file && file.Name.ToLowerInvariant().EndsWith(".pri"))
+                if (items.Count > 0 && items[0] is StorageFile file && OpenFileHelper.IsSupported(file.Name))
                 {
-                    await LoadPri(file);
+                    await OpenFile(file);
                     e.Handled = true;
                 }
             }
         }
 
         [DynamicWindowsRuntimeCast(typeof(ControlTemplate))]
-        private async Task LoadPri(StorageFile file)
+        private async Task OpenFile(StorageFile file)
         {
+            if (OpenFileHelper.IsXbf(file.Name))
+            {
+                Frame.Navigate(typeof(XbfPage), file);
+                return;
+            }
+
             try
             {
                 var pri = await PriFile.LoadAsync(file);

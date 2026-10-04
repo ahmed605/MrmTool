@@ -11,7 +11,7 @@
     <Grid x:Name="MainGrid" AllowDrop="True" DragOver="MainGrid_DragOver" Drop="MainGrid_Drop" Background="Transparent">
         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock Text="MrmTool" FontWeight="SemiLight" FontSize="42" />
-            <Button Content="Open PRI File" HorizontalAlignment="Center" Margin="0,15,0,0" Click="OnOpenFileClicked" />
+            <Button Content="Open PRI or XBF File" HorizontalAlignment="Center" Margin="0,15,0,0" Click="OnOpenFileClicked" />
         </StackPanel>
 
         <HyperlinkButton

@@ -4,14 +4,12 @@ using MrmTool.Models;
 using MrmTool.Scintilla;
 using System.Collections.ObjectModel;
 using System.Text;
-using System.Xml.Linq;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using WinRT;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace MrmTool.Dialogs
 {

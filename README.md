@@ -4,9 +4,10 @@
 
 **MrmTool** relies on [MrmLib](https://github.com/ahmed605/MrmLib) for processing and modifying **PRI** files.
 
-It also includes an **XBF** (XAML Binary Format) decompiler (no recompiler yet), it currently uses a modified version of [XbfAnalyzer](https://github.com/chausner/XbfAnalyzer) (the modified version is based on an older commit and not latest), but it's [planned](https://github.com/ahmed605/MrmTool/blob/f48c57a23fb1c53ac82dcbd3e9b0418206740dca/MrmTool/PriPage.xaml.cs#L472-L475) to be replaced with a new decompiler/recompiler based on **WinUI 3**'s **XBF** parser.
+It also includes a versioned **XBF** (XAML Binary Format) decompiler and recompiler. It can decompile XBF v1, v2, and v2.1 to XAML, compile XAML to those versions, and reserialize an existing XBF document without passing through XAML.
 
 **MrmTool** supports the following **PRI** versions:
+
 - Windows 8 (`mrm_pri0`)
 - Windows 8.1 (`mrm_pri1`)
 - Windows Phone 8.1 (`mrm_prif`)

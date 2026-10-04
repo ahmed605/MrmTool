@@ -27,5 +27,11 @@ namespace MrmTool.Common
         {
             throw new ArgumentException(message, paramName);
         }
+
+        [DoesNotReturn]
+        internal static void ThrowInvalidDataException(string message, Exception innerException)
+        {
+            throw new InvalidDataException(message, innerException);
+        }
     }
 }

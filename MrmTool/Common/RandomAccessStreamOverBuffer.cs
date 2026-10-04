@@ -86,7 +86,13 @@ namespace MrmTool.Common
             {
                 return Task.Run(() =>
                 {
-                    ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(_position, _buffer.Length, nameof(Position));
+                    if (_position == _buffer.Length)
+                    {
+                        buffer.Length = 0;
+                        return buffer;
+                    }
+
+                    ArgumentOutOfRangeException.ThrowIfGreaterThan(_position, _buffer.Length, nameof(Position));
 
                     byte* data = buffer.GetData();
 
