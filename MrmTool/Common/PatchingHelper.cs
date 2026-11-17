@@ -10,9 +10,11 @@ using static TerraFX.Interop.Windows.Windows;
 #if IS_64_BIT
 using IMAGE_THUNK_DATA = TerraFX.Interop.Windows.IMAGE_THUNK_DATA64;
 using IMAGE_NT_HEADERS = TerraFX.Interop.Windows.IMAGE_NT_HEADERS64;
+using THUNKPOINTERTYPE = nuint;
 #else
 using IMAGE_THUNK_DATA = TerraFX.Interop.Windows.IMAGE_THUNK_DATA32;
 using IMAGE_NT_HEADERS = TerraFX.Interop.Windows.IMAGE_NT_HEADERS32;
+using THUNKPOINTERTYPE = uint;
 #endif
 
 namespace MrmTool.Common
@@ -138,8 +140,8 @@ namespace MrmTool.Common
                 return HRESULT_FROM_WIN32(GetLastError());
             }
 
-            nuint originalFunction = (nuint)pThunk->u1.Function;
-            pThunk->u1.Function = (nuint)Function;
+            THUNKPOINTERTYPE originalFunction = (THUNKPOINTERTYPE)pThunk->u1.Function;
+            pThunk->u1.Function = (THUNKPOINTERTYPE)Function;
 
             PatchedFunctions[Index] = ((nuint)(void*)&pThunk->u1.Function, originalFunction);
 
